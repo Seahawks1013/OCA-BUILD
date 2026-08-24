@@ -388,6 +388,7 @@
         "artist_8KEjpp": {
           "type": "artist",
           "settings": {
+            "thumbnail": "shopify://shop_images/graham.jpg",
             "card_color": "",
             "media_type": "shopify",
             "video": "shopify://files/videos/copy_C0C3A794-09C3-4DDC-AB40-ECAA87585383.mov",
