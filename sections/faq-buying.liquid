@@ -1,4 +1,3 @@
-
 {%- liquid
   assign open_mode = section.settings.open_mode
 -%}
@@ -247,7 +246,9 @@
   "tag": "section",
   "class": "faq-buying-wrapper section-wrapper",
   "disabled_on": {
-    "groups": ["header"]
+    "groups": [
+      "header"
+    ]
   },
   "settings": [
     {
@@ -281,11 +282,20 @@
       "id": "open_mode",
       "label": "Which questions start open",
       "options": [
-        { "value": "all", "label": "All of them" },
-        { "value": "first", "label": "Only the first" },
-        { "value": "none", "label": "None" }
+        {
+          "value": "all",
+          "label": "All of them"
+        },
+        {
+          "value": "first",
+          "label": "Only the first"
+        },
+        {
+          "value": "none",
+          "label": "None"
+        }
       ],
-      "default": "all"
+      "default": "none"
     },
     {
       "type": "header",
@@ -313,9 +323,18 @@
       "id": "intro_width",
       "label": "Heading column width",
       "options": [
-        { "value": "0.5fr", "label": "Narrow" },
-        { "value": "0.7fr", "label": "Balanced" },
-        { "value": "0.9fr", "label": "Wide" }
+        {
+          "value": "0.5fr",
+          "label": "Narrow"
+        },
+        {
+          "value": "0.7fr",
+          "label": "Balanced"
+        },
+        {
+          "value": "0.9fr",
+          "label": "Wide"
+        }
       ],
       "default": "0.7fr"
     },
@@ -433,42 +452,49 @@
     {
       "name": "FAQ — Buying",
       "category": "Text",
-      "blocks": [
-        {
+      "blocks": {
+        "faq_1": {
           "type": "faq_item",
           "settings": {
             "question": "How soon do I get my files?",
             "answer": "<p>The moment your payment clears. Your download links appear on the confirmation screen and a copy is emailed to you at the same time — nothing ships, nothing to wait on.</p>"
           }
         },
-        {
+        "faq_2": {
           "type": "faq_item",
           "settings": {
             "question": "What can I pay with?",
             "answer": "<p>Every major debit and credit card, plus PayPal, Shop Pay, Apple Pay, and Google Pay.</p>"
           }
         },
-        {
+        "faq_3": {
           "type": "faq_item",
           "settings": {
             "question": "Why does checkout ask for my address?",
             "answer": "<p>Some countries work out tax on digital goods based on where the buyer is, so we have to collect a billing address even though there's no package going anywhere.</p>"
           }
         },
-        {
+        "faq_4": {
           "type": "faq_item",
           "settings": {
             "question": "Can I get a refund?",
             "answer": "<p>Once a file has been downloaded we can't un-send it, so sales are final. But if something arrives broken, won't load in your DAW, or isn't what the page described — message us and we'll make it right.</p>"
           }
         },
-        {
+        "faq_5": {
           "type": "faq_item",
           "settings": {
             "question": "Will these work with my setup?",
             "answer": "<p>Each product page lists the software and plugin versions it was built for. Check that list before buying, and if you're still unsure, reach out and we'll tell you straight.</p>"
           }
         }
+      },
+      "block_order": [
+        "faq_1",
+        "faq_2",
+        "faq_3",
+        "faq_4",
+        "faq_5"
       ]
     }
   ]
