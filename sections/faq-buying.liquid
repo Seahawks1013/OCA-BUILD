@@ -13,7 +13,9 @@
     --faqb-heading-size: {{ section.settings.heading_size }}px;
     --faqb-heading-size-mobile: {{ section.settings.heading_size_mobile }}px;
     --faqb-question-size: {{ section.settings.question_size }}px;
+    --faqb-max-width: {{ section.settings.max_width }}px;
     --faqb-column-gap: {{ section.settings.column_gap }}px;
+    --faqb-intro-ratio: {{ section.settings.intro_width }};
     --faqb-padding-top: {{ section.settings.padding_top }}px;
     --faqb-padding-bottom: {{ section.settings.padding_bottom }}px;
   "
@@ -67,15 +69,15 @@
   .faq-buying {
     background: var(--faqb-bg, #f2f2ee);
     color: var(--faqb-body-color, #6b6b68);
-    padding-block: var(--faqb-padding-top, 96px) var(--faqb-padding-bottom, 96px);
+    padding-block: var(--faqb-padding-top, 80px) var(--faqb-padding-bottom, 80px);
     padding-inline: var(--page-margin, 24px);
   }
 
   .faq-buying__inner {
     display: grid;
-    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
-    gap: var(--faqb-column-gap, 80px);
-    max-width: var(--page-width, 1600px);
+    grid-template-columns: minmax(0, var(--faqb-intro-ratio, 0.7fr)) minmax(0, 1fr);
+    gap: var(--faqb-column-gap, 64px);
+    max-width: var(--faqb-max-width, 1180px);
     margin-inline: auto;
     align-items: start;
   }
@@ -95,7 +97,7 @@
   }
 
   .faq-buying__heading {
-    font-size: var(--faqb-heading-size, 76px);
+    font-size: var(--faqb-heading-size, 62px);
     line-height: 0.95;
     letter-spacing: -0.035em;
     font-weight: 800;
@@ -220,7 +222,7 @@
 
   @media screen and (max-width: 749px) {
     .faq-buying {
-      padding-block: calc(var(--faqb-padding-top, 96px) * 0.6) calc(var(--faqb-padding-bottom, 96px) * 0.6);
+      padding-block: calc(var(--faqb-padding-top, 80px) * 0.6) calc(var(--faqb-padding-bottom, 80px) * 0.6);
     }
 
     .faq-buying__heading {
@@ -297,13 +299,35 @@
     },
     {
       "type": "range",
+      "id": "max_width",
+      "label": "Maximum content width",
+      "min": 800,
+      "max": 1600,
+      "step": 20,
+      "unit": "px",
+      "default": 1180,
+      "info": "Lower this to pull the section in tighter."
+    },
+    {
+      "type": "select",
+      "id": "intro_width",
+      "label": "Heading column width",
+      "options": [
+        { "value": "0.5fr", "label": "Narrow" },
+        { "value": "0.7fr", "label": "Balanced" },
+        { "value": "0.9fr", "label": "Wide" }
+      ],
+      "default": "0.7fr"
+    },
+    {
+      "type": "range",
       "id": "column_gap",
       "label": "Space between columns",
       "min": 20,
       "max": 160,
       "step": 4,
       "unit": "px",
-      "default": 80
+      "default": 64
     },
     {
       "type": "range",
@@ -313,7 +337,7 @@
       "max": 200,
       "step": 4,
       "unit": "px",
-      "default": 96
+      "default": 80
     },
     {
       "type": "range",
@@ -323,7 +347,7 @@
       "max": 200,
       "step": 4,
       "unit": "px",
-      "default": 96
+      "default": 80
     },
     {
       "type": "header",
@@ -361,7 +385,7 @@
       "max": 120,
       "step": 2,
       "unit": "px",
-      "default": 76
+      "default": 62
     },
     {
       "type": "range",
