@@ -325,6 +325,7 @@
             "card_color": "",
             "media_type": "shopify",
             "video": "shopify://files/videos/copy_C0C3A794-09C3-4DDC-AB40-ECAA87585383.mov",
+            "video_url": "",
             "orientation": "auto",
             "artist": "GRAHAM (2.3M+ Monthly Listeners)",
             "tag": "in the booth",
@@ -338,6 +339,7 @@
             "thumbnail": "shopify://shop_images/ovi_thumbnail.jpg",
             "card_color": "",
             "media_type": "shopify",
+            "video_url": "",
             "orientation": "auto",
             "artist": "OVI WOOD (600k+ Monthly Listeners)",
             "tag": "on the beat",
@@ -348,11 +350,12 @@
         "artist_6zhAke": {
           "type": "artist",
           "settings": {
-            "thumbnail": "shopify://shop_images/dame_blue_2.jpg",
+            "thumbnail": "shopify://shop_images/MC_JOSH_2.jpg",
             "card_color": "",
             "media_type": "shopify",
+            "video_url": "",
             "orientation": "auto",
-            "artist": "BigGucciDame (39.9k+ Monthly Listeners)",
+            "artist": "BigGucciDame (1.8M+ Monthly Listeners)",
             "tag": "in the studio",
             "quote": "",
             "credit": ""
