@@ -314,11 +314,77 @@
         "padding-block-start": 48,
         "padding-block-end": 48
       }
+    },
+    "faq_buying_aUpQHi": {
+      "type": "faq-buying",
+      "blocks": {
+        "faq_item_F4XUpt": {
+          "type": "faq_item",
+          "settings": {
+            "question": "How soon do I get my files?",
+            "answer": "<p>The moment your payment clears. Your download links appear on the confirmation screen and a copy is emailed to you at the same time — nothing ships, nothing to wait on.</p>"
+          }
+        },
+        "faq_item_tqkfY8": {
+          "type": "faq_item",
+          "settings": {
+            "question": "What can I pay with?",
+            "answer": "<p>Every major debit and credit card, plus PayPal, Shop Pay, Apple Pay, and Google Pay.</p>"
+          }
+        },
+        "faq_item_97XAiX": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Why does checkout ask for my address?",
+            "answer": "<p>Some countries work out tax on digital goods based on where the buyer is, so we have to collect a billing address even though there's no package going anywhere.</p>"
+          }
+        },
+        "faq_item_jdhzFj": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Can I get a refund?",
+            "answer": "<p>Once a file has been downloaded we can't un-send it, so sales are final. But if something arrives broken, won't load in your DAW, or isn't what the page described — message us and we'll make it right.</p>"
+          }
+        },
+        "faq_item_6QFiBh": {
+          "type": "faq_item",
+          "settings": {
+            "question": "Will these work with my setup?",
+            "answer": "<p>Each product page lists the software and plugin versions it was built for. Check that list before buying, and if you're still unsure, reach out and we'll tell you straight.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "faq_item_F4XUpt",
+        "faq_item_tqkfY8",
+        "faq_item_97XAiX",
+        "faq_item_jdhzFj",
+        "faq_item_6QFiBh"
+      ],
+      "name": "FAQ — Buying",
+      "settings": {
+        "eyebrow": "FAQ",
+        "heading": "Before you check out.",
+        "subheading": "Short answers to the things people ask us most.",
+        "open_mode": "all",
+        "stack_on_desktop": false,
+        "column_gap": 80,
+        "padding_top": 96,
+        "padding_bottom": 96,
+        "background_color": "#f2f2ee",
+        "heading_color": "#111111",
+        "body_color": "#6b6b68",
+        "rule_color": "#d8d8d2",
+        "heading_size": 76,
+        "heading_size_mobile": 44,
+        "question_size": 19
+      }
     }
   },
   "order": [
     "hero_jVaWmY",
     "video_hero_drop_1_iXGNRt",
-    "product_list_fa6P9H"
+    "product_list_fa6P9H",
+    "faq_buying_aUpQHi"
   ]
 }
