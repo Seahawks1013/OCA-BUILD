@@ -381,12 +381,81 @@
         "heading_size_mobile": 44,
         "question_size": 19
       }
+    },
+    "artist_video_carousel_1_iEzYKG": {
+      "type": "artist-video-carousel_1",
+      "blocks": {
+        "artist_8KEjpp": {
+          "type": "artist",
+          "settings": {
+            "card_color": "",
+            "media_type": "shopify",
+            "video": "shopify://files/videos/copy_C0C3A794-09C3-4DDC-AB40-ECAA87585383.mov",
+            "orientation": "auto",
+            "artist": "Artist name",
+            "tag": "in the booth",
+            "quote": "",
+            "credit": ""
+          }
+        },
+        "artist_6pcdq6": {
+          "type": "artist",
+          "settings": {
+            "card_color": "",
+            "media_type": "shopify",
+            "orientation": "auto",
+            "artist": "Artist name",
+            "tag": "on the beat",
+            "quote": "",
+            "credit": ""
+          }
+        },
+        "artist_6zhAke": {
+          "type": "artist",
+          "settings": {
+            "card_color": "",
+            "media_type": "shopify",
+            "orientation": "auto",
+            "artist": "Artist name",
+            "tag": "in the studio",
+            "quote": "",
+            "credit": ""
+          }
+        }
+      },
+      "block_order": [
+        "artist_8KEjpp",
+        "artist_6pcdq6",
+        "artist_6zhAke"
+      ],
+      "name": "Artist Video Carousel",
+      "settings": {
+        "eyebrow": "RECEIPTS",
+        "heading": "You've heard these already.",
+        "description": "<p>We're not another preset store. These are the chains artists pulling 600k+ monthly listeners are running — on records you already know. Tap any of them.</p>",
+        "cards_per_view": 3,
+        "cards_per_view_mobile": "1.15",
+        "card_gap": 24,
+        "card_ratio": "3 / 4",
+        "card_radius": 20,
+        "max_width": 1400,
+        "padding_top": 80,
+        "padding_bottom": 80,
+        "background_color": "#efefef",
+        "accent_color": "#1242fd",
+        "card_bg_default": "#1242fd",
+        "heading_color": "#111111",
+        "body_color": "#6b6b68",
+        "heading_size": 60,
+        "heading_size_mobile": 38
+      }
     }
   },
   "order": [
     "hero_jVaWmY",
     "video_hero_drop_1_iXGNRt",
     "product_list_fa6P9H",
-    "faq_buying_aUpQHi"
+    "faq_buying_aUpQHi",
+    "artist_video_carousel_1_iEzYKG"
   ]
 }
