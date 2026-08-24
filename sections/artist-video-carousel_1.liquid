@@ -1,0 +1,967 @@
+
+{%- liquid
+  assign per_view = section.settings.cards_per_view
+-%}
+
+<artist-video-carousel
+  class="avc"
+  style="
+    --avc-bg: {{ section.settings.background_color }};
+    --avc-heading-color: {{ section.settings.heading_color }};
+    --avc-body-color: {{ section.settings.body_color }};
+    --avc-accent: {{ section.settings.accent_color }};
+    --avc-card-radius: {{ section.settings.card_radius }}px;
+    --avc-max-width: {{ section.settings.max_width }}px;
+    --avc-heading-size: {{ section.settings.heading_size }}px;
+    --avc-heading-size-mobile: {{ section.settings.heading_size_mobile }}px;
+    --avc-per-view: {{ per_view }};
+    --avc-per-view-mobile: {{ section.settings.cards_per_view_mobile }};
+    --avc-gap: {{ section.settings.card_gap }}px;
+    --avc-card-ratio: {{ section.settings.card_ratio }};
+    --avc-padding-top: {{ section.settings.padding_top }}px;
+    --avc-padding-bottom: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="avc__inner">
+    <div class="avc__head">
+      <div class="avc__head-left">
+        {%- if section.settings.eyebrow != blank -%}
+          <p class="avc__eyebrow">{{ section.settings.eyebrow }}</p>
+        {%- endif -%}
+        {%- if section.settings.heading != blank -%}
+          <h2 class="avc__heading">{{ section.settings.heading }}</h2>
+        {%- endif -%}
+      </div>
+
+      <div class="avc__head-right">
+        {%- if section.settings.description != blank -%}
+          <div class="avc__description">{{ section.settings.description }}</div>
+        {%- endif -%}
+
+        {%- if section.blocks.size > 1 -%}
+          <div class="avc__arrows">
+            <button
+              class="avc__arrow"
+              type="button"
+              data-avc-prev
+              aria-label="{{ 'accessibility.previous' | t | default: 'Previous' }}"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <button
+              class="avc__arrow"
+              type="button"
+              data-avc-next
+              aria-label="{{ 'accessibility.next' | t | default: 'Next' }}"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        {%- endif -%}
+      </div>
+    </div>
+
+    <ul class="avc__track" data-avc-track role="list">
+      {%- for block in section.blocks -%}
+        {%- liquid
+          assign has_shopify_video = false
+          assign has_external = false
+          if block.settings.media_type == 'shopify' and block.settings.video != blank
+            assign has_shopify_video = true
+          endif
+          if block.settings.media_type == 'external' and block.settings.video_url != blank
+            assign has_external = true
+          endif
+          assign card_bg = block.settings.card_color | default: section.settings.card_bg_default
+
+          # Numeric aspect ratio for the lightbox (width / height).
+          # 'auto' reads it straight off a Shopify-hosted video; external
+          # links can't be probed, so they fall back to the chosen shape.
+          assign media_ratio = 1.7778
+          if block.settings.orientation == 'portrait'
+            assign media_ratio = 0.5625
+          elsif block.settings.orientation == 'square'
+            assign media_ratio = 1
+          elsif block.settings.orientation == 'landscape'
+            assign media_ratio = 1.7778
+          elsif has_shopify_video and block.settings.video.aspect_ratio > 0
+            assign media_ratio = block.settings.video.aspect_ratio
+          endif
+        -%}
+        <li class="avc__slide" {{ block.shopify_attributes }}>
+          <button
+            class="avc__card"
+            type="button"
+            style="--avc-card-bg: {{ card_bg }};"
+            data-avc-open
+            data-artist="{{ block.settings.artist | escape }}"
+            data-tag="{{ block.settings.tag | escape }}"
+            data-quote="{{ block.settings.quote | escape }}"
+            data-credit="{{ block.settings.credit | escape }}"
+            data-ratio="{{ media_ratio }}"
+            {% if block.settings.artist != blank %}
+              aria-label="Play clip: {{ block.settings.artist | escape }}"
+            {% else %}
+              aria-label="Play clip"
+            {% endif %}
+          >
+            <span class="avc__thumb">
+              {%- if block.settings.thumbnail != blank -%}
+                {{
+                  block.settings.thumbnail
+                  | image_url: width: 1200
+                  | image_tag:
+                    widths: '300, 500, 700, 900, 1200',
+                    sizes: '(min-width: 750px) 33vw, 80vw',
+                    alt: block.settings.artist,
+                    loading: 'lazy',
+                    class: 'avc__thumb-img'
+                }}
+              {%- else -%}
+                <span class="avc__thumb-placeholder">
+                  {{ 'image' | placeholder_svg_tag: 'avc__thumb-img' }}
+                </span>
+              {%- endif -%}
+            </span>
+
+            <span class="avc__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M9 6.5v11l9-5.5-9-5.5z" fill="currentColor"/>
+              </svg>
+            </span>
+
+            {%- if block.settings.tag != blank -%}
+              <span class="avc__tag">
+                <span class="avc__dot" aria-hidden="true"></span>
+                {{ block.settings.tag }}
+              </span>
+            {%- endif -%}
+
+            {%- comment -%}
+              Media lives in a template so nothing loads (or autoplays)
+              until the viewer actually opens the lightbox.
+            {%- endcomment -%}
+            <template>
+              {%- if has_shopify_video -%}
+                {{
+                  block.settings.video
+                  | video_tag:
+                    controls: true,
+                    autoplay: true,
+                    loop: false,
+                    muted: false,
+                    playsinline: true,
+                    class: 'avc__dialog-video'
+                }}
+              {%- elsif has_external -%}
+                {%- if block.settings.video_url.type == 'youtube' -%}
+                  <iframe
+                    class="avc__dialog-video"
+                    src="https://www.youtube.com/embed/{{ block.settings.video_url.id }}?autoplay=1&rel=0&playsinline=1"
+                    title="{{ block.settings.artist | escape }}"
+                    allow="autoplay; encrypted-media; picture-in-picture"
+                    allowfullscreen
+                    frameborder="0"
+                  ></iframe>
+                {%- elsif block.settings.video_url.type == 'vimeo' -%}
+                  <iframe
+                    class="avc__dialog-video"
+                    src="https://player.vimeo.com/video/{{ block.settings.video_url.id }}?autoplay=1"
+                    title="{{ block.settings.artist | escape }}"
+                    allow="autoplay; fullscreen; picture-in-picture"
+                    allowfullscreen
+                    frameborder="0"
+                  ></iframe>
+                {%- endif -%}
+              {%- else -%}
+                <div class="avc__dialog-empty">Add a video to this block.</div>
+              {%- endif -%}
+            </template>
+          </button>
+
+          {%- if block.settings.artist != blank -%}
+            <p class="avc__name">{{ block.settings.artist }}</p>
+          {%- endif -%}
+        </li>
+      {%- else -%}
+        <li class="avc__slide">
+          <div class="avc__card avc__card--empty" style="--avc-card-bg: {{ section.settings.card_bg_default }};">
+            <span class="avc__thumb">{{ 'image' | placeholder_svg_tag: 'avc__thumb-img' }}</span>
+          </div>
+          <p class="avc__name">Add an artist block</p>
+        </li>
+      {%- endfor -%}
+    </ul>
+  </div>
+
+  <dialog class="avc__dialog" data-avc-dialog aria-label="Video">
+    <button class="avc__close" type="button" data-avc-close aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="avc__dialog-media" data-avc-dialog-media></div>
+    <div class="avc__dialog-body">
+      <p class="avc__dialog-quote" data-avc-quote></p>
+      <p class="avc__dialog-meta" data-avc-meta></p>
+    </div>
+  </dialog>
+</artist-video-carousel>
+
+{% stylesheet %}
+  .avc {
+    display: block;
+    background: var(--avc-bg, #efefef);
+    color: var(--avc-body-color, #6b6b68);
+    padding-block: var(--avc-padding-top, 80px) var(--avc-padding-bottom, 80px);
+    padding-inline: var(--page-margin, 24px);
+  }
+
+  .avc__inner {
+    max-width: var(--avc-max-width, 1400px);
+    margin-inline: auto;
+  }
+
+  /* ---------- Header ---------- */
+  .avc__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 2rem;
+    margin-block-end: 2.5rem;
+  }
+
+  .avc__head-left {
+    flex: 1 1 320px;
+  }
+
+  .avc__head-right {
+    flex: 0 1 380px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+
+  .avc__eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--avc-accent, #1242fd);
+    margin: 0 0 0.75rem;
+  }
+
+  .avc__heading {
+    font-family: var(--font-heading--family, inherit);
+    font-size: var(--avc-heading-size, 60px);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+    color: var(--avc-heading-color, #111);
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .avc__description {
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--avc-body-color, #6b6b68);
+    max-width: 42ch;
+  }
+
+  .avc__description > :first-child { margin-block-start: 0; }
+  .avc__description > :last-child { margin-block-end: 0; }
+
+  /* ---------- Arrows ---------- */
+  .avc__arrows {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .avc__arrow {
+    inline-size: 42px;
+    block-size: 42px;
+    border-radius: 50%;
+    border: 1px solid currentcolor;
+    background: transparent;
+    color: var(--avc-heading-color, #111);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease, opacity 0.2s ease;
+  }
+
+  .avc__arrow svg { inline-size: 20px; block-size: 20px; }
+
+  .avc__arrow:hover:not([disabled]) {
+    background: var(--avc-heading-color, #111);
+    color: var(--avc-bg, #efefef);
+  }
+
+  .avc__arrow[disabled] {
+    opacity: 0.25;
+    cursor: default;
+  }
+
+  /* ---------- Track ---------- */
+  .avc__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - (var(--avc-per-view) - 1) * var(--avc-gap, 24px)) / var(--avc-per-view));
+    gap: var(--avc-gap, 24px);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    /* room for the card's hover lift */
+    padding-block: 4px 8px;
+  }
+
+  .avc__track::-webkit-scrollbar { display: none; }
+
+  .avc__slide {
+    scroll-snap-align: start;
+    min-inline-size: 0;
+  }
+
+  /* ---------- Card ---------- */
+  .avc__card {
+    position: relative;
+    display: block;
+    inline-size: 100%;
+    aspect-ratio: var(--avc-card-ratio, 3 / 4);
+    border: 0;
+    padding: 0;
+    overflow: hidden;
+    border-radius: var(--avc-card-radius, 20px);
+    background: var(--avc-card-bg, #1242fd);
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+
+  .avc__card--empty { cursor: default; }
+
+  .avc__card:hover { transform: translateY(-4px); }
+
+  .avc__card:focus-visible {
+    outline: 3px solid var(--avc-heading-color, #111);
+    outline-offset: 3px;
+  }
+
+  .avc__thumb,
+  .avc__thumb-placeholder {
+    position: absolute;
+    inset: 0;
+    display: block;
+  }
+
+  .avc__thumb-img {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+  }
+
+  /* Play button */
+  .avc__play {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 50%;
+    translate: -50% -50%;
+    inline-size: 62px;
+    block-size: 62px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.92);
+    color: #111;
+    display: grid;
+    place-items: center;
+    transition: scale 0.25s ease, background 0.25s ease;
+  }
+
+  .avc__play svg { inline-size: 30px; block-size: 30px; }
+
+  .avc__card:hover .avc__play { scale: 1.08; background: #fff; }
+
+  /* Tag pill on the card */
+  .avc__tag {
+    position: absolute;
+    inset-block-end: 14px;
+    inset-inline-start: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 6px rgb(0 0 0 / 0.45);
+    padding-inline-end: 8px;
+  }
+
+  .avc__dot {
+    inline-size: 7px;
+    block-size: 7px;
+    border-radius: 50%;
+    background: var(--avc-accent, #1242fd);
+    flex: 0 0 auto;
+  }
+
+  .avc__name {
+    margin: 0.9rem 0 0;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--avc-heading-color, #111);
+  }
+
+  /* ---------- Lightbox ---------- */
+  .avc__dialog {
+    border: 0;
+    padding: 0;
+    background: #101010;
+    color: #fff;
+    border-radius: 18px;
+    overflow: hidden;
+    /*
+      Width is driven by the clip's own aspect ratio so a 9:16 vertical
+      gets a narrow column and a 16:9 gets a wide one — in both cases the
+      video is capped at 56vh tall so the dialog always fits on screen.
+    */
+    inline-size: min(92vw, max(280px, min(680px, calc(56vh * var(--avc-ratio-num, 1.7778)))));
+    max-block-size: 90vh;
+    box-shadow: 0 30px 80px rgb(0 0 0 / 0.45);
+  }
+
+  .avc__dialog::backdrop {
+    background: rgb(120 120 120 / 0.45);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  .avc__dialog[open] {
+    animation: avc-pop 0.22s ease-out;
+  }
+
+  @keyframes avc-pop {
+    from { opacity: 0; scale: 0.96; }
+    to   { opacity: 1; scale: 1; }
+  }
+
+  .avc__close {
+    position: absolute;
+    inset-block-start: 14px;
+    inset-inline-end: 14px;
+    z-index: 2;
+    inline-size: 34px;
+    block-size: 34px;
+    border-radius: 50%;
+    border: 0;
+    background: rgb(255 255 255 / 0.92);
+    color: #111;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+  }
+
+  .avc__close svg { inline-size: 18px; block-size: 18px; }
+  .avc__close:hover { background: #fff; }
+
+  .avc__dialog-media {
+    position: relative;
+    aspect-ratio: var(--avc-ratio-num, 1.7778);
+    background: #000;
+  }
+
+  .avc__dialog-media:empty { display: none; }
+
+  .avc__dialog-video,
+  .avc__dialog-media video,
+  .avc__dialog-media iframe {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    border: 0;
+    /* contain, never cover — cropping someone's face out of a vertical clip is worse than letterboxing */
+    object-fit: contain;
+    display: block;
+  }
+
+  .avc__dialog-empty {
+    display: grid;
+    place-items: center;
+    block-size: 100%;
+    font-size: 14px;
+    color: #999;
+  }
+
+  .avc__dialog-body {
+    padding: 20px 22px 22px;
+  }
+
+  .avc__dialog-quote {
+    font-family: var(--font-heading--family, inherit);
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    margin: 0;
+    text-wrap: pretty;
+  }
+
+  .avc__dialog-quote:empty { display: none; }
+
+  .avc__dialog-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4em;
+    margin: 0.7rem 0 0;
+    font-size: 14px;
+    color: rgb(255 255 255 / 0.72);
+  }
+
+  .avc__dialog-meta:empty { display: none; }
+
+  .avc__dialog-meta .avc__dot { margin-inline-end: 0.15em; }
+  .avc__dialog-meta strong { color: #fff; font-weight: 700; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .avc__card,
+    .avc__play,
+    .avc__arrow { transition: none; }
+
+    .avc__track { scroll-behavior: auto; }
+    .avc__dialog[open] { animation: none; }
+  }
+
+  /* ---------- Mobile ---------- */
+  @media screen and (max-width: 989px) {
+    .avc__head-right { flex-basis: 100%; }
+  }
+
+  @media screen and (max-width: 749px) {
+    .avc {
+      padding-block: calc(var(--avc-padding-top, 80px) * 0.65) calc(var(--avc-padding-bottom, 80px) * 0.65);
+    }
+
+    .avc__heading { font-size: var(--avc-heading-size-mobile, 38px); }
+
+    .avc__track {
+      grid-auto-columns: calc(
+        (100% - (var(--avc-per-view-mobile) - 1) * var(--avc-gap, 24px)) / var(--avc-per-view-mobile)
+      );
+    }
+
+    .avc__play { inline-size: 52px; block-size: 52px; }
+    .avc__play svg { inline-size: 24px; block-size: 24px; }
+    .avc__dialog-quote { font-size: 18px; }
+  }
+{% endstylesheet %}
+
+{% javascript %}
+  class ArtistVideoCarousel extends HTMLElement {
+    connectedCallback() {
+      this.track = this.querySelector('[data-avc-track]');
+      this.dialog = this.querySelector('[data-avc-dialog]');
+      this.dialogMedia = this.querySelector('[data-avc-dialog-media]');
+      this.quoteEl = this.querySelector('[data-avc-quote]');
+      this.metaEl = this.querySelector('[data-avc-meta]');
+      this.prevBtn = this.querySelector('[data-avc-prev]');
+      this.nextBtn = this.querySelector('[data-avc-next]');
+
+      this.querySelectorAll('[data-avc-open]').forEach((card) => {
+        card.addEventListener('click', () => this.open(card));
+      });
+
+      this.querySelector('[data-avc-close]')?.addEventListener('click', () => this.dialog.close());
+
+      // Click outside the dialog card closes it
+      this.dialog?.addEventListener('click', (event) => {
+        if (event.target === this.dialog) this.dialog.close();
+      });
+
+      // Always tear the media down on close so nothing keeps playing
+      this.dialog?.addEventListener('close', () => this.dialogMedia.replaceChildren());
+
+      this.prevBtn?.addEventListener('click', () => this.step(-1));
+      this.nextBtn?.addEventListener('click', () => this.step(1));
+      this.track?.addEventListener('scroll', () => this.syncArrows(), { passive: true });
+
+      this.resizeObserver = new ResizeObserver(() => this.syncArrows());
+      if (this.track) this.resizeObserver.observe(this.track);
+
+      this.syncArrows();
+    }
+
+    disconnectedCallback() {
+      this.resizeObserver?.disconnect();
+    }
+
+    open(card) {
+      const template = card.querySelector('template');
+      if (template) {
+        this.dialogMedia.replaceChildren(template.content.cloneNode(true));
+      }
+
+      const { artist = '', tag = '', quote = '', credit = '', ratio = '' } = card.dataset;
+
+      // Resize the dialog to match this clip's orientation (16:9, 9:16, anything)
+      const parsed = parseFloat(ratio);
+      this.dialog.style.setProperty('--avc-ratio-num', Number.isFinite(parsed) && parsed > 0 ? parsed : 1.7778);
+
+      this.quoteEl.textContent = quote ? '“' + quote + '”' : '';
+
+      // Built with DOM nodes rather than innerHTML so merchant text is never parsed as markup
+      this.metaEl.replaceChildren();
+      if (artist || tag || credit) {
+        const dot = document.createElement('span');
+        dot.className = 'avc__dot';
+        this.metaEl.append(dot);
+
+        const parts = [];
+        if (artist) {
+          const strong = document.createElement('strong');
+          strong.textContent = artist;
+          parts.push(strong);
+        }
+        if (tag) parts.push(document.createTextNode(tag));
+        if (credit) parts.push(document.createTextNode(credit));
+
+        parts.forEach((node, index) => {
+          if (index > 0) this.metaEl.append(document.createTextNode(' · '));
+          this.metaEl.append(node);
+        });
+      }
+
+      this.dialog.showModal();
+
+      const video = this.dialogMedia.querySelector('video');
+      if (video) video.play().catch(() => {});
+    }
+
+    step(direction) {
+      if (!this.track) return;
+      const card = this.track.querySelector('.avc__slide');
+      const gap = parseFloat(getComputedStyle(this.track).columnGap) || 0;
+      const distance = card ? card.offsetWidth + gap : this.track.clientWidth * 0.8;
+      this.track.scrollBy({ left: direction * distance, behavior: 'smooth' });
+    }
+
+    syncArrows() {
+      if (!this.track || !this.prevBtn || !this.nextBtn) return;
+      const maxScroll = this.track.scrollWidth - this.track.clientWidth - 2;
+      this.prevBtn.toggleAttribute('disabled', this.track.scrollLeft <= 2);
+      this.nextBtn.toggleAttribute('disabled', this.track.scrollLeft >= maxScroll);
+    }
+  }
+
+  if (!customElements.get('artist-video-carousel')) {
+    customElements.define('artist-video-carousel', ArtistVideoCarousel);
+  }
+{% endjavascript %}
+
+{% schema %}
+{
+  "name": "Artist Video Carousel",
+  "tag": "section",
+  "class": "artist-video-carousel-wrapper section-wrapper",
+  "disabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Intro"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow label",
+      "default": "RECEIPTS"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "You've heard these already."
+    },
+    {
+      "type": "richtext",
+      "id": "description",
+      "label": "Description",
+      "default": "<p>We're not another preset store. These are the chains artists pulling 600k+ monthly listeners are running — on records you already know. Tap any of them.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Carousel"
+    },
+    {
+      "type": "range",
+      "id": "cards_per_view",
+      "label": "Cards visible (desktop)",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "select",
+      "id": "cards_per_view_mobile",
+      "label": "Cards visible (mobile)",
+      "options": [
+        { "value": "1", "label": "1" },
+        { "value": "1.15", "label": "1 + peek of the next" },
+        { "value": "2", "label": "2" }
+      ],
+      "default": "1.15",
+      "info": "A peek of the next card hints that the row scrolls."
+    },
+    {
+      "type": "range",
+      "id": "card_gap",
+      "label": "Gap between cards",
+      "min": 8,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "default": 24
+    },
+    {
+      "type": "select",
+      "id": "card_ratio",
+      "label": "Card shape",
+      "options": [
+        { "value": "3 / 4", "label": "3:4 (portrait)" },
+        { "value": "4 / 5", "label": "4:5" },
+        { "value": "1 / 1", "label": "1:1 (square)" },
+        { "value": "9 / 16", "label": "9:16 (tall)" }
+      ],
+      "default": "3 / 4"
+    },
+    {
+      "type": "range",
+      "id": "card_radius",
+      "label": "Card corner radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Maximum content width",
+      "min": 900,
+      "max": 1700,
+      "step": 20,
+      "unit": "px",
+      "default": 1400
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#efefef"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent color",
+      "default": "#1242fd",
+      "info": "The eyebrow text and the small dots."
+    },
+    {
+      "type": "color",
+      "id": "card_bg_default",
+      "label": "Default card background",
+      "default": "#1242fd",
+      "info": "Used by any clip that doesn't set its own card background."
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading text",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Body text",
+      "default": "#6b6b68"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading size (desktop)",
+      "min": 32,
+      "max": 110,
+      "step": 2,
+      "unit": "px",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "heading_size_mobile",
+      "label": "Heading size (mobile)",
+      "min": 22,
+      "max": 64,
+      "step": 2,
+      "unit": "px",
+      "default": 38
+    }
+  ],
+  "blocks": [
+    {
+      "type": "artist",
+      "name": "Artist clip",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Thumbnail"
+        },
+        {
+          "type": "image_picker",
+          "id": "thumbnail",
+          "label": "Thumbnail image",
+          "info": "A cut-out PNG sits nicely on the card color. Portrait crops work best."
+        },
+        {
+          "type": "color",
+          "id": "card_color",
+          "label": "Card background",
+          "info": "Leave blank to use the section default card background."
+        },
+        {
+          "type": "header",
+          "content": "Video"
+        },
+        {
+          "type": "select",
+          "id": "media_type",
+          "label": "Video source",
+          "options": [
+            { "value": "shopify", "label": "Uploaded to Shopify" },
+            { "value": "external", "label": "YouTube or Vimeo link" }
+          ],
+          "default": "shopify"
+        },
+        {
+          "type": "video",
+          "id": "video",
+          "label": "Video",
+          "visible_if": "{{ block.settings.media_type == 'shopify' }}"
+        },
+        {
+          "type": "video_url",
+          "id": "video_url",
+          "label": "Video link",
+          "accept": ["youtube", "vimeo"],
+          "visible_if": "{{ block.settings.media_type == 'external' }}"
+        },
+        {
+          "type": "select",
+          "id": "orientation",
+          "label": "Video shape",
+          "options": [
+            { "value": "auto", "label": "Auto" },
+            { "value": "landscape", "label": "16:9 — landscape" },
+            { "value": "portrait", "label": "9:16 — vertical" },
+            { "value": "square", "label": "1:1 — square" }
+          ],
+          "default": "auto",
+          "info": "Auto detects the shape of a Shopify-uploaded video. YouTube and Vimeo links can't be detected, so pick the shape manually for those."
+        },
+        {
+          "type": "header",
+          "content": "Details"
+        },
+        {
+          "type": "text",
+          "id": "artist",
+          "label": "Artist name",
+          "default": "Artist name"
+        },
+        {
+          "type": "text",
+          "id": "tag",
+          "label": "Card label",
+          "default": "in the booth",
+          "info": "The small line at the bottom of the card."
+        },
+        {
+          "type": "text",
+          "id": "quote",
+          "label": "Pull quote",
+          "info": "Shown under the video in the popup. Quotation marks are added automatically."
+        },
+        {
+          "type": "text",
+          "id": "credit",
+          "label": "Credit",
+          "info": "Where the clip came from, e.g. \"via On The Radar\"."
+        }
+      ]
+    }
+  ],
+  "max_blocks": 12,
+  "presets": [
+    {
+      "name": "Artist Video Carousel",
+      "category": "Media",
+      "blocks": {
+        "artist_1": {
+          "type": "artist",
+          "settings": { "artist": "Artist name", "tag": "in the booth" }
+        },
+        "artist_2": {
+          "type": "artist",
+          "settings": { "artist": "Artist name", "tag": "on the beat" }
+        },
+        "artist_3": {
+          "type": "artist",
+          "settings": { "artist": "Artist name", "tag": "in the studio" }
+        }
+      },
+      "block_order": ["artist_1", "artist_2", "artist_3"]
+    }
+  ]
+}
+{% endschema %}
