@@ -1,0 +1,452 @@
+
+{%- liquid
+  assign open_mode = section.settings.open_mode
+-%}
+
+<div
+  class="faq-buying{% if section.settings.stack_on_desktop %} faq-buying--stacked{% endif %}"
+  style="
+    --faqb-bg: {{ section.settings.background_color }};
+    --faqb-heading-color: {{ section.settings.heading_color }};
+    --faqb-body-color: {{ section.settings.body_color }};
+    --faqb-rule-color: {{ section.settings.rule_color }};
+    --faqb-heading-size: {{ section.settings.heading_size }}px;
+    --faqb-heading-size-mobile: {{ section.settings.heading_size_mobile }}px;
+    --faqb-question-size: {{ section.settings.question_size }}px;
+    --faqb-column-gap: {{ section.settings.column_gap }}px;
+    --faqb-padding-top: {{ section.settings.padding_top }}px;
+    --faqb-padding-bottom: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="faq-buying__inner">
+    <div class="faq-buying__intro">
+      {%- if section.settings.eyebrow != blank -%}
+        <p class="faq-buying__eyebrow">{{ section.settings.eyebrow }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.heading != blank -%}
+        <h2 class="faq-buying__heading">{{ section.settings.heading }}</h2>
+      {%- endif -%}
+
+      {%- if section.settings.subheading != blank -%}
+        <p class="faq-buying__subheading">{{ section.settings.subheading }}</p>
+      {%- endif -%}
+    </div>
+
+    <div class="faq-buying__list">
+      {%- for block in section.blocks -%}
+        {%- liquid
+          assign is_open = false
+          if open_mode == 'all'
+            assign is_open = true
+          elsif open_mode == 'first' and forloop.first
+            assign is_open = true
+          endif
+        -%}
+        <details
+          class="faq-buying__item"
+          {% if is_open %}open{% endif %}
+          {{ block.shopify_attributes }}
+        >
+          <summary class="faq-buying__question">
+            <span class="faq-buying__question-text">{{ block.settings.question }}</span>
+            <span class="faq-buying__icon" aria-hidden="true"></span>
+          </summary>
+          <div class="faq-buying__answer">
+            {{ block.settings.answer }}
+          </div>
+        </details>
+      {%- else -%}
+        <p class="faq-buying__answer">Add a question block to get started.</p>
+      {%- endfor -%}
+    </div>
+  </div>
+</div>
+
+{% stylesheet %}
+  .faq-buying {
+    background: var(--faqb-bg, #f2f2ee);
+    color: var(--faqb-body-color, #6b6b68);
+    padding-block: var(--faqb-padding-top, 96px) var(--faqb-padding-bottom, 96px);
+    padding-inline: var(--page-margin, 24px);
+  }
+
+  .faq-buying__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+    gap: var(--faqb-column-gap, 80px);
+    max-width: var(--page-width, 1600px);
+    margin-inline: auto;
+    align-items: start;
+  }
+
+  .faq-buying--stacked .faq-buying__inner {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* ---------- Left intro column ---------- */
+  .faq-buying__eyebrow {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--faqb-body-color, #6b6b68);
+    margin: 0 0 0.75rem;
+  }
+
+  .faq-buying__heading {
+    font-size: var(--faqb-heading-size, 76px);
+    line-height: 0.95;
+    letter-spacing: -0.035em;
+    font-weight: 800;
+    color: var(--faqb-heading-color, #111);
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .faq-buying__subheading {
+    font-size: 17px;
+    line-height: 1.5;
+    margin: 1rem 0 0;
+    color: var(--faqb-body-color, #6b6b68);
+    max-width: 42ch;
+  }
+
+  /* ---------- Right accordion column ---------- */
+  .faq-buying__item {
+    border-block-end: 1px solid var(--faqb-rule-color, #d8d8d2);
+  }
+
+  .faq-buying__item:first-child {
+    border-block-start: 1px solid var(--faqb-rule-color, #d8d8d2);
+  }
+
+  .faq-buying__question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 2rem;
+    padding-block: 1.5rem;
+    cursor: pointer;
+    list-style: none;
+    font-size: var(--faqb-question-size, 19px);
+    font-weight: 700;
+    color: var(--faqb-heading-color, #111);
+  }
+
+  /* Hide the native disclosure marker */
+  .faq-buying__question::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-buying__question::marker {
+    content: '';
+  }
+
+  .faq-buying__question:focus-visible {
+    outline: 2px solid currentcolor;
+    outline-offset: 4px;
+  }
+
+  .faq-buying__question-text {
+    flex: 1 1 auto;
+  }
+
+  /* Plus icon that rotates into an × when open */
+  .faq-buying__icon {
+    position: relative;
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.25s ease;
+  }
+
+  .faq-buying__icon::before,
+  .faq-buying__icon::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 0;
+    width: 100%;
+    height: 2px;
+    background: currentcolor;
+    translate: 0 -50%;
+  }
+
+  .faq-buying__icon::after {
+    rotate: 90deg;
+  }
+
+  .faq-buying__item[open] .faq-buying__icon {
+    transform: rotate(45deg);
+  }
+
+  .faq-buying__answer {
+    padding-block-end: 1.75rem;
+    padding-inline-end: 3rem;
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--faqb-body-color, #6b6b68);
+    max-width: 60ch;
+  }
+
+  .faq-buying__answer > :first-child {
+    margin-block-start: 0;
+  }
+
+  .faq-buying__answer > :last-child {
+    margin-block-end: 0;
+  }
+
+  .faq-buying__answer a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .faq-buying__icon {
+      transition: none;
+    }
+  }
+
+  /* ---------- Mobile ---------- */
+  @media screen and (max-width: 989px) {
+    .faq-buying__inner {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2.5rem;
+    }
+  }
+
+  @media screen and (max-width: 749px) {
+    .faq-buying {
+      padding-block: calc(var(--faqb-padding-top, 96px) * 0.6) calc(var(--faqb-padding-bottom, 96px) * 0.6);
+    }
+
+    .faq-buying__heading {
+      font-size: var(--faqb-heading-size-mobile, 44px);
+    }
+
+    .faq-buying__question {
+      gap: 1.25rem;
+      padding-block: 1.25rem;
+      font-size: calc(var(--faqb-question-size, 19px) - 2px);
+    }
+
+    .faq-buying__answer {
+      padding-inline-end: 0;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "FAQ — Buying",
+  "tag": "section",
+  "class": "faq-buying-wrapper section-wrapper",
+  "disabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Intro"
+    },
+    {
+      "type": "text",
+      "id": "eyebrow",
+      "label": "Eyebrow label",
+      "default": "FAQ"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "Before you check out."
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "Short answers to the things people ask us most."
+    },
+    {
+      "type": "header",
+      "content": "Behavior"
+    },
+    {
+      "type": "select",
+      "id": "open_mode",
+      "label": "Which questions start open",
+      "options": [
+        { "value": "all", "label": "All of them" },
+        { "value": "first", "label": "Only the first" },
+        { "value": "none", "label": "None" }
+      ],
+      "default": "all"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "checkbox",
+      "id": "stack_on_desktop",
+      "label": "Stack intro above questions on desktop",
+      "default": false
+    },
+    {
+      "type": "range",
+      "id": "column_gap",
+      "label": "Space between columns",
+      "min": 20,
+      "max": 160,
+      "step": 4,
+      "unit": "px",
+      "default": 80
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#f2f2ee"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading & question text",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Body text",
+      "default": "#6b6b68"
+    },
+    {
+      "type": "color",
+      "id": "rule_color",
+      "label": "Divider lines",
+      "default": "#d8d8d2"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading size (desktop)",
+      "min": 32,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 76
+    },
+    {
+      "type": "range",
+      "id": "heading_size_mobile",
+      "label": "Heading size (mobile)",
+      "min": 24,
+      "max": 72,
+      "step": 2,
+      "unit": "px",
+      "default": 44
+    },
+    {
+      "type": "range",
+      "id": "question_size",
+      "label": "Question size",
+      "min": 14,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "default": 19
+    }
+  ],
+  "blocks": [
+    {
+      "type": "faq_item",
+      "name": "Question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "Ask a question here"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>Write the answer here.</p>"
+        }
+      ]
+    }
+  ],
+  "max_blocks": 20,
+  "presets": [
+    {
+      "name": "FAQ — Buying",
+      "category": "Text",
+      "blocks": [
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "How soon do I get my files?",
+            "answer": "<p>The moment your payment clears. Your download links appear on the confirmation screen and a copy is emailed to you at the same time — nothing ships, nothing to wait on.</p>"
+          }
+        },
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "What can I pay with?",
+            "answer": "<p>Every major debit and credit card, plus PayPal, Shop Pay, Apple Pay, and Google Pay.</p>"
+          }
+        },
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "Why does checkout ask for my address?",
+            "answer": "<p>Some countries work out tax on digital goods based on where the buyer is, so we have to collect a billing address even though there's no package going anywhere.</p>"
+          }
+        },
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "Can I get a refund?",
+            "answer": "<p>Once a file has been downloaded we can't un-send it, so sales are final. But if something arrives broken, won't load in your DAW, or isn't what the page described — message us and we'll make it right.</p>"
+          }
+        },
+        {
+          "type": "faq_item",
+          "settings": {
+            "question": "Will these work with my setup?",
+            "answer": "<p>Each product page lists the software and plugin versions it was built for. Check that list before buying, and if you're still unsure, reach out and we'll tell you straight.</p>"
+          }
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
