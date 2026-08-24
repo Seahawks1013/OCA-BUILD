@@ -322,7 +322,7 @@
           "type": "faq_item",
           "settings": {
             "question": "How soon do I get my files?",
-            "answer": "<p>The moment your payment clears. Your download links appear on the confirmation screen and a copy is emailed to you at the same time — nothing ships, nothing to wait on.</p>"
+            "answer": "<p>The moment your payment clears. Your download links appear on the confirmation screen and a copy is emailed to you at the same time. Nothing ships, so there's nothing to wait on.</p>"
           }
         },
         "faq_item_tqkfY8": {
@@ -343,7 +343,7 @@
           "type": "faq_item",
           "settings": {
             "question": "Can I get a refund?",
-            "answer": "<p>Once a file has been downloaded we can't un-send it, so sales are final. But if something arrives broken, won't load in your DAW, or isn't what the page described — message us and we'll make it right.</p>"
+            "answer": "<p>Once a file has been downloaded we can't un-send it, so sales are final. But if something arrives broken, won't load in your DAW, or isn't what the page described, message us and we'll make it right.</p>"
           }
         },
         "faq_item_6QFiBh": {
@@ -366,8 +366,10 @@
         "eyebrow": "FAQ",
         "heading": "Before you check out.",
         "subheading": "Short answers to the things people ask us most.",
-        "open_mode": "all",
+        "initial_state": "none",
         "stack_on_desktop": false,
+        "max_width": 1180,
+        "intro_width": "0.7fr",
         "column_gap": 80,
         "padding_top": 96,
         "padding_bottom": 96,
