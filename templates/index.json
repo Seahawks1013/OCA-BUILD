@@ -392,7 +392,7 @@
             "media_type": "shopify",
             "video": "shopify://files/videos/copy_C0C3A794-09C3-4DDC-AB40-ECAA87585383.mov",
             "orientation": "auto",
-            "artist": "Artist name",
+            "artist": "GRAHAM (2.3M+ Monthly Listeners)",
             "tag": "in the booth",
             "quote": "",
             "credit": ""
@@ -430,9 +430,9 @@
       ],
       "name": "Artist Video Carousel",
       "settings": {
-        "eyebrow": "RECEIPTS",
-        "heading": "Used by Real Artists",
-        "description": "<p>We're not another preset store. There are artists of all sizes, actively using our vocal presets. Tap to learn more.</p>",
+        "eyebrow": "THE RECEIPTS",
+        "heading": "Don't Take Our Word. Take Theirs.",
+        "description": "<p>We're not just another preset store. Artists at every level are running these on real records right now. Tap to learn more<br/><br/></p>",
         "cards_per_view": 3,
         "cards_per_view_mobile": "1.15",
         "card_gap": 24,
