@@ -431,8 +431,8 @@
       "name": "Artist Video Carousel",
       "settings": {
         "eyebrow": "RECEIPTS",
-        "heading": "You've heard these already.",
-        "description": "<p>We're not another preset store. These are the chains artists pulling 600k+ monthly listeners are running — on records you already know. Tap any of them.</p>",
+        "heading": "Used by Real Artists",
+        "description": "<p>We're not another preset store. There are artists of all sizes, actively using our vocal presets. Tap to learn more.</p>",
         "cards_per_view": 3,
         "cards_per_view_mobile": "1.15",
         "card_gap": 24,
