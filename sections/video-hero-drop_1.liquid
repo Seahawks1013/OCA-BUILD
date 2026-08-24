@@ -1,0 +1,329 @@
+
+{%- liquid
+  assign video_url = section.settings.video_url | default: ''
+-%}
+
+<div
+  id="VideoHeroDrop-{{ section.id }}"
+  class="video-hero-drop"
+  style="
+    --vhd-min-height: {{ section.settings.section_height }}svh;
+    --vhd-overlay-color: {{ section.settings.overlay_color }};
+    --vhd-text-color: {{ section.settings.text_color }};
+    --vhd-heading-size: {{ section.settings.heading_size }}px;
+    --vhd-heading-size-mobile: {{ section.settings.heading_size_mobile }}px;
+    --vhd-subheading-size: {{ section.settings.subheading_size }}px;
+  "
+>
+  {%- comment -%} Video Background {%- endcomment -%}
+  <div class="video-hero-drop__media">
+    {%- if section.settings.video != blank -%}
+      {{
+        section.settings.video
+        | video_tag:
+          autoplay: true,
+          loop: true,
+          controls: false,
+          muted: true,
+          playsinline: true,
+          class: 'video-hero-drop__video'
+      }}
+    {%- elsif video_url != blank -%}
+      <video
+        class="video-hero-drop__video"
+        autoplay
+        loop
+        muted
+        playsinline
+        src="{{ video_url }}"
+      ></video>
+    {%- elsif section.settings.fallback_image != blank -%}
+      {{
+        section.settings.fallback_image
+        | image_url: width: 3840
+        | image_tag:
+          class: 'video-hero-drop__video',
+          widths: '832, 1200, 1600, 1920, 2560, 3840',
+          sizes: '100vw'
+      }}
+    {%- else -%}
+      <div class="video-hero-drop__placeholder"></div>
+    {%- endif -%}
+  </div>
+
+  {%- comment -%} Dark Overlay {%- endcomment -%}
+  <div class="video-hero-drop__overlay"></div>
+
+  {%- comment -%} Text Content {%- endcomment -%}
+  <div class="video-hero-drop__content">
+    {%- if section.settings.subheading != blank -%}
+      <p class="video-hero-drop__subheading">
+        {{ section.settings.subheading }}
+      </p>
+    {%- endif -%}
+
+    {%- if section.settings.heading != blank -%}
+      <h2 class="video-hero-drop__heading">
+        {{ section.settings.heading }}
+      </h2>
+    {%- endif -%}
+
+    {%- if section.settings.button_label != blank -%}
+      <a
+        href="{{ section.settings.button_link | default: '#' }}"
+        class="video-hero-drop__button"
+        {% if section.settings.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
+      >
+        {{ section.settings.button_label }}
+      </a>
+    {%- endif -%}
+  </div>
+</div>
+
+{% stylesheet %}
+  .video-hero-drop {
+    position: relative;
+    min-height: var(--vhd-min-height, 80svh);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* Video / Image Background */
+  .video-hero-drop__media {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .video-hero-drop__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+  }
+
+  .video-hero-drop__placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+  }
+
+  /* Dark Overlay */
+  .video-hero-drop__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--vhd-overlay-color, rgba(0, 0, 0, 0.45));
+    pointer-events: none;
+  }
+
+  /* Text Content */
+  .video-hero-drop__content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: var(--vhd-text-color, #ffffff);
+    padding: 2rem;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .video-hero-drop__subheading {
+    font-size: var(--vhd-subheading-size, 16px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin: 0;
+    opacity: 0.9;
+  }
+
+  .video-hero-drop__heading {
+    font-size: var(--vhd-heading-size, 72px);
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .video-hero-drop__button {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 14px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--vhd-text-color, #ffffff);
+    border: 2px solid var(--vhd-text-color, #ffffff);
+    border-radius: 50px;
+    background: transparent;
+    transition: background 0.25s ease, color 0.25s ease;
+    letter-spacing: 0.05em;
+  }
+
+  .video-hero-drop__button:hover {
+    background: var(--vhd-text-color, #ffffff);
+    color: #000;
+  }
+
+  /* Mobile */
+  @media screen and (max-width: 749px) {
+    .video-hero-drop__heading {
+      font-size: var(--vhd-heading-size-mobile, 40px);
+    }
+
+    .video-hero-drop__subheading {
+      font-size: 13px;
+    }
+
+    .video-hero-drop__button {
+      padding: 12px 32px;
+      font-size: 14px;
+    }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Video Hero Drop",
+  "tag": "section",
+  "class": "video-hero-drop-wrapper section-wrapper",
+  "disabled_on": {
+    "groups": ["header"]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Video"
+    },
+    {
+      "type": "video",
+      "id": "video",
+      "label": "Shopify-hosted video",
+      "info": "Upload a video in Settings > Files, then select it here. Plays on loop, muted."
+    },
+    {
+      "type": "text",
+      "id": "video_url",
+      "label": "Or paste a direct video URL",
+      "info": "Use this if you have a direct .mp4 link instead of a Shopify-hosted video."
+    },
+    {
+      "type": "image_picker",
+      "id": "fallback_image",
+      "label": "Fallback image",
+      "info": "Shown if no video is provided."
+    },
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "vocal presets, by artists, for artists"
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "DROP. DROP. SOUND PRO."
+    },
+    {
+      "type": "header",
+      "content": "Button"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Click to shop"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_in_new_tab",
+      "label": "Open link in new tab",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "section_height",
+      "label": "Section height",
+      "min": 40,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 80
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "Overlay color",
+      "default": "#00000073"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading size (desktop)",
+      "min": 36,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "heading_size_mobile",
+      "label": "Heading size (mobile)",
+      "min": 24,
+      "max": 72,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "subheading_size",
+      "label": "Subheading size",
+      "min": 10,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Video Hero Drop",
+      "category": "Banners"
+    }
+  ]
+}
+{% endschema %}
