@@ -11,7 +11,7 @@
   "current": {
     "logo": "shopify://shop_images/horizontal_higher_quality.png",
     "logo_height": 19,
-    "logo_height_mobile": 21,
+    "logo_height_mobile": 22,
     "favicon": "shopify://shop_images/favicon-32x32.png",
     "page_text_color": "{{ settings.color_palette.foreground }}",
     "type_body_font": "inter_n4",
