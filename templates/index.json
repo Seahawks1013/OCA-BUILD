@@ -402,6 +402,7 @@
         "artist_6pcdq6": {
           "type": "artist",
           "settings": {
+            "thumbnail": "shopify://shop_images/ovi_thumbnail.jpg",
             "card_color": "",
             "media_type": "shopify",
             "orientation": "auto",
@@ -414,6 +415,7 @@
         "artist_6zhAke": {
           "type": "artist",
           "settings": {
+            "thumbnail": "shopify://shop_images/dame_blue_2.jpg",
             "card_color": "",
             "media_type": "shopify",
             "orientation": "auto",
