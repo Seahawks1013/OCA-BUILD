@@ -435,7 +435,7 @@
       "settings": {
         "eyebrow": "THE RECEIPTS",
         "heading": "Don't Take Our Word. Take Theirs.",
-        "description": "<p>We're not just another preset store. Artists at every level are running these on real records right now. Tap to learn more<br/><br/></p>",
+        "description": "<p>We're not just another preset store. Artists at every level are running these on real records right now. Tap to learn more.<br/><br/></p>",
         "cards_per_view": 3,
         "cards_per_view_mobile": "1.15",
         "card_gap": 24,
