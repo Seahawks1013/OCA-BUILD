@@ -1,5 +1,5 @@
 {%- liquid
-  assign open_mode = section.settings.open_mode
+  assign open_mode = section.settings.initial_state
 -%}
 
 <div
@@ -279,7 +279,7 @@
     },
     {
       "type": "select",
-      "id": "open_mode",
+      "id": "initial_state",
       "label": "Which questions start open",
       "options": [
         {
