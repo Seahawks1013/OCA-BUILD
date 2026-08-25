@@ -1,13 +1,126 @@
 
 {%- liquid
   assign video_url = section.settings.video_url | default: ''
+
+  # --- Desktop aspect ratio ---
+  assign desktop_ratio = section.settings.aspect_ratio
+  if desktop_ratio == 'custom'
+    assign desktop_ratio = section.settings.custom_ratio_width
+      | append: ' / '
+      | append: section.settings.custom_ratio_height
+  endif
+
+  # --- Mobile aspect ratio (falls back to desktop unless overridden) ---
+  assign mobile_ratio = desktop_ratio
+  if section.settings.custom_mobile_ratio
+    assign mobile_ratio = section.settings.aspect_ratio_mobile
+    if mobile_ratio == 'custom'
+      assign mobile_ratio = section.settings.custom_ratio_width_mobile
+        | append: ' / '
+        | append: section.settings.custom_ratio_height_mobile
+    endif
+  endif
+
+  # --- Screen-height handling (aspect ratio is bypassed) ---
+  # 'fullscreen' = 100% of the screen, 'screen' = the adjustable percentage.
+  assign section_classes = 'video-hero-drop'
+  assign screen_height_desktop = 100
+  assign screen_height_mobile = 100
+
+  if desktop_ratio == 'fullscreen' or desktop_ratio == 'screen'
+    if desktop_ratio == 'screen'
+      assign screen_height_desktop = section.settings.screen_height
+    endif
+    assign section_classes = section_classes | append: ' video-hero-drop--screen-desktop'
+    assign desktop_ratio = '16 / 9'
+  endif
+
+  if mobile_ratio == 'fullscreen' or mobile_ratio == 'screen'
+    if mobile_ratio == 'screen'
+      assign screen_height_mobile = section.settings.screen_height_mobile
+    endif
+    assign section_classes = section_classes | append: ' video-hero-drop--screen-mobile'
+    assign mobile_ratio = '16 / 9'
+  endif
 -%}
+
+{%- liquid
+  # Is there actually a mobile-specific asset to use?
+  assign has_mobile_media = false
+  if section.settings.custom_mobile_media
+    if section.settings.mobile_video != blank
+      assign has_mobile_media = true
+    elsif section.settings.mobile_video_url != blank
+      assign has_mobile_media = true
+    elsif section.settings.mobile_fallback_image != blank
+      assign has_mobile_media = true
+    endif
+  endif
+-%}
+
+{%- capture desktop_media -%}
+  {%- if section.settings.video != blank -%}
+    {{
+      section.settings.video
+      | video_tag:
+        autoplay: true,
+        loop: true,
+        controls: false,
+        muted: true,
+        playsinline: true,
+        class: 'video-hero-drop__video'
+    }}
+  {%- elsif video_url != blank -%}
+    <video class="video-hero-drop__video" autoplay loop muted playsinline src="{{ video_url }}"></video>
+  {%- elsif section.settings.fallback_image != blank -%}
+    {{
+      section.settings.fallback_image
+      | image_url: width: 3840
+      | image_tag:
+        class: 'video-hero-drop__video',
+        widths: '832, 1200, 1600, 1920, 2560, 3840',
+        sizes: '100vw'
+    }}
+  {%- else -%}
+    <div class="video-hero-drop__placeholder"></div>
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- capture mobile_media -%}
+  {%- if section.settings.mobile_video != blank -%}
+    {{
+      section.settings.mobile_video
+      | video_tag:
+        autoplay: true,
+        loop: true,
+        controls: false,
+        muted: true,
+        playsinline: true,
+        class: 'video-hero-drop__video'
+    }}
+  {%- elsif section.settings.mobile_video_url != blank -%}
+    <video class="video-hero-drop__video" autoplay loop muted playsinline src="{{ section.settings.mobile_video_url }}"></video>
+  {%- elsif section.settings.mobile_fallback_image != blank -%}
+    {{
+      section.settings.mobile_fallback_image
+      | image_url: width: 1600
+      | image_tag:
+        class: 'video-hero-drop__video',
+        widths: '416, 600, 800, 1200, 1600',
+        sizes: '100vw'
+    }}
+  {%- endif -%}
+{%- endcapture -%}
 
 <div
   id="VideoHeroDrop-{{ section.id }}"
-  class="video-hero-drop"
+  class="{{ section_classes }}"
   style="
-    --vhd-min-height: {{ section.settings.section_height }}svh;
+    --vhd-ratio: {{ desktop_ratio }};
+    --vhd-ratio-mobile: {{ mobile_ratio }};
+    --vhd-screen-h: {{ screen_height_desktop }}svh;
+    --vhd-screen-h-mobile: {{ screen_height_mobile }}svh;
+    --vhd-min-height: {{ section.settings.min_height }}svh;
     --vhd-overlay-color: {{ section.settings.overlay_color }};
     --vhd-text-color: {{ section.settings.text_color }};
     --vhd-heading-size: {{ section.settings.heading_size }}px;
@@ -15,40 +128,25 @@
     --vhd-subheading-size: {{ section.settings.subheading_size }}px;
   "
 >
-  {%- comment -%} Video Background {%- endcomment -%}
-  <div class="video-hero-drop__media">
-    {%- if section.settings.video != blank -%}
-      {{
-        section.settings.video
-        | video_tag:
-          autoplay: true,
-          loop: true,
-          controls: false,
-          muted: true,
-          playsinline: true,
-          class: 'video-hero-drop__video'
-      }}
-    {%- elsif video_url != blank -%}
-      <video
-        class="video-hero-drop__video"
-        autoplay
-        loop
-        muted
-        playsinline
-        src="{{ video_url }}"
-      ></video>
-    {%- elsif section.settings.fallback_image != blank -%}
-      {{
-        section.settings.fallback_image
-        | image_url: width: 3840
-        | image_tag:
-          class: 'video-hero-drop__video',
-          widths: '832, 1200, 1600, 1920, 2560, 3840',
-          sizes: '100vw'
-      }}
-    {%- else -%}
-      <div class="video-hero-drop__placeholder"></div>
+  {%- comment -%}
+    Video background.
+
+    Desktop and mobile media each live in a <template>, and a tiny inline
+    script mounts exactly one of them. This matters: a plain CSS show/hide
+    makes phones download BOTH files, and <source media="..."> is unreliable
+    (Chromium fetches both and then plays the desktop one anyway). This way a
+    phone only ever downloads the mobile file.
+  {%- endcomment -%}
+  <div
+    class="video-hero-drop__media"
+    data-vhd-media
+    data-has-mobile="{% if has_mobile_media %}true{% else %}false{% endif %}"
+  >
+    <template data-vhd-desktop>{{ desktop_media }}</template>
+    {%- if has_mobile_media -%}
+      <template data-vhd-mobile>{{ mobile_media }}</template>
     {%- endif -%}
+    <noscript>{{ desktop_media }}</noscript>
   </div>
 
   {%- comment -%} Dark Overlay {%- endcomment -%}
@@ -80,15 +178,65 @@
   </div>
 </div>
 
+{%- comment -%}
+  Inline (not {% javascript %}) on purpose: this runs during HTML parsing, so
+  the video is in place before first paint. An external, deferred bundle would
+  leave the hero briefly empty.
+{%- endcomment -%}
+<script>
+  (function () {
+    function mountHeroMedia(root) {
+      var host = root && root.querySelector ? root.querySelector('[data-vhd-media]') : null;
+      if (!host || host.dataset.vhdMounted === '1') return;
+
+      var wantsMobile =
+        host.dataset.hasMobile === 'true' && window.matchMedia('(max-width: 749px)').matches;
+
+      var template =
+        host.querySelector(wantsMobile ? '[data-vhd-mobile]' : '[data-vhd-desktop]') ||
+        host.querySelector('[data-vhd-desktop]');
+
+      if (!template) return;
+
+      host.dataset.vhdMounted = '1';
+      host.appendChild(template.content.cloneNode(true));
+
+      var video = host.querySelector('video');
+      if (video && video.play) {
+        var attempt = video.play();
+        if (attempt && attempt.catch) attempt.catch(function () {});
+      }
+    }
+
+    mountHeroMedia(document.getElementById('VideoHeroDrop-{{ section.id }}'));
+
+    // Re-mount when the theme editor re-renders the section
+    document.addEventListener('shopify:section:load', function (event) {
+      mountHeroMedia(event.target);
+    });
+  })();
+</script>
+
 {% stylesheet %}
   .video-hero-drop {
     position: relative;
-    min-height: var(--vhd-min-height, 80svh);
+    width: 100%;
+    aspect-ratio: var(--vhd-ratio, 16 / 9);
+    min-height: var(--vhd-min-height, 0px);
+    /* Never clip the text: grow past the ratio if the content needs the room. */
+    min-height: max(var(--vhd-min-height, 0px), fit-content);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    width: 100%;
+  }
+
+  /* Screen-height sizing overrides the ratio */
+  @media screen and (min-width: 750px) {
+    .video-hero-drop--screen-desktop {
+      aspect-ratio: auto;
+      min-height: var(--vhd-screen-h, 100svh);
+    }
   }
 
   /* Video / Image Background */
@@ -175,6 +323,19 @@
 
   /* Mobile */
   @media screen and (max-width: 749px) {
+    .video-hero-drop {
+      aspect-ratio: var(--vhd-ratio-mobile, var(--vhd-ratio, 16 / 9));
+    }
+
+    .video-hero-drop--screen-mobile {
+      aspect-ratio: auto;
+      min-height: var(--vhd-screen-h-mobile, 100svh);
+    }
+
+    .video-hero-drop__content {
+      padding: 1.25rem;
+    }
+
     .video-hero-drop__heading {
       font-size: var(--vhd-heading-size-mobile, 40px);
     }
@@ -196,7 +357,9 @@
   "tag": "section",
   "class": "video-hero-drop-wrapper section-wrapper",
   "disabled_on": {
-    "groups": ["header"]
+    "groups": [
+      "header"
+    ]
   },
   "settings": [
     {
@@ -220,6 +383,37 @@
       "id": "fallback_image",
       "label": "Fallback image",
       "info": "Shown if no video is provided."
+    },
+    {
+      "type": "header",
+      "content": "Mobile video"
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_media",
+      "label": "Use a separate video on mobile",
+      "default": false,
+      "info": "Off, phones use the desktop video. On, phones download only the mobile file — never both."
+    },
+    {
+      "type": "video",
+      "id": "mobile_video",
+      "label": "Mobile video",
+      "info": "Upload in Settings > Files, then pick it here.",
+      "visible_if": "{{ section.settings.custom_mobile_media }}"
+    },
+    {
+      "type": "text",
+      "id": "mobile_video_url",
+      "label": "Or paste a direct mobile video URL",
+      "visible_if": "{{ section.settings.custom_mobile_media }}"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_fallback_image",
+      "label": "Mobile fallback image",
+      "info": "Used if no mobile video is set.",
+      "visible_if": "{{ section.settings.custom_mobile_media }}"
     },
     {
       "type": "header",
@@ -260,17 +454,188 @@
     },
     {
       "type": "header",
-      "content": "Layout"
+      "content": "Shape (desktop)"
+    },
+    {
+      "type": "select",
+      "id": "aspect_ratio",
+      "label": "Aspect ratio",
+      "options": [
+        {
+          "value": "16 / 9",
+          "label": "16:9 (widescreen)"
+        },
+        {
+          "value": "21 / 9",
+          "label": "21:9 (cinematic)"
+        },
+        {
+          "value": "3 / 2",
+          "label": "3:2"
+        },
+        {
+          "value": "4 / 3",
+          "label": "4:3"
+        },
+        {
+          "value": "1 / 1",
+          "label": "1:1 (square)"
+        },
+        {
+          "value": "4 / 5",
+          "label": "4:5 (portrait)"
+        },
+        {
+          "value": "9 / 16",
+          "label": "9:16 (vertical)"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        },
+        {
+          "value": "screen",
+          "label": "Screen height (adjustable)"
+        },
+        {
+          "value": "fullscreen",
+          "label": "Full screen height"
+        }
+      ],
+      "default": "16 / 9"
     },
     {
       "type": "range",
-      "id": "section_height",
-      "label": "Section height",
-      "min": 40,
+      "id": "screen_height",
+      "label": "Screen height",
+      "min": 30,
       "max": 100,
       "step": 5,
       "unit": "%",
-      "default": 80
+      "default": 80,
+      "visible_if": "{{ section.settings.aspect_ratio == 'screen' }}"
+    },
+    {
+      "type": "range",
+      "id": "custom_ratio_width",
+      "label": "Custom ratio width",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 16,
+      "visible_if": "{{ section.settings.aspect_ratio == 'custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "custom_ratio_height",
+      "label": "Custom ratio height",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 9,
+      "visible_if": "{{ section.settings.aspect_ratio == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "Shape (mobile)"
+    },
+    {
+      "type": "checkbox",
+      "id": "custom_mobile_ratio",
+      "label": "Use a different ratio on mobile",
+      "default": true,
+      "info": "On by default so phones keep the tall hero. Turn off to make mobile match the desktop shape."
+    },
+    {
+      "type": "select",
+      "id": "aspect_ratio_mobile",
+      "label": "Mobile aspect ratio",
+      "options": [
+        {
+          "value": "16 / 9",
+          "label": "16:9 (widescreen)"
+        },
+        {
+          "value": "21 / 9",
+          "label": "21:9 (cinematic)"
+        },
+        {
+          "value": "3 / 2",
+          "label": "3:2"
+        },
+        {
+          "value": "4 / 3",
+          "label": "4:3"
+        },
+        {
+          "value": "1 / 1",
+          "label": "1:1 (square)"
+        },
+        {
+          "value": "4 / 5",
+          "label": "4:5 (portrait)"
+        },
+        {
+          "value": "9 / 16",
+          "label": "9:16 (vertical)"
+        },
+        {
+          "value": "custom",
+          "label": "Custom"
+        },
+        {
+          "value": "screen",
+          "label": "Screen height (adjustable)"
+        },
+        {
+          "value": "fullscreen",
+          "label": "Full screen height"
+        }
+      ],
+      "default": "screen",
+      "visible_if": "{{ section.settings.custom_mobile_ratio }}"
+    },
+    {
+      "type": "range",
+      "id": "screen_height_mobile",
+      "label": "Screen height",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 80,
+      "visible_if": "{{ section.settings.custom_mobile_ratio and section.settings.aspect_ratio_mobile == 'screen' }}"
+    },
+    {
+      "type": "range",
+      "id": "custom_ratio_width_mobile",
+      "label": "Custom ratio width",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 4,
+      "visible_if": "{{ section.settings.custom_mobile_ratio and section.settings.aspect_ratio_mobile == 'custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "custom_ratio_height_mobile",
+      "label": "Custom ratio height",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 5,
+      "visible_if": "{{ section.settings.custom_mobile_ratio and section.settings.aspect_ratio_mobile == 'custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "min_height",
+      "label": "Minimum height",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 0,
+      "info": "Optional floor so the banner never gets too short on narrow screens. 0 = off."
     },
     {
       "type": "header",
