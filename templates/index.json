@@ -106,7 +106,7 @@
         "subheading": "by artists, for artists.",
         "heading": "DRAG. DROP. SOUND PRO.",
         "button_label": "Shop Vocal Presets",
-        "button_link": "",
+        "button_link": "shopify://collections/vocal-presets",
         "open_in_new_tab": false,
         "section_height": 80,
         "overlay_color": "#00000073",
