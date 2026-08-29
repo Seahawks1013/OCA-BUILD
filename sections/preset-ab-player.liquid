@@ -1,0 +1,1217 @@
+
+{%- comment -%}
+  Preset A/B Player
+  Raw vs Preset audio comparison. Both files are the same take at the same
+  timestamp, so switching keeps the playhead exactly where it was.
+  Cards are blocks — add one per preset and the carousel grows on its own.
+{%- endcomment -%}
+
+{%- liquid
+  assign preset_blocks = section.blocks | where: 'type', 'preset'
+  assign daw_blocks = section.blocks | where: 'type', 'daw'
+-%}
+
+<preset-ab-player
+  class="pab"
+  id="Pab-{{ section.id }}"
+  style="
+    --pab-bg: {{ section.settings.background_color }};
+    --pab-ink: {{ section.settings.heading_color }};
+    --pab-muted: {{ section.settings.body_color }};
+    --pab-accent: {{ section.settings.accent_color }};
+    --pab-panel: {{ section.settings.panel_color }};
+    --pab-panel-ink: {{ section.settings.panel_text_color }};
+    --pab-radius: {{ section.settings.corner_radius }}px;
+    --pab-max: {{ section.settings.max_width }}px;
+    --pab-title: {{ section.settings.title_size }}px;
+    --pab-title-mobile: {{ section.settings.title_size_mobile }}px;
+    --pab-pad-top: {{ section.settings.padding_top }}px;
+    --pab-pad-bottom: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="pab__inner">
+    <div class="pab__stage">
+      {%- if preset_blocks.size > 1 -%}
+        <button class="pab__nav pab__nav--prev" type="button" data-pab-prev aria-label="Previous preset">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="pab__nav pab__nav--next" type="button" data-pab-next aria-label="Next preset">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      {%- endif -%}
+
+      <div class="pab__track" data-pab-track>
+        {%- for block in preset_blocks -%}
+          {%- liquid
+            # ---- Audio sources: accept a bare filename from Settings > Files, or a full URL
+            assign raw_src = ''
+            if block.settings.raw_audio != blank
+              if block.settings.raw_audio contains '//'
+                assign raw_src = block.settings.raw_audio
+              else
+                assign raw_src = block.settings.raw_audio | file_url
+              endif
+            endif
+
+            assign preset_src = ''
+            if block.settings.preset_audio != blank
+              if block.settings.preset_audio contains '//'
+                assign preset_src = block.settings.preset_audio
+              else
+                assign preset_src = block.settings.preset_audio | file_url
+              endif
+            endif
+
+            # ---- Artwork: custom upload wins, otherwise pull from the linked product
+            assign art = block.settings.image
+            if art == blank and block.settings.product != blank
+              assign art = block.settings.product.featured_image
+            endif
+
+            # ---- Buy link: custom link wins, otherwise the linked product
+            assign buy_url = block.settings.button_link
+            if buy_url == blank and block.settings.product != blank
+              assign buy_url = block.settings.product.url
+            endif
+          -%}
+
+          <article
+            class="pab__slide"
+            data-pab-slide
+            data-seed="{{ forloop.index }}{{ block.settings.title | size }}"
+            {{ block.shopify_attributes }}
+          >
+            <div class="pab__head">
+              <div class="pab__copy">
+                {%- if block.settings.eyebrow != blank -%}
+                  <p class="pab__eyebrow">{{ block.settings.eyebrow }}</p>
+                {%- endif -%}
+                {%- if block.settings.title != blank -%}
+                  <h3 class="pab__title">{{ block.settings.title }}</h3>
+                {%- endif -%}
+                {%- if block.settings.subline != blank -%}
+                  <p class="pab__subline">{{ block.settings.subline }}</p>
+                {%- endif -%}
+              </div>
+
+              <div class="pab__art">
+                {%- if art != blank -%}
+                  {{ art | image_url: width: 900 | image_tag:
+                      widths: '300, 500, 700, 900',
+                      sizes: '(min-width: 750px) 42vw, 80vw',
+                      alt: block.settings.title,
+                      loading: 'lazy',
+                      class: 'pab__art-img' }}
+                {%- else -%}
+                  <div class="pab__art-ph">{{ 'product-apparel-1' | placeholder_svg_tag: 'pab__art-img' }}</div>
+                {%- endif -%}
+              </div>
+            </div>
+
+            <div class="pab__panel">
+              <div class="pab__row pab__row--main">
+                <button class="pab__play" type="button" data-pab-play aria-label="Play">
+                  <svg class="pab__icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/></svg>
+                  <svg class="pab__icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z" fill="currentColor"/></svg>
+                </button>
+
+                <div
+                  class="pab__wave"
+                  data-pab-wave
+                  role="slider"
+                  tabindex="0"
+                  aria-label="Seek"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                ></div>
+
+                <p class="pab__time">
+                  <span class="pab__time-now" data-pab-now>0:00</span><span class="pab__time-sep"> / </span><span data-pab-dur>0:00</span>
+                </p>
+
+                <div class="pab__ab">
+                  <span class="pab__ab-label">{{ section.settings.toggle_label }}</span>
+                  <div class="pab__switch" data-pab-switch>
+                    <span class="pab__switch-thumb" data-pab-thumb></span>
+                    <button class="pab__switch-btn is-active" type="button" data-pab-mode="raw" aria-pressed="true">{{ section.settings.raw_label }}</button>
+                    <button class="pab__switch-btn" type="button" data-pab-mode="preset" aria-pressed="false">{{ section.settings.preset_label }}</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pab__row pab__row--meta">
+                {%- if daw_blocks.size > 0 -%}
+                  <ul class="pab__daws" role="list">
+                    {%- for daw in daw_blocks -%}
+                      <li class="pab__daw{% if daw.settings.logo == blank %} pab__daw--text{% endif %}" {{ daw.shopify_attributes }}>
+                        {%- if daw.settings.logo != blank -%}
+                          {{ daw.settings.logo | image_url: width: 120 | image_tag: widths: '60, 120', alt: daw.settings.name, loading: 'lazy', class: 'pab__daw-img' }}
+                        {%- else -%}
+                          {{ daw.settings.name }}
+                        {%- endif -%}
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+
+                {%- if section.settings.pills != blank -%}
+                  <ul class="pab__pills" role="list">
+                    {%- assign pill_items = section.settings.pills | split: ',' -%}
+                    {%- for pill in pill_items -%}
+                      <li class="pab__pill">{{ pill | strip }}</li>
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+
+                {%- if section.settings.button_label != blank -%}
+                  <a class="pab__cta" href="{{ buy_url | default: '#' }}">
+                    <span>{{ section.settings.button_label }}</span>
+                    <span class="pab__cta-arrow" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                  </a>
+                {%- endif -%}
+              </div>
+
+              {%- comment -%} preload=metadata so duration is known without pulling the whole file {%- endcomment -%}
+              {%- if raw_src != blank -%}
+                <audio data-pab-audio="raw" src="{{ raw_src }}" preload="metadata" playsinline></audio>
+              {%- endif -%}
+              {%- if preset_src != blank -%}
+                <audio data-pab-audio="preset" src="{{ preset_src }}" preload="metadata" playsinline></audio>
+              {%- endif -%}
+            </div>
+          </article>
+        {%- else -%}
+          <article class="pab__slide">
+            <div class="pab__head">
+              <div class="pab__copy">
+                <h3 class="pab__title">Add a preset</h3>
+                <p class="pab__subline">Add a “Preset” block to get started.</p>
+              </div>
+            </div>
+          </article>
+        {%- endfor -%}
+      </div>
+    </div>
+
+    {%- if preset_blocks.size > 1 -%}
+      <div class="pab__dots" data-pab-dots role="tablist" aria-label="Choose a preset"></div>
+    {%- endif -%}
+  </div>
+</preset-ab-player>
+
+<script>
+  (function () {
+    if (customElements.get('preset-ab-player')) return;
+
+    var BARS = 96;
+
+    // Deterministic pseudo-random so a card's waveform never changes between loads
+    function seededHeights(seed, count) {
+      var s = 0;
+      for (var i = 0; i < String(seed).length; i++) s = (s * 31 + String(seed).charCodeAt(i)) >>> 0;
+      var out = [];
+      for (var j = 0; j < count; j++) {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        var n = (s / 4294967296);
+        s = (s * 1664525 + 1013904223) >>> 0;
+        var n2 = (s / 4294967296);
+        // envelope so it reads like a musical phrase rather than noise
+        var t = j / count;
+        var env = 0.45 + 0.55 * Math.sin(Math.PI * t) * (0.7 + 0.3 * Math.sin(t * 14));
+        out.push(Math.max(0.12, Math.min(1, (0.35 + 0.65 * ((n + n2) / 2)) * env)));
+      }
+      return out;
+    }
+
+    function fmt(sec) {
+      if (!isFinite(sec) || sec < 0) sec = 0;
+      var m = Math.floor(sec / 60);
+      var s = Math.floor(sec % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function Slide(root, host) {
+      this.root = root;
+      this.host = host;
+      this.audio = {
+        raw: root.querySelector('[data-pab-audio="raw"]'),
+        preset: root.querySelector('[data-pab-audio="preset"]')
+      };
+      this.mode = 'raw';
+      this.wave = root.querySelector('[data-pab-wave]');
+      this.playBtn = root.querySelector('[data-pab-play]');
+      this.nowEl = root.querySelector('[data-pab-now]');
+      this.durEl = root.querySelector('[data-pab-dur]');
+      this.switchEl = root.querySelector('[data-pab-switch]');
+      this.thumb = root.querySelector('[data-pab-thumb]');
+      this.bars = [];
+      this.dragging = false;
+      this.init();
+    }
+
+    Slide.prototype.current = function () {
+      return this.audio[this.mode] || this.audio.raw || this.audio.preset;
+    };
+
+    Slide.prototype.init = function () {
+      var self = this;
+
+      // --- waveform bars
+      if (this.wave) {
+        var heights = seededHeights(this.root.dataset.seed || '1', BARS);
+        var frag = document.createDocumentFragment();
+        heights.forEach(function (h) {
+          var b = document.createElement('span');
+          b.className = 'pab__bar';
+          b.style.setProperty('--h', (h * 100).toFixed(1) + '%');
+          frag.appendChild(b);
+          self.bars.push(b);
+        });
+        this.wave.appendChild(frag);
+
+        this.wave.addEventListener('pointerdown', function (e) {
+          self.dragging = true;
+          // Seek FIRST — pointer capture is a nicety, and if it ever throws
+          // it must not take the seek down with it.
+          self.seekFromEvent(e);
+          try { self.wave.setPointerCapture(e.pointerId); } catch (err) {}
+          e.preventDefault();
+        });
+        this.wave.addEventListener('pointermove', function (e) {
+          if (self.dragging) self.seekFromEvent(e);
+        });
+        ['pointerup', 'pointercancel'].forEach(function (evt) {
+          self.wave.addEventListener(evt, function () { self.dragging = false; });
+        });
+        this.wave.addEventListener('keydown', function (e) {
+          var a = self.current();
+          if (!a || !isFinite(a.duration)) return;
+          if (e.key === 'ArrowRight') { a.currentTime = Math.min(a.duration, a.currentTime + 5); e.preventDefault(); }
+          if (e.key === 'ArrowLeft') { a.currentTime = Math.max(0, a.currentTime - 5); e.preventDefault(); }
+          if (e.key === ' ' || e.key === 'Enter') { self.toggle(); e.preventDefault(); }
+          self.sync();
+        });
+      }
+
+      // --- play / pause
+      if (this.playBtn) this.playBtn.addEventListener('click', function () { self.toggle(); });
+
+      // --- A/B switch, preserving position
+      this.root.querySelectorAll('[data-pab-mode]').forEach(function (btn) {
+        btn.addEventListener('click', function () { self.setMode(btn.dataset.pabMode); });
+      });
+
+      // --- audio wiring
+      Object.keys(this.audio).forEach(function (k) {
+        var a = self.audio[k];
+        if (!a) return;
+        a.addEventListener('loadedmetadata', function () { self.sync(); });
+        a.addEventListener('timeupdate', function () { if (k === self.mode) self.sync(); });
+        a.addEventListener('ended', function () {
+          if (k !== self.mode) return;
+          self.root.classList.remove('is-playing');
+          if (self.playBtn) self.playBtn.setAttribute('aria-label', 'Play');
+        });
+      });
+
+      this.positionThumb();
+      this.sync();
+    };
+
+    // Both takes are the same length, so borrow the duration from whichever
+    // element already knows it — the other may not have metadata yet.
+    Slide.prototype.duration = function () {
+      var keys = ['raw', 'preset'];
+      for (var i = 0; i < keys.length; i++) {
+        var a = this.audio[keys[i]];
+        if (a && isFinite(a.duration) && a.duration > 0) return a.duration;
+      }
+      return 0;
+    };
+
+    // A seek silently does nothing while readyState is 0, so queue it until
+    // metadata lands. This is what makes scrub + A/B stay sample-aligned.
+    Slide.prototype.seekTo = function (t) {
+      var self = this;
+      Object.keys(this.audio).forEach(function (k) {
+        var a = self.audio[k];
+        if (!a) return;
+        if (a.readyState >= 1) {
+          try { a.currentTime = t; } catch (err) {}
+        } else {
+          a.dataset.pendingSeek = t;
+          a.addEventListener('loadedmetadata', function once() {
+            a.removeEventListener('loadedmetadata', once);
+            try { a.currentTime = parseFloat(a.dataset.pendingSeek) || 0; } catch (err) {}
+          });
+          a.preload = 'auto';
+        }
+      });
+      this.sync();
+    };
+
+    // Once someone engages with a card, buffer the *other* take so the
+    // A/B swap is instant. The active one buffers itself by playing.
+    Slide.prototype.warm = function () {
+      if (this.warmed) return;
+      this.warmed = true;
+      var self = this;
+      Object.keys(this.audio).forEach(function (k) {
+        var a = self.audio[k];
+        if (!a || k === self.mode) return;
+        a.preload = 'auto';
+        a.load();
+      });
+    };
+
+    Slide.prototype.seekFromEvent = function (e) {
+      var dur = this.duration();
+      if (!dur) return;
+      var r = this.wave.getBoundingClientRect();
+      var pct = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      this.seekTo(pct * dur);
+    };
+
+    Slide.prototype.toggle = function () {
+      var a = this.current();
+      if (!a) return;
+      if (a.paused) {
+        this.host.stopOthers(this);
+        this.warm();
+        var p = a.play();
+        if (p && p.catch) p.catch(function () {});
+        this.root.classList.add('is-playing');
+        if (this.playBtn) this.playBtn.setAttribute('aria-label', 'Pause');
+      } else {
+        a.pause();
+        this.root.classList.remove('is-playing');
+        if (this.playBtn) this.playBtn.setAttribute('aria-label', 'Play');
+      }
+    };
+
+    Slide.prototype.pause = function () {
+      var a = this.current();
+      if (a && !a.paused) a.pause();
+      this.root.classList.remove('is-playing');
+    };
+
+    Slide.prototype.setMode = function (mode) {
+      if (mode === this.mode) return;
+      var from = this.current();
+      var to = this.audio[mode];
+      if (!to) return;
+
+      var t = from ? from.currentTime : 0;
+      var wasPlaying = from ? !from.paused : false;
+
+      this.mode = mode;
+      if (from && !from.paused) from.pause();
+
+      // Land on the exact same moment in the other take. If the target has no
+      // metadata yet, wait for it — seeking a cold element is a no-op.
+      var start = function () {
+        try { to.currentTime = t; } catch (e) {}
+        if (wasPlaying) {
+          var p = to.play();
+          if (p && p.catch) p.catch(function () {});
+        }
+      };
+
+      if (to.readyState >= 1) {
+        start();
+      } else {
+        to.addEventListener('loadedmetadata', function once() {
+          to.removeEventListener('loadedmetadata', once);
+          start();
+        });
+        to.preload = 'auto';
+        to.load();
+      }
+
+      this.root.querySelectorAll('[data-pab-mode]').forEach(function (b) {
+        var on = b.dataset.pabMode === mode;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      this.root.classList.toggle('is-preset', mode === 'preset');
+      this.positionThumb();
+      this.sync();
+    };
+
+    Slide.prototype.positionThumb = function () {
+      if (!this.thumb) return;
+      var active = this.root.querySelector('[data-pab-mode].is-active');
+      if (!active) return;
+      this.thumb.style.width = active.offsetWidth + 'px';
+      this.thumb.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+    };
+
+    Slide.prototype.sync = function () {
+      var a = this.current();
+      if (!a) return;
+      var dur = this.duration();
+      var pct = dur ? a.currentTime / dur : 0;
+
+      if (this.nowEl) this.nowEl.textContent = fmt(a.currentTime);
+      if (this.durEl) this.durEl.textContent = fmt(dur);
+      if (this.wave) this.wave.setAttribute('aria-valuenow', Math.round(pct * 100));
+
+      var edge = pct * this.bars.length;
+      for (var i = 0; i < this.bars.length; i++) {
+        var on = i < edge;
+        if (this.bars[i].dataset.on !== String(on)) {
+          this.bars[i].dataset.on = String(on);
+          this.bars[i].classList.toggle('is-played', on);
+        }
+      }
+    };
+
+    function Player() {}
+    Player.prototype = Object.create(HTMLElement.prototype);
+
+    class PresetABPlayer extends HTMLElement {
+      connectedCallback() {
+        if (this.dataset.pabReady === '1') return;
+        this.dataset.pabReady = '1';
+
+        var self = this;
+        this.track = this.querySelector('[data-pab-track]');
+        this.slides = [].slice.call(this.querySelectorAll('[data-pab-slide]'))
+          .map(function (el) { return new Slide(el, self); });
+
+        this.index = 0;
+        this.prevBtn = this.querySelector('[data-pab-prev]');
+        this.nextBtn = this.querySelector('[data-pab-next]');
+        this.dotsEl = this.querySelector('[data-pab-dots]');
+
+        if (this.prevBtn) this.prevBtn.addEventListener('click', function () { self.go(self.index - 1); });
+        if (this.nextBtn) this.nextBtn.addEventListener('click', function () { self.go(self.index + 1); });
+
+        if (this.dotsEl && this.slides.length > 1) {
+          this.slides.forEach(function (s, i) {
+            var d = document.createElement('button');
+            d.className = 'pab__dot';
+            d.type = 'button';
+            d.setAttribute('aria-label', 'Preset ' + (i + 1));
+            d.addEventListener('click', function () { self.go(i); });
+            self.dotsEl.appendChild(d);
+          });
+        }
+
+        if (this.track) {
+          var raf;
+          this.track.addEventListener('scroll', function () {
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(function () { self.readIndex(); });
+          }, { passive: true });
+        }
+
+        window.addEventListener('resize', function () {
+          self.slides.forEach(function (s) { s.positionThumb(); });
+        });
+
+        this.update();
+      }
+
+      stopOthers(except) {
+        this.slides.forEach(function (s) { if (s !== except) s.pause(); });
+      }
+
+      readIndex() {
+        if (!this.track) return;
+        var w = this.track.clientWidth || 1;
+        var i = Math.round(this.track.scrollLeft / w);
+        if (i !== this.index) {
+          this.index = i;
+          this.stopOthers(this.slides[i]);
+          this.update();
+        }
+      }
+
+      go(i) {
+        if (!this.track || !this.slides.length) return;
+        i = Math.max(0, Math.min(this.slides.length - 1, i));
+        this.index = i;
+        this.track.scrollTo({ left: this.track.clientWidth * i, behavior: 'smooth' });
+        this.stopOthers(this.slides[i]);
+        this.update();
+      }
+
+      update() {
+        var last = this.slides.length - 1;
+        if (this.prevBtn) this.prevBtn.toggleAttribute('disabled', this.index <= 0);
+        if (this.nextBtn) this.nextBtn.toggleAttribute('disabled', this.index >= last);
+        if (this.dotsEl) {
+          var kids = this.dotsEl.children;
+          for (var i = 0; i < kids.length; i++) kids[i].classList.toggle('is-active', i === this.index);
+        }
+        this.slides.forEach(function (s) { s.positionThumb(); });
+      }
+    }
+
+    customElements.define('preset-ab-player', PresetABPlayer);
+  })();
+</script>
+
+{% stylesheet %}
+  .pab {
+    display: block;
+    background: var(--pab-bg, #f1f1ef);
+    color: var(--pab-muted, #6b6b68);
+    padding-block: var(--pab-pad-top, 72px) var(--pab-pad-bottom, 72px);
+    padding-inline: var(--page-margin, 24px);
+  }
+
+  .pab__inner { max-width: var(--pab-max, 1120px); margin-inline: auto; }
+
+  .pab__stage { position: relative; }
+
+  /* ---------- carousel ---------- */
+  .pab__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+
+  .pab__track::-webkit-scrollbar { display: none; }
+
+  .pab__slide { scroll-snap-align: center; min-inline-size: 0; }
+
+  .pab__nav {
+    position: absolute;
+    top: 32%;
+    z-index: 3;
+    inline-size: 44px;
+    block-size: 44px;
+    border-radius: 50%;
+    border: 1px solid rgb(0 0 0 / 0.14);
+    background: rgb(255 255 255 / 0.86);
+    backdrop-filter: blur(6px);
+    color: var(--pab-ink, #111);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, background 0.25s ease;
+  }
+
+  .pab__nav svg { inline-size: 20px; block-size: 20px; }
+  .pab__nav--prev { inset-inline-start: -8px; }
+  .pab__nav--next { inset-inline-end: -8px; }
+  .pab__nav:hover:not([disabled]) { transform: scale(1.08); background: #fff; }
+  .pab__nav[disabled] { opacity: 0.28; cursor: default; }
+
+  /* ---------- headline + art ---------- */
+  .pab__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 2rem;
+    align-items: end;
+    padding-block-end: 1.25rem;
+  }
+
+  .pab__copy { padding-block-end: 0.5rem; }
+
+  .pab__eyebrow {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(18px, 2.2vw, 30px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--pab-muted, #6b6b68);
+    margin: 0 0 0.1em;
+  }
+
+  .pab__title {
+    font-family: var(--font-heading--family, inherit);
+    /* Scales down with the viewport so a long word shrinks instead of
+       breaking mid-word. Never scaled by transform, so it is never squashed. */
+    font-size: min(var(--pab-title, 76px), 7.4vw);
+    font-weight: 900;
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+    color: var(--pab-ink, #111);
+    margin: 0;
+    text-transform: uppercase;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    hyphens: none;
+  }
+
+  .pab__subline {
+    font-size: clamp(13px, 1.3vw, 17px);
+    font-weight: 700;
+    color: var(--pab-ink, #111);
+    margin: 0.6em 0 0;
+    text-align: right;
+  }
+
+  .pab__art {
+    position: relative;
+    /* justify-self, NOT margin-inline-start:auto — an auto margin turns a grid
+       item into shrink-to-fit, which collapses a percentage-width child to 0. */
+    justify-self: end;
+    inline-size: 100%;
+    max-inline-size: 440px;
+  }
+
+  .pab__art-img {
+    inline-size: 100%;
+    block-size: auto;
+    max-block-size: 440px;
+    object-fit: contain;
+    object-position: bottom right;
+    display: block;
+    border-radius: 10px;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__slide:hover .pab__art-img { transform: translateY(-4px) rotate(-0.4deg); }
+
+  /* ---------- player panel ---------- */
+  .pab__panel {
+    background: var(--pab-panel, #3a3a3a);
+    color: var(--pab-panel-ink, #fff);
+    border-radius: var(--pab-radius, 22px);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 18px 50px rgb(0 0 0 / 0.16);
+  }
+
+  .pab__row { display: flex; align-items: center; gap: 18px; }
+  .pab__row--main { flex-wrap: nowrap; }
+
+  .pab__row--meta {
+    flex-wrap: wrap;
+    gap: 12px;
+    border-block-start: 1px solid rgb(255 255 255 / 0.12);
+    padding-block-start: 16px;
+  }
+
+  /* play button */
+  .pab__play {
+    flex: 0 0 auto;
+    inline-size: 52px;
+    block-size: 52px;
+    border-radius: 50%;
+    border: 0;
+    background: #fff;
+    color: #111;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__play:hover { transform: scale(1.07); }
+  .pab__play svg { inline-size: 24px; block-size: 24px; grid-area: 1 / 1; }
+  .pab__icon-pause { display: none; }
+  .pab__slide.is-playing .pab__icon-play { display: none; }
+  .pab__slide.is-playing .pab__icon-pause { display: block; }
+
+  /* waveform */
+  .pab__wave {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    block-size: 46px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    touch-action: none;
+    overflow: hidden;
+  }
+
+  .pab__wave:focus-visible { outline: 2px solid var(--pab-accent, #1242fd); outline-offset: 4px; border-radius: 4px; }
+
+  .pab__bar {
+    flex: 1 1 0;
+    block-size: var(--h, 40%);
+    min-inline-size: 2px;
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.34);
+    transition: background 0.12s linear, transform 0.12s ease;
+  }
+
+  .pab__bar.is-played { background: var(--pab-accent, #1242fd); }
+
+  .pab__slide.is-playing .pab__bar.is-played:nth-last-child(-n + 96) { transform: scaleY(1); }
+
+  /* time */
+  .pab__time {
+    flex: 0 0 auto;
+    margin: 0;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: rgb(255 255 255 / 0.6);
+    white-space: nowrap;
+  }
+
+  .pab__time-now { color: var(--pab-accent, #1242fd); font-weight: 700; }
+
+  /* A/B switch */
+  .pab__ab { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; }
+
+  .pab__ab-label {
+    font-size: 13px;
+    color: rgb(255 255 255 / 0.62);
+    white-space: nowrap;
+  }
+
+  .pab__switch {
+    position: relative;
+    display: flex;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.1);
+  }
+
+  .pab__switch-thumb {
+    position: absolute;
+    inset-block: 4px;
+    inset-inline-start: 0;
+    border-radius: 999px;
+    background: #fff;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__switch-btn {
+    position: relative;
+    z-index: 1;
+    border: 0;
+    background: transparent;
+    color: rgb(255 255 255 / 0.75);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+
+  .pab__switch-btn.is-active { color: #111; }
+
+  /* DAWs + pills */
+  .pab__daws, .pab__pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    flex-wrap: wrap;
+  }
+
+  .pab__daw {
+    inline-size: 38px;
+    block-size: 38px;
+    border-radius: 9px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: rgb(255 255 255 / 0.08);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__daw:hover { transform: translateY(-2px); }
+  .pab__daw-img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; }
+
+  .pab__daw--text {
+    inline-size: auto;
+    block-size: auto;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgb(255 255 255 / 0.85);
+    white-space: nowrap;
+  }
+
+  .pab__pills { margin-inline-start: auto; }
+
+  .pab__pill {
+    font-size: 12px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.08);
+    color: rgb(255 255 255 / 0.8);
+    white-space: nowrap;
+  }
+
+  /* CTA */
+  .pab__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 12px 12px 26px;
+    border-radius: 999px;
+    background: #fff;
+    color: #111;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s ease;
+  }
+
+  .pab__cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgb(0 0 0 / 0.22); }
+
+  .pab__cta-arrow {
+    inline-size: 34px;
+    block-size: 34px;
+    border-radius: 50%;
+    background: var(--pab-accent, #1242fd);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__cta:hover .pab__cta-arrow { transform: translateX(3px); }
+  .pab__cta-arrow svg { inline-size: 17px; block-size: 17px; }
+
+  /* dots */
+  .pab__dots { display: flex; justify-content: center; gap: 7px; margin-block-start: 18px; }
+
+  .pab__dot {
+    inline-size: 7px;
+    block-size: 7px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 0.2);
+    cursor: pointer;
+    transition: inline-size 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s ease;
+  }
+
+  .pab__dot.is-active { inline-size: 22px; border-radius: 999px; background: var(--pab-accent, #1242fd); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pab__track { scroll-behavior: auto; }
+    .pab__nav, .pab__play, .pab__cta, .pab__cta-arrow,
+    .pab__switch-thumb, .pab__art-img, .pab__daw, .pab__dot { transition: none; }
+  }
+
+  /* ---------- responsive ---------- */
+  @media screen and (max-width: 989px) {
+    .pab__row--main { flex-wrap: wrap; }
+    .pab__wave { order: 3; flex-basis: 100%; }
+    .pab__ab { margin-inline-start: auto; }
+    .pab__pills { margin-inline-start: 0; }
+  }
+
+  @media screen and (max-width: 749px) {
+    .pab__head { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+    .pab__copy { order: 2; }
+    .pab__art { order: 1; }
+    .pab__title { font-size: var(--pab-title-mobile, 46px); }
+    .pab__subline { text-align: left; }
+    .pab__panel { padding: 16px; border-radius: calc(var(--pab-radius, 22px) * 0.8); }
+    .pab__nav { top: 26%; inline-size: 38px; block-size: 38px; }
+    .pab__nav--prev { inset-inline-start: -6px; }
+    .pab__nav--next { inset-inline-end: -6px; }
+    .pab__cta { inline-size: 100%; justify-content: space-between; }
+    .pab__time { font-size: 13px; }
+    .pab__ab-label { display: none; }
+
+    /* 96 bars at a 2px floor need ~382px; a phone panel has far less,
+       so tighten the gap and floor so they always fit inside the panel. */
+    .pab__wave { gap: 1px; block-size: 40px; }
+    .pab__bar { min-inline-size: 1px; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Preset A/B Player",
+  "tag": "section",
+  "class": "preset-ab-player-wrapper section-wrapper",
+  "disabled_on": {
+    "groups": [
+      "header"
+    ]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Player labels"
+    },
+    {
+      "type": "text",
+      "id": "toggle_label",
+      "label": "Toggle label",
+      "default": "Hear the preset"
+    },
+    {
+      "type": "text",
+      "id": "raw_label",
+      "label": "“Before” label",
+      "default": "RAW"
+    },
+    {
+      "type": "text",
+      "id": "preset_label",
+      "label": "“After” label",
+      "default": "PRESET"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "GET THE PRESET"
+    },
+    {
+      "type": "text",
+      "id": "pills",
+      "label": "Feature pills",
+      "default": "Instant download, One-time payment, Lifetime access",
+      "info": "Separate with commas."
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Maximum width",
+      "min": 800,
+      "max": 1500,
+      "step": 20,
+      "unit": "px",
+      "default": 1120
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "label": "Panel corner radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 22
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#f1f1ef"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (waveform + arrow)",
+      "default": "#1242fd"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading text",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Muted text",
+      "default": "#6b6b68"
+    },
+    {
+      "type": "color",
+      "id": "panel_color",
+      "label": "Player panel",
+      "default": "#3a3a3a"
+    },
+    {
+      "type": "color",
+      "id": "panel_text_color",
+      "label": "Player panel text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "label": "Title size (desktop)",
+      "min": 40,
+      "max": 160,
+      "step": 2,
+      "unit": "px",
+      "default": 76
+    },
+    {
+      "type": "range",
+      "id": "title_size_mobile",
+      "label": "Title size (mobile)",
+      "min": 22,
+      "max": 90,
+      "step": 2,
+      "unit": "px",
+      "default": 46
+    }
+  ],
+  "blocks": [
+    {
+      "type": "preset",
+      "name": "Preset",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Copy"
+        },
+        {
+          "type": "text",
+          "id": "eyebrow",
+          "label": "Small line above",
+          "default": "sound like"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "MAINSTREAM"
+        },
+        {
+          "type": "text",
+          "id": "subline",
+          "label": "Line below",
+          "default": "& it works in any DAW..."
+        },
+        {
+          "type": "header",
+          "content": "Product"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Linked product",
+          "info": "The artwork and the button link are pulled from this product."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Custom artwork",
+          "info": "Optional. Overrides the product image."
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Custom button link",
+          "info": "Optional. Overrides the product link."
+        },
+        {
+          "type": "header",
+          "content": "Audio"
+        },
+        {
+          "type": "text",
+          "id": "raw_audio",
+          "label": "Raw audio",
+          "info": "Upload to Settings → Files, then enter just the filename (e.g. mainstream-raw.mp3). A full URL also works."
+        },
+        {
+          "type": "text",
+          "id": "preset_audio",
+          "label": "Preset audio",
+          "info": "Same snippet, same start point, with the preset applied — so the switch stays in sync."
+        }
+      ]
+    },
+    {
+      "type": "daw",
+      "name": "DAW badge",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "FL Studio"
+        },
+        {
+          "type": "image_picker",
+          "id": "logo",
+          "label": "Logo",
+          "info": "Optional. Without one, the name shows as a pill."
+        }
+      ]
+    }
+  ],
+  "max_blocks": 24,
+  "presets": [
+    {
+      "name": "Preset A/B Player",
+      "category": "Media",
+      "blocks": {
+        "preset_1": {
+          "type": "preset",
+          "settings": {
+            "eyebrow": "sound like",
+            "title": "MAINSTREAM",
+            "subline": "& it works in any DAW..."
+          }
+        },
+        "daw_1": {
+          "type": "daw",
+          "settings": {
+            "name": "FL Studio"
+          }
+        },
+        "daw_2": {
+          "type": "daw",
+          "settings": {
+            "name": "Ableton Live"
+          }
+        },
+        "daw_3": {
+          "type": "daw",
+          "settings": {
+            "name": "Logic Pro"
+          }
+        },
+        "daw_4": {
+          "type": "daw",
+          "settings": {
+            "name": "Pro Tools"
+          }
+        }
+      },
+      "block_order": [
+        "preset_1",
+        "daw_1",
+        "daw_2",
+        "daw_3",
+        "daw_4"
+      ]
+    }
+  ]
+}
+{% endschema %}
