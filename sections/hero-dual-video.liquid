@@ -1,0 +1,489 @@
+
+{%- comment -%}
+  Hero — Dual Video
+  Standalone hero with independent DESKTOP and MOBILE video uploads.
+  Both upload fields are always visible in the editor (no checkbox to tick).
+  Phones download only the mobile file; laptops only the desktop file.
+{%- endcomment -%}
+
+{%- liquid
+  # ---------- Desktop shape ----------
+  assign d_ratio = section.settings.desktop_shape
+  assign d_screen = 100
+  assign classes = 'hdv'
+
+  if d_ratio == 'custom'
+    assign d_ratio = section.settings.desktop_custom_w | append: ' / ' | append: section.settings.desktop_custom_h
+  endif
+  if d_ratio == 'screen'
+    assign d_screen = section.settings.desktop_screen_height
+    assign classes = classes | append: ' hdv--screen-desktop'
+    assign d_ratio = '16 / 9'
+  endif
+
+  # ---------- Mobile shape ----------
+  assign m_ratio = section.settings.mobile_shape
+  assign m_screen = 100
+
+  if m_ratio == 'custom'
+    assign m_ratio = section.settings.mobile_custom_w | append: ' / ' | append: section.settings.mobile_custom_h
+  endif
+  if m_ratio == 'screen'
+    assign m_screen = section.settings.mobile_screen_height
+    assign classes = classes | append: ' hdv--screen-mobile'
+    assign m_ratio = '16 / 9'
+  endif
+
+  # ---------- Is there a mobile-specific asset? ----------
+  assign has_mobile = false
+  if section.settings.mobile_video != blank
+    assign has_mobile = true
+  elsif section.settings.mobile_video_url != blank
+    assign has_mobile = true
+  elsif section.settings.mobile_image != blank
+    assign has_mobile = true
+  endif
+-%}
+
+{%- capture desktop_media -%}
+  {%- if section.settings.desktop_video != blank -%}
+    {{ section.settings.desktop_video | video_tag: autoplay: true, loop: true, controls: false, muted: true, playsinline: true, class: 'hdv__media' }}
+  {%- elsif section.settings.desktop_video_url != blank -%}
+    <video class="hdv__media" autoplay loop muted playsinline src="{{ section.settings.desktop_video_url }}"></video>
+  {%- elsif section.settings.desktop_image != blank -%}
+    {{ section.settings.desktop_image | image_url: width: 3840 | image_tag: class: 'hdv__media', widths: '832, 1200, 1600, 1920, 2560, 3840', sizes: '100vw' }}
+  {%- else -%}
+    <div class="hdv__placeholder"></div>
+  {%- endif -%}
+{%- endcapture -%}
+
+{%- capture mobile_media -%}
+  {%- if section.settings.mobile_video != blank -%}
+    {{ section.settings.mobile_video | video_tag: autoplay: true, loop: true, controls: false, muted: true, playsinline: true, class: 'hdv__media' }}
+  {%- elsif section.settings.mobile_video_url != blank -%}
+    <video class="hdv__media" autoplay loop muted playsinline src="{{ section.settings.mobile_video_url }}"></video>
+  {%- elsif section.settings.mobile_image != blank -%}
+    {{ section.settings.mobile_image | image_url: width: 1600 | image_tag: class: 'hdv__media', widths: '416, 600, 800, 1200, 1600', sizes: '100vw' }}
+  {%- endif -%}
+{%- endcapture -%}
+
+<div
+  id="HeroDualVideo-{{ section.id }}"
+  class="{{ classes }}"
+  style="
+    --hdv-ratio: {{ d_ratio }};
+    --hdv-ratio-mobile: {{ m_ratio }};
+    --hdv-screen: {{ d_screen }}svh;
+    --hdv-screen-mobile: {{ m_screen }}svh;
+    --hdv-overlay: {{ section.settings.overlay_color }};
+    --hdv-text: {{ section.settings.text_color }};
+    --hdv-h-size: {{ section.settings.heading_size }}px;
+    --hdv-h-size-mobile: {{ section.settings.heading_size_mobile }}px;
+    --hdv-sub-size: {{ section.settings.subheading_size }}px;
+  "
+>
+  <div
+    class="hdv__bg"
+    data-hdv-bg
+    data-has-mobile="{% if has_mobile %}true{% else %}false{% endif %}"
+  >
+    <template data-hdv-desktop>{{ desktop_media }}</template>
+    {%- if has_mobile -%}
+      <template data-hdv-mobile>{{ mobile_media }}</template>
+    {%- endif -%}
+    <noscript>{{ desktop_media }}</noscript>
+  </div>
+
+  <div class="hdv__overlay"></div>
+
+  <div class="hdv__content">
+    {%- if section.settings.subheading != blank -%}
+      <p class="hdv__sub">{{ section.settings.subheading }}</p>
+    {%- endif -%}
+    {%- if section.settings.heading != blank -%}
+      <h2 class="hdv__heading">{{ section.settings.heading }}</h2>
+    {%- endif -%}
+    {%- if section.settings.button_label != blank -%}
+      <a
+        href="{{ section.settings.button_link | default: '#' }}"
+        class="hdv__button"
+        {% if section.settings.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
+      >{{ section.settings.button_label }}</a>
+    {%- endif -%}
+  </div>
+</div>
+
+<script>
+  (function () {
+    function mount(root) {
+      var host = root && root.querySelector ? root.querySelector('[data-hdv-bg]') : null;
+      if (!host || host.dataset.hdvMounted === '1') return;
+
+      var useMobile =
+        host.dataset.hasMobile === 'true' && window.matchMedia('(max-width: 749px)').matches;
+
+      var tpl =
+        host.querySelector(useMobile ? '[data-hdv-mobile]' : '[data-hdv-desktop]') ||
+        host.querySelector('[data-hdv-desktop]');
+      if (!tpl) return;
+
+      host.dataset.hdvMounted = '1';
+      host.appendChild(tpl.content.cloneNode(true));
+
+      var v = host.querySelector('video');
+      if (v && v.play) {
+        var p = v.play();
+        if (p && p.catch) p.catch(function () {});
+      }
+    }
+
+    mount(document.getElementById('HeroDualVideo-{{ section.id }}'));
+    document.addEventListener('shopify:section:load', function (e) { mount(e.target); });
+  })();
+</script>
+
+{% stylesheet %}
+  .hdv {
+    position: relative;
+    width: 100%;
+    aspect-ratio: var(--hdv-ratio, 16 / 9);
+    min-height: max(0px, fit-content);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  @media screen and (min-width: 750px) {
+    .hdv--screen-desktop {
+      aspect-ratio: auto;
+      min-height: var(--hdv-screen, 100svh);
+    }
+  }
+
+  .hdv__bg { position: absolute; inset: 0; z-index: 0; }
+
+  .hdv__media {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+  }
+
+  .hdv__placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #10131f, #16213e, #0f3460);
+  }
+
+  .hdv__overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: var(--hdv-overlay, rgba(0, 0, 0, 0.45));
+    pointer-events: none;
+  }
+
+  .hdv__content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    color: var(--hdv-text, #fff);
+    padding: 2rem;
+    max-width: 960px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .hdv__sub {
+    font-size: var(--hdv-sub-size, 16px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    margin: 0;
+    opacity: 0.9;
+  }
+
+  .hdv__heading {
+    font-family: var(--font-heading--family, inherit);
+    font-size: var(--hdv-h-size, 72px);
+    font-weight: 900;
+    text-transform: uppercase;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .hdv__button {
+    display: inline-block;
+    margin-top: 1rem;
+    padding: 14px 40px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--hdv-text, #fff);
+    border: 2px solid var(--hdv-text, #fff);
+    border-radius: 50px;
+    background: transparent;
+    letter-spacing: 0.05em;
+    transition: background 0.25s ease, color 0.25s ease;
+  }
+
+  .hdv__button:hover { background: var(--hdv-text, #fff); color: #000; }
+
+  @media screen and (max-width: 749px) {
+    .hdv { aspect-ratio: var(--hdv-ratio-mobile, var(--hdv-ratio, 16 / 9)); }
+
+    .hdv--screen-mobile {
+      aspect-ratio: auto;
+      min-height: var(--hdv-screen-mobile, 100svh);
+    }
+
+    .hdv__heading { font-size: var(--hdv-h-size-mobile, 40px); }
+    .hdv__sub { font-size: 13px; }
+    .hdv__button { padding: 12px 32px; font-size: 14px; }
+    .hdv__content { padding: 1.25rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hdv__button { transition: none; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Hero — Dual Video",
+  "tag": "section",
+  "class": "hero-dual-video-wrapper section-wrapper",
+  "disabled_on": { "groups": ["header"] },
+  "settings": [
+    {
+      "type": "header",
+      "content": "💻 Desktop video"
+    },
+    {
+      "type": "video",
+      "id": "desktop_video",
+      "label": "Desktop video",
+      "info": "Upload in Settings → Files first, then select it here."
+    },
+    {
+      "type": "text",
+      "id": "desktop_video_url",
+      "label": "Or a direct .mp4 URL"
+    },
+    {
+      "type": "image_picker",
+      "id": "desktop_image",
+      "label": "Desktop fallback image"
+    },
+    {
+      "type": "header",
+      "content": "📱 Mobile video"
+    },
+    {
+      "type": "video",
+      "id": "mobile_video",
+      "label": "Mobile video",
+      "info": "Leave empty and phones will use the desktop video. If set, phones download ONLY this file."
+    },
+    {
+      "type": "text",
+      "id": "mobile_video_url",
+      "label": "Or a direct .mp4 URL"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "Mobile fallback image"
+    },
+    {
+      "type": "header",
+      "content": "Text"
+    },
+    {
+      "type": "text",
+      "id": "subheading",
+      "label": "Subheading",
+      "default": "by artists, for artists."
+    },
+    {
+      "type": "text",
+      "id": "heading",
+      "label": "Heading",
+      "default": "DRAG. DROP. SOUND PRO."
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "Shop Vocal Presets"
+    },
+    {
+      "type": "url",
+      "id": "button_link",
+      "label": "Button link"
+    },
+    {
+      "type": "checkbox",
+      "id": "open_in_new_tab",
+      "label": "Open link in new tab",
+      "default": false
+    },
+    {
+      "type": "header",
+      "content": "💻 Desktop shape"
+    },
+    {
+      "type": "select",
+      "id": "desktop_shape",
+      "label": "Desktop shape",
+      "options": [
+        { "value": "16 / 9", "label": "16:9 — widescreen" },
+        { "value": "21 / 9", "label": "21:9 — cinematic" },
+        { "value": "3 / 2", "label": "3:2" },
+        { "value": "4 / 3", "label": "4:3" },
+        { "value": "1 / 1", "label": "1:1 — square" },
+        { "value": "custom", "label": "Custom ratio" },
+        { "value": "screen", "label": "Screen height" }
+      ],
+      "default": "16 / 9"
+    },
+    {
+      "type": "range",
+      "id": "desktop_screen_height",
+      "label": "Desktop screen height",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 90,
+      "visible_if": "{{ section.settings.desktop_shape == 'screen' }}"
+    },
+    {
+      "type": "range",
+      "id": "desktop_custom_w",
+      "label": "Custom width",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 16,
+      "visible_if": "{{ section.settings.desktop_shape == 'custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "desktop_custom_h",
+      "label": "Custom height",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 9,
+      "visible_if": "{{ section.settings.desktop_shape == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "📱 Mobile shape"
+    },
+    {
+      "type": "select",
+      "id": "mobile_shape",
+      "label": "Mobile shape",
+      "options": [
+        { "value": "screen", "label": "Screen height" },
+        { "value": "16 / 9", "label": "16:9 — widescreen" },
+        { "value": "4 / 5", "label": "4:5 — portrait" },
+        { "value": "1 / 1", "label": "1:1 — square" },
+        { "value": "9 / 16", "label": "9:16 — vertical" },
+        { "value": "custom", "label": "Custom ratio" }
+      ],
+      "default": "screen"
+    },
+    {
+      "type": "range",
+      "id": "mobile_screen_height",
+      "label": "Mobile screen height",
+      "min": 30,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 80,
+      "visible_if": "{{ section.settings.mobile_shape == 'screen' }}"
+    },
+    {
+      "type": "range",
+      "id": "mobile_custom_w",
+      "label": "Custom width",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 9,
+      "visible_if": "{{ section.settings.mobile_shape == 'custom' }}"
+    },
+    {
+      "type": "range",
+      "id": "mobile_custom_h",
+      "label": "Custom height",
+      "min": 1,
+      "max": 32,
+      "step": 1,
+      "default": 16,
+      "visible_if": "{{ section.settings.mobile_shape == 'custom' }}"
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "overlay_color",
+      "label": "Overlay color",
+      "default": "#00000073"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "label": "Heading size (desktop)",
+      "min": 24,
+      "max": 120,
+      "step": 2,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "heading_size_mobile",
+      "label": "Heading size (mobile)",
+      "min": 18,
+      "max": 72,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "subheading_size",
+      "label": "Subheading size",
+      "min": 10,
+      "max": 28,
+      "step": 1,
+      "unit": "px",
+      "default": 16
+    }
+  ],
+  "presets": [
+    {
+      "name": "Hero — Dual Video",
+      "category": "Banners"
+    }
+  ]
+}
+{% endschema %}
