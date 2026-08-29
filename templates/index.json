@@ -125,6 +125,74 @@
         "padding-block-end": 72
       }
     },
+    "preset_ab_player_GAwyiF": {
+      "type": "preset-ab-player",
+      "blocks": {
+        "preset_cECjh8": {
+          "type": "preset",
+          "settings": {
+            "eyebrow": "the",
+            "title": "GABE CHAIN",
+            "subline": "& it works in any DAW...",
+            "product": "",
+            "button_link": "",
+            "raw_audio": "",
+            "preset_audio": ""
+          }
+        },
+        "daw_KaAM4B": {
+          "type": "daw",
+          "settings": {
+            "name": "FL Studio"
+          }
+        },
+        "daw_qFWjzC": {
+          "type": "daw",
+          "settings": {
+            "name": "Ableton Live"
+          }
+        },
+        "daw_rq63tK": {
+          "type": "daw",
+          "settings": {
+            "name": "Logic Pro"
+          }
+        },
+        "daw_ANVDRd": {
+          "type": "daw",
+          "settings": {
+            "name": "Pro Tools"
+          }
+        }
+      },
+      "block_order": [
+        "preset_cECjh8",
+        "daw_KaAM4B",
+        "daw_qFWjzC",
+        "daw_rq63tK",
+        "daw_ANVDRd"
+      ],
+      "name": "Preset A/B Player",
+      "settings": {
+        "toggle_label": "Hear the preset",
+        "raw_label": "RAW",
+        "preset_label": "PRESET",
+        "button_label": "GET THE PRESET",
+        "pills": "Instant download, One-time payment, Lifetime access",
+        "max_width": 1120,
+        "corner_radius": 22,
+        "padding_top": 72,
+        "padding_bottom": 72,
+        "background_color": "#f1f1ef",
+        "accent_color": "#1242fd",
+        "heading_color": "#111111",
+        "body_color": "#6b6b68",
+        "panel_color": "#3a3a3a",
+        "panel_text_color": "#ffffff",
+        "title_size": 76,
+        "title_size_mobile": 46
+      }
+    },
     "product_list_fa6P9H": {
       "type": "product-list",
       "blocks": {
@@ -469,6 +537,7 @@
   "order": [
     "hero_dual_video_WpYMX9",
     "hero_jVaWmY",
+    "preset_ab_player_GAwyiF",
     "product_list_fa6P9H",
     "artist_video_carousel_1_iEzYKG",
     "faq_buying_aUpQHi"
