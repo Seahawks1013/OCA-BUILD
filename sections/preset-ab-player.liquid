@@ -12,8 +12,11 @@
 -%}
 
 <preset-ab-player
-  class="pab"
+  class="pab{% if section.settings.animate_panel %} pab--animated{% endif %}"
   id="Pab-{{ section.id }}"
+  data-bars-per-second="{{ section.settings.wave_detail }}"
+  data-click="{% if section.settings.click_sound %}true{% else %}false{% endif %}"
+  data-click-volume="{{ section.settings.click_volume | divided_by: 100.0 }}"
   style="
     --pab-bg: {{ section.settings.background_color }};
     --pab-ink: {{ section.settings.heading_color }};
@@ -176,10 +179,10 @@
 
               {%- comment -%} preload=metadata so duration is known without pulling the whole file {%- endcomment -%}
               {%- if raw_src != blank -%}
-                <audio data-pab-audio="raw" src="{{ raw_src }}" preload="metadata" playsinline></audio>
+                <audio data-pab-audio="raw" src="{{ raw_src }}" preload="metadata" playsinline{% if section.settings.loop_audio %} loop{% endif %}></audio>
               {%- endif -%}
               {%- if preset_src != blank -%}
-                <audio data-pab-audio="preset" src="{{ preset_src }}" preload="metadata" playsinline></audio>
+                <audio data-pab-audio="preset" src="{{ preset_src }}" preload="metadata" playsinline{% if section.settings.loop_audio %} loop{% endif %}></audio>
               {%- endif -%}
             </div>
           </article>
@@ -207,6 +210,40 @@
     if (customElements.get('preset-ab-player')) return;
 
     var BARS = 96;
+
+    // ---- UI click sound (inlined, ~4KB) -------------------------------------
+    var CLICK_B64 = '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qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//t0xHoDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpMQU1FMy4xMDCqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//t0xHoDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpMQU1FMy4xMDCqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//t0xHoDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
+    var actx = null, clickBuf = null, clickReady = false;
+
+    function initClickAudio() {
+      if (actx) return;
+      try {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        actx = new Ctx();
+        var bin = atob(CLICK_B64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        var done = function (buf) { clickBuf = buf; clickReady = true; };
+        var p = actx.decodeAudioData(bytes.buffer, done, function () {});
+        if (p && p.then) p.then(done).catch(function () {});
+      } catch (e) { actx = null; }
+    }
+
+    function playClick(volume) {
+      if (!clickReady || !actx || !clickBuf) return;
+      try {
+        if (actx.state === 'suspended') actx.resume();
+        var src = actx.createBufferSource();
+        var gain = actx.createGain();
+        gain.gain.value = volume;
+        src.buffer = clickBuf;
+        src.connect(gain);
+        gain.connect(actx.destination);
+        src.start(0);
+      } catch (e) {}
+    }
+
 
     // Deterministic pseudo-random so a card's waveform never changes between loads
     function seededHeights(seed, count) {
@@ -261,16 +298,7 @@
 
       // --- waveform bars
       if (this.wave) {
-        var heights = seededHeights(this.root.dataset.seed || '1', BARS);
-        var frag = document.createDocumentFragment();
-        heights.forEach(function (h) {
-          var b = document.createElement('span');
-          b.className = 'pab__bar';
-          b.style.setProperty('--h', (h * 100).toFixed(1) + '%');
-          frag.appendChild(b);
-          self.bars.push(b);
-        });
-        this.wave.appendChild(frag);
+        this.renderWave();
 
         this.wave.addEventListener('pointerdown', function (e) {
           self.dragging = true;
@@ -297,18 +325,29 @@
       }
 
       // --- play / pause
-      if (this.playBtn) this.playBtn.addEventListener('click', function () { self.toggle(); });
+      if (this.playBtn) this.playBtn.addEventListener('click', function () {
+        self.host.click_();
+        self.toggle();
+      });
 
       // --- A/B switch, preserving position
       this.root.querySelectorAll('[data-pab-mode]').forEach(function (btn) {
-        btn.addEventListener('click', function () { self.setMode(btn.dataset.pabMode); });
+        btn.addEventListener('click', function () {
+          self.host.click_();
+          self.setMode(btn.dataset.pabMode);
+        });
       });
 
       // --- audio wiring
       Object.keys(this.audio).forEach(function (k) {
         var a = self.audio[k];
         if (!a) return;
-        a.addEventListener('loadedmetadata', function () { self.sync(); });
+        a.addEventListener('loadedmetadata', function () {
+          // duration is finally known — rebuild the bars to match this take's length
+          self.renderWave();
+          self.sync();
+        });
+        a.addEventListener('durationchange', function () { self.renderWave(); });
         a.addEventListener('timeupdate', function () { if (k === self.mode) self.sync(); });
         a.addEventListener('ended', function () {
           if (k !== self.mode) return;
@@ -318,6 +357,36 @@
       });
 
       this.positionThumb();
+      this.sync();
+    };
+
+    // Bar count follows the real duration, so a 36s snippet reads as visibly
+    // denser than a 17s one. Capped by the available pixel width so bars never
+    // squash, and by the audio itself so the timeline always spans the whole take.
+    Slide.prototype.renderWave = function () {
+      if (!this.wave) return;
+      var self = this;
+      var width = this.wave.clientWidth || 600;
+      var perSec = this.host.barsPerSec || 4;
+      var dur = this.duration();
+
+      var wanted = dur ? Math.round(dur * perSec) : 96;
+      var maxByWidth = Math.max(24, Math.floor(width / 3));
+      var count = Math.max(28, Math.min(wanted, maxByWidth, 220));
+      if (count === this.barCount) return;
+
+      this.barCount = count;
+      this.bars = [];
+      var heights = seededHeights(this.root.dataset.seed || '1', count);
+      var frag = document.createDocumentFragment();
+      heights.forEach(function (h) {
+        var b = document.createElement('span');
+        b.className = 'pab__bar';
+        b.style.setProperty('--h', (h * 100).toFixed(1) + '%');
+        frag.appendChild(b);
+        self.bars.push(b);
+      });
+      this.wave.replaceChildren(frag);
       this.sync();
     };
 
@@ -482,6 +551,19 @@
         this.slides = [].slice.call(this.querySelectorAll('[data-pab-slide]'))
           .map(function (el) { return new Slide(el, self); });
 
+        this.barsPerSec = parseFloat(this.dataset.barsPerSecond || '4') || 4;
+        this.clickOn = this.dataset.click !== 'false';
+        this.clickVol = parseFloat(this.dataset.clickVolume || '0.5');
+        if (this.clickOn) {
+          initClickAudio();
+          // an AudioContext starts suspended until a real gesture unlocks it
+          var unlock = function () {
+            if (actx && actx.state === 'suspended') actx.resume();
+            window.removeEventListener('pointerdown', unlock);
+          };
+          window.addEventListener('pointerdown', unlock, { once: true });
+        }
+
         this.index = 0;
         this.prevBtn = this.querySelector('[data-pab-prev]');
         this.nextBtn = this.querySelector('[data-pab-next]');
@@ -509,11 +591,19 @@
           }, { passive: true });
         }
 
+        var rt;
         window.addEventListener('resize', function () {
-          self.slides.forEach(function (s) { s.positionThumb(); });
+          clearTimeout(rt);
+          rt = setTimeout(function () {
+            self.slides.forEach(function (s) { s.positionThumb(); s.renderWave(); });
+          }, 150);
         });
 
         this.update();
+      }
+
+      click_() {
+        if (this.clickOn) playClick(this.clickVol);
       }
 
       stopOthers(except) {
@@ -675,6 +765,7 @@
 
   /* ---------- player panel ---------- */
   .pab__panel {
+    position: relative;
     background: var(--pab-panel, #3a3a3a);
     color: var(--pab-panel-ink, #fff);
     border-radius: var(--pab-radius, 22px);
@@ -683,7 +774,57 @@
     flex-direction: column;
     gap: 16px;
     box-shadow: 0 18px 50px rgb(0 0 0 / 0.16);
+    overflow: hidden;
+    isolation: isolate;
   }
+
+  /* Slow drifting light behind the panel. Two soft blobs on long, offset,
+     prime-ish durations so the loop never visibly repeats. */
+  .pab--animated .pab__panel::before,
+  .pab--animated .pab__panel::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    border-radius: 50%;
+    filter: blur(70px);
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .pab--animated .pab__panel::before {
+    inline-size: 46%;
+    aspect-ratio: 1;
+    inset-block-start: -30%;
+    inset-inline-start: -8%;
+    background: var(--pab-accent, #1242fd);
+    opacity: 0.34;
+    animation: pab-drift-a 19s ease-in-out infinite alternate;
+  }
+
+  .pab--animated .pab__panel::after {
+    inline-size: 38%;
+    aspect-ratio: 1;
+    inset-block-end: -34%;
+    inset-inline-end: -6%;
+    background: var(--pab-accent, #1242fd);
+    opacity: 0.22;
+    animation: pab-drift-b 26s ease-in-out infinite alternate;
+  }
+
+  @keyframes pab-drift-a {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(28%, 14%, 0) scale(1.12); }
+    100% { transform: translate3d(62%, -6%, 0) scale(0.94); }
+  }
+
+  @keyframes pab-drift-b {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(-34%, -12%, 0) scale(0.9); }
+    100% { transform: translate3d(-70%, 8%, 0) scale(1.15); }
+  }
+
+  /* keep all real content above the drifting light */
+  .pab__row { position: relative; z-index: 1; }
 
   .pab__row { display: flex; align-items: center; gap: 18px; }
   .pab__row--main { flex-wrap: nowrap; }
@@ -973,6 +1114,53 @@
       "label": "Feature pills",
       "default": "Instant download, One-time payment, Lifetime access",
       "info": "Separate with commas."
+    },
+    {
+      "type": "header",
+      "content": "Playback & feel"
+    },
+    {
+      "type": "checkbox",
+      "id": "loop_audio",
+      "label": "Loop the snippet",
+      "default": true,
+      "info": "Restarts automatically when it reaches the end."
+    },
+    {
+      "type": "range",
+      "id": "wave_detail",
+      "label": "Waveform detail",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "unit": "/s",
+      "default": 4,
+      "info": "Bars drawn per second of audio. A longer snippet gets more bars, so the visual matches its length."
+    },
+    {
+      "type": "checkbox",
+      "id": "click_sound",
+      "label": "Click sound on the buttons",
+      "default": true,
+      "info": "Plays your click on the play button and the RAW/PRESET switch."
+    },
+    {
+      "type": "range",
+      "id": "click_volume",
+      "label": "Click volume",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 50,
+      "visible_if": "{{ section.settings.click_sound }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "animate_panel",
+      "label": "Animate the panel background",
+      "default": true,
+      "info": "Slow drifting light behind the player."
     },
     {
       "type": "header",
