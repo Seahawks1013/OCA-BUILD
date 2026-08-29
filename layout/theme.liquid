@@ -57,7 +57,79 @@
 
     <div class="page-wrapper">
       <div id="header-group">
-        {% section 'announcement-rotator' %}
+        {%- comment -%} Announcement rotator — self-contained, edit the text below {%- endcomment -%}
+        <div class="arot" id="arot">
+          <div class="arot__inner">
+            <button class="arot__arrow" type="button" id="arot-prev" aria-label="Previous announcement">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="arot__slides" aria-live="polite" aria-atomic="true">
+              <div class="arot__slide is-active"><span>INSTANT DOWNLOADS!</span></div>
+              <div class="arot__slide" aria-hidden="true"><span>CUSTOM VOCAL PRESETS - NOW AVAILABLE</span></div>
+              <div class="arot__slide" aria-hidden="true"><span>CUSTOM MIXES - NOW AVAILABLE</span></div>
+            </div>
+            <button class="arot__arrow" type="button" id="arot-next" aria-label="Next announcement">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <style>
+          .arot{background:#1242fd;color:#fff;position:relative;z-index:2}
+          .arot__inner{display:flex;align-items:center;justify-content:center;gap:10px;padding:11px 12px}
+          .arot__slides{display:grid;align-items:center;justify-items:center;min-width:0}
+          .arot__slide{grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(4px);
+            transition:opacity .42s ease,transform .42s cubic-bezier(.2,.8,.2,1),visibility 0s linear .42s;
+            text-align:center;max-width:100%}
+          .arot__slide.is-active{opacity:1;visibility:visible;transform:translateY(0);transition-delay:0s,0s,0s}
+          .arot__slide span{display:block;font-size:13px;font-weight:700;letter-spacing:.08em;line-height:1.35;
+            text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+          .arot__arrow{flex:0 0 auto;width:28px;height:28px;padding:0;border:0;border-radius:50%;
+            background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer;opacity:.75;
+            transition:opacity .2s ease,background .2s ease,transform .2s cubic-bezier(.2,.8,.2,1)}
+          .arot__arrow svg{width:16px;height:16px}
+          .arot__arrow:hover{opacity:1;background:rgba(255,255,255,.14);transform:scale(1.08)}
+          .arot__arrow:active{transform:scale(.94)}
+          .arot__arrow:focus-visible{outline:2px solid currentColor;outline-offset:2px;opacity:1}
+          @media (max-width:749px){
+            .arot__slide span{font-size:11px;white-space:normal}
+            .arot__inner{gap:4px;padding:10px 8px}
+          }
+          @media (prefers-reduced-motion:reduce){
+            .arot__slide{transition:opacity .01ms linear;transform:none}
+            .arot__arrow{transition:none}
+          }
+        </style>
+
+        <script>
+          (function () {
+            var root = document.getElementById('arot');
+            if (!root) return;
+            var slides = root.querySelectorAll('.arot__slide');
+            if (slides.length < 2) return;
+            var i = 0, timer = null;
+            var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            function go(n) {
+              n = ((n % slides.length) + slides.length) % slides.length;
+              if (n === i) return;
+              slides[i].classList.remove('is-active');
+              slides[i].setAttribute('aria-hidden', 'true');
+              slides[n].classList.add('is-active');
+              slides[n].removeAttribute('aria-hidden');
+              i = n;
+            }
+            function start() { if (!reduced && !timer) timer = setInterval(function () { go(i + 1); }, 5000); }
+            function stop() { if (timer) { clearInterval(timer); timer = null; } }
+
+            document.getElementById('arot-prev').addEventListener('click', function () { go(i - 1); stop(); start(); });
+            document.getElementById('arot-next').addEventListener('click', function () { go(i + 1); stop(); start(); });
+            root.addEventListener('pointerenter', stop);
+            root.addEventListener('pointerleave', start);
+            document.addEventListener('visibilitychange', function () { document.hidden ? stop() : start(); });
+            start();
+          })();
+        </script>
         {% sections 'header-group' %}
       </div>
 
