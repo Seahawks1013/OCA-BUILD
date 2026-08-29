@@ -455,6 +455,34 @@
         "heading_size_mobile": 44,
         "question_size": 19
       }
+    },
+    "hero_dual_video_WpYMX9": {
+      "type": "hero-dual-video",
+      "name": "Hero — Dual Video",
+      "settings": {
+        "desktop_video": "shopify://files/videos/video loop for site.mp4",
+        "desktop_video_url": "",
+        "mobile_video": "shopify://files/videos/vertical website video.mp4",
+        "mobile_video_url": "",
+        "subheading": "by artists, for artists.",
+        "heading": "DRAG. DROP. SOUND PRO.",
+        "button_label": "Shop Vocal Presets",
+        "button_link": "",
+        "open_in_new_tab": false,
+        "desktop_shape": "16 / 9",
+        "desktop_screen_height": 90,
+        "desktop_custom_w": 16,
+        "desktop_custom_h": 9,
+        "mobile_shape": "screen",
+        "mobile_screen_height": 80,
+        "mobile_custom_w": 9,
+        "mobile_custom_h": 16,
+        "overlay_color": "#00000073",
+        "text_color": "#ffffff",
+        "heading_size": 72,
+        "heading_size_mobile": 40,
+        "subheading_size": 16
+      }
     }
   },
   "order": [
@@ -462,6 +490,7 @@
     "video_hero_drop_1_iXGNRt",
     "product_list_fa6P9H",
     "artist_video_carousel_1_iEzYKG",
-    "faq_buying_aUpQHi"
+    "faq_buying_aUpQHi",
+    "hero_dual_video_WpYMX9"
   ]
 }
