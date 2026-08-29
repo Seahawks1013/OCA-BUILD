@@ -395,10 +395,12 @@
       this.bars = [];
       var heights = seededHeights(this.root.dataset.seed || '1', count);
       var frag = document.createDocumentFragment();
-      heights.forEach(function (h) {
+      heights.forEach(function (h, idx) {
         var b = document.createElement('span');
         b.className = 'pab__bar';
         b.style.setProperty('--h', (h * 100).toFixed(1) + '%');
+        // index drives the stagger so the pulse travels rather than throbbing as one
+        b.style.setProperty('--i', idx);
         frag.appendChild(b);
         self.bars.push(b);
       });
@@ -894,12 +896,27 @@
     min-inline-size: 2px;
     border-radius: 2px;
     background: rgb(255 255 255 / 0.34);
-    transition: background 0.12s linear, transform 0.12s ease;
+    transform-origin: center;
+    transition: background 0.12s linear;
   }
 
   .pab__bar.is-played { background: var(--pab-accent, #1242fd); }
 
-  .pab__slide.is-playing .pab__bar.is-played:nth-last-child(-n + 96) { transform: scaleY(1); }
+  /* Bars only move while this card is playing — staggered by index so the
+     motion travels along the waveform instead of pulsing as one block. */
+  .pab__slide.is-playing .pab__bar {
+    animation: pab-bar-pulse 1150ms ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * -34ms);
+  }
+
+  .pab__slide.is-playing .pab__bar.is-played {
+    animation-duration: 820ms;
+  }
+
+  @keyframes pab-bar-pulse {
+    0%, 100% { transform: scaleY(0.82); }
+    50%      { transform: scaleY(1.38); }
+  }
 
   /* time */
   .pab__time {
@@ -1051,6 +1068,7 @@
   .pab__dot.is-active { inline-size: 22px; border-radius: 999px; background: var(--pab-accent, #1242fd); }
 
   @media (prefers-reduced-motion: reduce) {
+    .pab__slide.is-playing .pab__bar { animation: none; }
     .pab__track { scroll-behavior: auto; }
     .pab__nav, .pab__play, .pab__cta, .pab__cta-arrow,
     .pab__switch-thumb, .pab__art-img, .pab__daw, .pab__dot { transition: none; }

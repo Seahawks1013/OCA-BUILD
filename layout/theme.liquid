@@ -84,41 +84,37 @@
                to nothing on desktop while still showing on mobile. */
             flex:0 0 auto;
             color:#fff;
-            /* black carrying real blue through the middle, not a flat dark bar */
             background:linear-gradient(100deg,
-              #05060d 0%,
-              #0b1442 22%,
-              #16256f 42%,
-              #1c2f9c 52%,
-              #101a5c 64%,
-              #070c22 84%,
-              #040409 100%);
-            box-shadow:inset 0 -2px 0 rgba(18,66,253,.9);
+              #0a1c86 0%,
+              #1440f0 20%,
+              #2a5cff 38%,
+              #1746f7 52%,
+              #0f31d6 70%,
+              #0b2094 88%,
+              #0a1a7a 100%);
+            box-shadow:inset 0 -2px 0 rgba(255,255,255,.35);
           }
-          /* primary glow — brand blue, sweeps left to right */
           .arot::before{
-            content:'';position:absolute;top:50%;left:0;width:40%;aspect-ratio:2/1;
-            margin-top:-20%;border-radius:50%;
-            background:radial-gradient(closest-side,rgba(30,90,255,1),rgba(18,66,253,0) 72%);
-            filter:blur(18px);opacity:1;pointer-events:none;z-index:0;will-change:transform;
+            content:'';position:absolute;top:50%;left:0;width:38%;aspect-ratio:2/1;
+            margin-top:-19%;border-radius:50%;
+            background:radial-gradient(closest-side,rgba(255,255,255,.28),rgba(255,255,255,0) 72%);
+            filter:blur(30px);opacity:.85;pointer-events:none;z-index:0;will-change:transform;
             animation:arot-drift 24s ease-in-out infinite alternate;
           }
-          /* secondary glow — cooler, travels the other way on a different cycle */
           .arot__glow{
             position:absolute;top:50%;right:0;width:32%;aspect-ratio:2/1;
             margin-top:-16%;border-radius:50%;
-            background:radial-gradient(closest-side,rgba(110,165,255,.95),rgba(110,165,255,0) 72%);
-            filter:blur(22px);opacity:.85;pointer-events:none;z-index:0;will-change:transform;
+            background:radial-gradient(closest-side,rgba(190,215,255,.38),rgba(190,215,255,0) 72%);
+            filter:blur(30px);opacity:.8;pointer-events:none;z-index:0;will-change:transform;
             animation:arot-drift-2 31s ease-in-out infinite alternate;
           }
-          /* light sweep, tinted blue rather than plain white */
           .arot::after{
             content:'';position:absolute;inset:0;pointer-events:none;z-index:0;will-change:transform;
             background:linear-gradient(100deg,
               rgba(255,255,255,0) 35%,
-              rgba(150,180,255,.06) 47%,
-              rgba(200,220,255,.14) 50%,
-              rgba(150,180,255,.06) 53%,
+              rgba(255,255,255,.10) 47%,
+              rgba(255,255,255,.14) 50%,
+              rgba(255,255,255,.10) 53%,
               rgba(255,255,255,0) 65%);
             animation:arot-sheen 13s linear infinite;
           }
@@ -136,27 +132,36 @@
             0%{transform:translateX(-100%)}
             100%{transform:translateX(100%)}
           }
-.arot__inner{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:10px;padding:12px}
+          .arot__inner{
+            position:relative;z-index:1;display:flex;align-items:center;
+            justify-content:center;gap:10px;padding:12px;
+          }
           .arot__slides{display:grid;align-items:center;justify-items:center;min-width:0}
-          .arot__slide{grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(4px);
+          .arot__slide{
+            grid-area:1/1;opacity:0;visibility:hidden;transform:translateY(4px);
             transition:opacity .42s ease,transform .42s cubic-bezier(.2,.8,.2,1),visibility 0s linear .42s;
-            text-align:center;max-width:100%}
+            text-align:center;max-width:100%;
+          }
           .arot__slide.is-active{opacity:1;visibility:visible;transform:translateY(0);transition-delay:0s,0s,0s}
-          .arot__slide span{display:block;font-size:13px;font-weight:700;letter-spacing:.08em;line-height:1.35;
+          .arot__slide span{
+            display:block;font-size:13px;font-weight:700;letter-spacing:.08em;line-height:1.35;
             text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-            text-shadow:0 1px 10px rgba(0,0,0,.5)}
-          .arot__arrow{flex:0 0 auto;width:28px;height:28px;padding:0;border:0;border-radius:50%;
-            background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer;opacity:.7;
-            transition:opacity .2s ease,background .2s ease,transform .2s cubic-bezier(.2,.8,.2,1)}
+            text-shadow:0 1px 3px rgba(4,16,90,.65),0 2px 14px rgba(4,16,90,.45);
+          }
+          .arot__arrow{
+            flex:0 0 auto;width:28px;height:28px;padding:0;border:0;border-radius:50%;
+            background:transparent;color:inherit;display:grid;place-items:center;cursor:pointer;opacity:.8;
+            transition:opacity .2s ease,background .2s ease,transform .2s cubic-bezier(.2,.8,.2,1);
+          }
           .arot__arrow svg{width:16px;height:16px}
-          .arot__arrow:hover{opacity:1;background:rgba(255,255,255,.12);transform:scale(1.08)}
+          .arot__arrow:hover{opacity:1;background:rgba(255,255,255,.2);transform:scale(1.08)}
           .arot__arrow:active{transform:scale(.94)}
-          .arot__arrow:focus-visible{outline:2px solid currentColor;outline-offset:2px;opacity:1}
+          .arot__arrow:focus-visible{outline:2px solid #fff;outline-offset:2px;opacity:1}
           @media (max-width:749px){
             .arot__slide span{font-size:11px;white-space:normal}
             .arot__inner{gap:4px;padding:10px 8px}
-            .arot::before{width:44%}
-            .arot__glow{width:38%}
+            .arot::before{width:52%}
+            .arot__glow{width:44%}
           }
           @media (prefers-reduced-motion:reduce){
             .arot::before,.arot::after,.arot__glow{animation:none}
