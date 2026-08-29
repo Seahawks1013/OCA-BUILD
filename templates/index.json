@@ -538,6 +538,83 @@
         "heading_size_mobile": 44,
         "question_size": 19
       }
+    },
+    "preset_ab_player_XPUJ4W": {
+      "type": "preset-ab-player",
+      "blocks": {
+        "preset_iUntYb": {
+          "type": "preset",
+          "settings": {
+            "eyebrow": "sound like",
+            "title": "MAINSTREAM",
+            "subline": "& it works in any DAW...",
+            "product": "",
+            "button_link": "",
+            "raw_audio": "",
+            "preset_audio": ""
+          }
+        },
+        "daw_AqHzBT": {
+          "type": "daw",
+          "settings": {
+            "name": "FL Studio"
+          }
+        },
+        "daw_wxdyex": {
+          "type": "daw",
+          "settings": {
+            "name": "Ableton Live"
+          }
+        },
+        "daw_GTgKD7": {
+          "type": "daw",
+          "settings": {
+            "name": "Logic Pro"
+          }
+        },
+        "daw_rmT7kN": {
+          "type": "daw",
+          "settings": {
+            "name": "Pro Tools"
+          }
+        }
+      },
+      "block_order": [
+        "preset_iUntYb",
+        "daw_AqHzBT",
+        "daw_wxdyex",
+        "daw_GTgKD7",
+        "daw_rmT7kN"
+      ],
+      "disabled": true,
+      "name": "Preset A/B Player",
+      "settings": {
+        "toggle_label": "Hear the preset",
+        "raw_label": "RAW",
+        "preset_label": "PRESET",
+        "button_label": "GET THE PRESET",
+        "pills": "Instant download, One-time payment, Lifetime access",
+        "loop_audio": true,
+        "wave_detail": 4,
+        "click_sound": true,
+        "click_volume": 50,
+        "animate_panel": true,
+        "max_width": 1120,
+        "corner_radius": 22,
+        "thumb_shape": "50%",
+        "show_key_hint": true,
+        "key_hint_text": "Use arrow keys",
+        "padding_top": 72,
+        "padding_bottom": 72,
+        "background_color": "#f1f1ef",
+        "accent_color": "#1242fd",
+        "heading_color": "#111111",
+        "body_color": "#6b6b68",
+        "panel_color": "#3a3a3a",
+        "panel_text_color": "#ffffff",
+        "title_size": 76,
+        "title_size_mobile": 46
+      }
     }
   },
   "order": [
@@ -546,6 +623,7 @@
     "preset_ab_player_GAwyiF",
     "product_list_fa6P9H",
     "artist_video_carousel_1_iEzYKG",
-    "faq_buying_aUpQHi"
+    "faq_buying_aUpQHi",
+    "preset_ab_player_XPUJ4W"
   ]
 }
