@@ -1,0 +1,324 @@
+
+{%- comment -%}
+  Announcement Rotator
+  Click-through announcement bar with arrows and a crossfade.
+  Lives in the header group, same slot as the stock announcement bar.
+{%- endcomment -%}
+
+{%- liquid
+  assign msgs = section.blocks | where: 'type', 'message'
+-%}
+
+{%- if msgs.size > 0 -%}
+  <announcement-rotator
+    class="arot arot--{{ section.settings.arrow_position }}"
+    id="Arot-{{ section.id }}"
+    data-autoplay="{% if section.settings.autoplay %}true{% else %}false{% endif %}"
+    data-interval="{{ section.settings.interval | times: 1000 }}"
+    style="
+      --arot-bg: {{ section.settings.background_color }};
+      --arot-ink: {{ section.settings.text_color }};
+      --arot-size: {{ section.settings.font_size }}px;
+      --arot-size-mobile: {{ section.settings.font_size_mobile }}px;
+      --arot-tracking: {{ section.settings.letter_spacing }}em;
+      --arot-pad: {{ section.settings.padding }}px;
+      --arot-speed: {{ section.settings.transition_speed }}ms;
+    "
+  >
+    <div class="arot__inner">
+      {%- if section.settings.show_arrows and msgs.size > 1 -%}
+        <button class="arot__arrow" type="button" data-arot-prev aria-label="Previous announcement">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      {%- endif -%}
+
+      <div class="arot__slides" data-arot-slides aria-live="polite" aria-atomic="true">
+        {%- for block in msgs -%}
+          <div
+            class="arot__slide{% if forloop.first %} is-active{% endif %}"
+            data-arot-slide
+            {% unless forloop.first %}aria-hidden="true"{% endunless %}
+            {{ block.shopify_attributes }}
+          >
+            {%- if block.settings.link != blank -%}
+              <a class="arot__text arot__text--link" href="{{ block.settings.link }}">{{ block.settings.text }}</a>
+            {%- else -%}
+              <span class="arot__text">{{ block.settings.text }}</span>
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+      </div>
+
+      {%- if section.settings.show_arrows and msgs.size > 1 -%}
+        <button class="arot__arrow" type="button" data-arot-next aria-label="Next announcement">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      {%- endif -%}
+    </div>
+  </announcement-rotator>
+
+  <script>
+    (function () {
+      if (customElements.get('announcement-rotator')) return;
+
+      class AnnouncementRotator extends HTMLElement {
+        connectedCallback() {
+          if (this.dataset.ready === '1') return;
+          this.dataset.ready = '1';
+
+          this.slides = [].slice.call(this.querySelectorAll('[data-arot-slide]'));
+          if (this.slides.length === 0) return;
+
+          this.index = 0;
+          var self = this;
+
+          var prev = this.querySelector('[data-arot-prev]');
+          var next = this.querySelector('[data-arot-next]');
+          if (prev) prev.addEventListener('click', function () { self.go(self.index - 1, true); });
+          if (next) next.addEventListener('click', function () { self.go(self.index + 1, true); });
+
+          // Arrow keys when the bar has focus
+          this.addEventListener('keydown', function (e) {
+            if (e.key === 'ArrowLeft') { self.go(self.index - 1, true); e.preventDefault(); }
+            if (e.key === 'ArrowRight') { self.go(self.index + 1, true); e.preventDefault(); }
+          });
+
+          var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          this.auto = this.dataset.autoplay === 'true' && this.slides.length > 1 && !reduced;
+          this.interval = parseInt(this.dataset.interval, 10) || 5000;
+
+          if (this.auto) {
+            this.start();
+            // don't rotate out from under someone reading or hovering
+            this.addEventListener('pointerenter', function () { self.stop(); });
+            this.addEventListener('pointerleave', function () { self.start(); });
+            this.addEventListener('focusin', function () { self.stop(); });
+            this.addEventListener('focusout', function () { self.start(); });
+            document.addEventListener('visibilitychange', function () {
+              document.hidden ? self.stop() : self.start();
+            });
+          }
+        }
+
+        disconnectedCallback() { this.stop(); }
+
+        start() {
+          if (!this.auto || this.timer) return;
+          var self = this;
+          this.timer = setInterval(function () { self.go(self.index + 1, false); }, this.interval);
+        }
+
+        stop() {
+          if (this.timer) { clearInterval(this.timer); this.timer = null; }
+        }
+
+        go(i, fromUser) {
+          var n = this.slides.length;
+          if (n < 2) return;
+          i = ((i % n) + n) % n;           // wrap both directions
+          if (i === this.index) return;
+
+          var out = this.slides[this.index];
+          var into = this.slides[i];
+
+          out.classList.remove('is-active');
+          out.setAttribute('aria-hidden', 'true');
+          into.classList.add('is-active');
+          into.removeAttribute('aria-hidden');
+
+          this.index = i;
+
+          // a manual click restarts the dwell so it doesn't flip immediately after
+          if (fromUser && this.auto) { this.stop(); this.start(); }
+        }
+      }
+
+      customElements.define('announcement-rotator', AnnouncementRotator);
+    })();
+  </script>
+{%- endif -%}
+
+{% stylesheet %}
+  .arot {
+    display: block;
+    background: var(--arot-bg, #1242fd);
+    color: var(--arot-ink, #fff);
+    position: relative;
+    z-index: 2;
+  }
+
+  .arot__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding-block: var(--arot-pad, 11px);
+    padding-inline: 12px;
+    max-inline-size: 100%;
+  }
+
+  /* arrows pinned to the far edges instead of hugging the text */
+  .arot--edges .arot__inner {
+    justify-content: space-between;
+    padding-inline: clamp(10px, 3vw, 40px);
+  }
+
+  .arot--edges .arot__slides { flex: 1 1 auto; }
+
+  .arot__slides {
+    display: grid;               /* every slide in one cell = height of the tallest */
+    align-items: center;
+    justify-items: center;
+    min-inline-size: 0;
+  }
+
+  .arot__slide {
+    grid-area: 1 / 1;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition:
+      opacity var(--arot-speed, 420ms) ease,
+      transform var(--arot-speed, 420ms) cubic-bezier(0.2, 0.8, 0.2, 1),
+      visibility 0s linear var(--arot-speed, 420ms);
+    text-align: center;
+    max-inline-size: 100%;
+  }
+
+  .arot__slide.is-active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    transition-delay: 0s, 0s, 0s;
+  }
+
+  .arot__text {
+    display: block;
+    font-size: var(--arot-size, 13px);
+    font-weight: 700;
+    letter-spacing: var(--arot-tracking, 0.08em);
+    line-height: 1.35;
+    text-transform: uppercase;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-inline-size: 100%;
+  }
+
+  .arot__text--link {
+    color: inherit;
+    text-decoration: none;
+    border-block-end: 1px solid transparent;
+    transition: border-color 0.25s ease;
+  }
+
+  .arot__text--link:hover { border-block-end-color: currentcolor; }
+
+  .arot__arrow {
+    flex: 0 0 auto;
+    inline-size: 28px;
+    block-size: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: opacity 0.2s ease, background 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .arot__arrow svg { inline-size: 16px; block-size: 16px; }
+
+  .arot__arrow:hover {
+    opacity: 1;
+    background: rgb(255 255 255 / 0.14);
+    transform: scale(1.08);
+  }
+
+  .arot__arrow:active { transform: scale(0.94); }
+
+  .arot__arrow:focus-visible {
+    outline: 2px solid currentcolor;
+    outline-offset: 2px;
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .arot__slide { transition: opacity 0.01ms linear; transform: none; }
+    .arot__arrow { transition: none; }
+  }
+
+  @media screen and (max-width: 749px) {
+    .arot__text {
+      font-size: var(--arot-size-mobile, 11px);
+      white-space: normal;
+    }
+
+    .arot__inner { gap: 4px; padding-inline: 8px; }
+    .arot--edges .arot__inner { padding-inline: 6px; }
+    .arot__arrow { inline-size: 26px; block-size: 26px; }
+    .arot__arrow svg { inline-size: 15px; block-size: 15px; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Announcement Rotator",
+  "enabled_on": { "groups": ["header"] },
+  "settings": [
+    { "type": "header", "content": "Behaviour" },
+    { "type": "checkbox", "id": "show_arrows", "label": "Show arrows", "default": true },
+    {
+      "type": "select",
+      "id": "arrow_position",
+      "label": "Arrow position",
+      "options": [
+        { "value": "inline", "label": "Beside the text" },
+        { "value": "edges", "label": "At the far edges" }
+      ],
+      "default": "inline"
+    },
+    { "type": "checkbox", "id": "autoplay", "label": "Rotate automatically", "default": true,
+      "info": "Pauses on hover, on keyboard focus, and when the tab is hidden." },
+    { "type": "range", "id": "interval", "label": "Seconds per message", "min": 3, "max": 12, "step": 1, "unit": "s", "default": 5,
+      "visible_if": "{{ section.settings.autoplay }}" },
+    { "type": "range", "id": "transition_speed", "label": "Fade speed", "min": 150, "max": 900, "step": 30, "unit": "ms", "default": 420 },
+    { "type": "header", "content": "Appearance" },
+    { "type": "color", "id": "background_color", "label": "Background", "default": "#1242fd" },
+    { "type": "color", "id": "text_color", "label": "Text", "default": "#ffffff" },
+    { "type": "range", "id": "font_size", "label": "Text size (desktop)", "min": 10, "max": 20, "step": 1, "unit": "px", "default": 13 },
+    { "type": "range", "id": "font_size_mobile", "label": "Text size (mobile)", "min": 9, "max": 16, "step": 1, "unit": "px", "default": 11 },
+    { "type": "range", "id": "letter_spacing", "label": "Letter spacing", "min": 0, "max": 0.3, "step": 0.01, "unit": "em", "default": 0.08 },
+    { "type": "range", "id": "padding", "label": "Bar height", "min": 4, "max": 28, "step": 1, "unit": "px", "default": 11 }
+  ],
+  "blocks": [
+    {
+      "type": "message",
+      "name": "Message",
+      "settings": [
+        { "type": "text", "id": "text", "label": "Text", "default": "INSTANT DOWNLOADS!" },
+        { "type": "url", "id": "link", "label": "Link", "info": "Optional." }
+      ]
+    }
+  ],
+  "max_blocks": 10,
+  "presets": [
+    {
+      "name": "Announcement Rotator",
+      "blocks": {
+        "m1": { "type": "message", "settings": { "text": "INSTANT DOWNLOADS!" } },
+        "m2": { "type": "message", "settings": { "text": "CUSTOM VOCAL PRESETS - NOW AVAILABLE" } },
+        "m3": { "type": "message", "settings": { "text": "CUSTOM MIXES - NOW AVAILABLE" } }
+      },
+      "block_order": ["m1", "m2", "m3"]
+    }
+  ]
+}
+{% endschema %}
