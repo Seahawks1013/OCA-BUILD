@@ -136,7 +136,7 @@
             "subline": "& it works in any DAW...",
             "product": "",
             "image": "shopify://shop_images/GABE_CHAIN_PRESET.jpg",
-            "button_link": "",
+            "button_link": "shopify://products/gabe-chain",
             "raw_audio": "Bandit_DRY.wav",
             "preset_audio": "Bandit_WET.wav"
           }
@@ -180,6 +180,11 @@
         "preset_label": "PRESET",
         "button_label": "GET THE PRESET",
         "pills": "Instant download, One-time payment, Lifetime access",
+        "loop_audio": true,
+        "wave_detail": 4,
+        "click_sound": true,
+        "click_volume": 50,
+        "animate_panel": true,
         "max_width": 1120,
         "corner_radius": 22,
         "padding_top": 72,
