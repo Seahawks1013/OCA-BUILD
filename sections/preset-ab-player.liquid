@@ -7,8 +7,19 @@
 {%- endcomment -%}
 
 {%- liquid
-  assign preset_blocks = section.blocks | where: 'type', 'preset'
-  assign daw_blocks = section.blocks | where: 'type', 'daw'
+  # Counted with explicit loops rather than `| where:` — that filter is
+  # unreliable against locally-defined section blocks, and an empty result
+  # would silently suppress the whole section.
+  assign preset_count = 0
+  assign daw_count = 0
+  for block in section.blocks
+    if block.type == 'preset'
+      assign preset_count = preset_count | plus: 1
+    endif
+    if block.type == 'daw'
+      assign daw_count = daw_count | plus: 1
+    endif
+  endfor
 -%}
 
 <preset-ab-player
@@ -34,7 +45,7 @@
 >
   <div class="pab__inner">
     <div class="pab__stage">
-      {%- if preset_blocks.size > 1 -%}
+      {%- if preset_count > 1 -%}
         <button class="pab__nav pab__nav--prev" type="button" data-pab-prev aria-label="Previous preset">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -44,7 +55,10 @@
       {%- endif -%}
 
       <div class="pab__track" data-pab-track>
-        {%- for block in preset_blocks -%}
+        {%- assign p_index = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'preset' -%}{%- continue -%}{%- endif -%}
+          {%- assign p_index = p_index | plus: 1 -%}
           {%- liquid
             # ---- Audio sources: accept a bare filename from Settings > Files, or a full URL
             assign raw_src = ''
@@ -81,7 +95,7 @@
           <article
             class="pab__slide"
             data-pab-slide
-            data-seed="{{ forloop.index }}{{ block.settings.title | size }}"
+            data-seed="{{ p_index }}{{ block.settings.title | size }}"
             {{ block.shopify_attributes }}
           >
             <div class="pab__head">
@@ -144,9 +158,10 @@
               </div>
 
               <div class="pab__row pab__row--meta">
-                {%- if daw_blocks.size > 0 -%}
+                {%- if daw_count > 0 -%}
                   <ul class="pab__daws" role="list">
-                    {%- for daw in daw_blocks -%}
+                    {%- for daw in section.blocks -%}
+                      {%- if daw.type != 'daw' -%}{%- continue -%}{%- endif -%}
                       <li class="pab__daw{% if daw.settings.logo == blank %} pab__daw--text{% endif %}" {{ daw.shopify_attributes }}>
                         {%- if daw.settings.logo != blank -%}
                           {{ daw.settings.logo | image_url: width: 120 | image_tag: widths: '60, 120', alt: daw.settings.name, loading: 'lazy', class: 'pab__daw-img' }}
@@ -186,7 +201,8 @@
               {%- endif -%}
             </div>
           </article>
-        {%- else -%}
+        {%- endfor -%}
+        {%- if preset_count == 0 -%}
           <article class="pab__slide">
             <div class="pab__head">
               <div class="pab__copy">
@@ -195,11 +211,11 @@
               </div>
             </div>
           </article>
-        {%- endfor -%}
+        {%- endif -%}
       </div>
     </div>
 
-    {%- if preset_blocks.size > 1 -%}
+    {%- if preset_count > 1 -%}
       <div class="pab__dots" data-pab-dots role="tablist" aria-label="Choose a preset"></div>
     {%- endif -%}
   </div>

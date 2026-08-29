@@ -6,10 +6,18 @@
 {%- endcomment -%}
 
 {%- liquid
-  assign msgs = section.blocks | where: 'type', 'message'
+  # Counted with an explicit loop rather than `| where:` — the where filter is
+  # unreliable against locally-defined section blocks, and if it comes back
+  # empty the guard below silently suppresses the whole bar.
+  assign msg_count = 0
+  for block in section.blocks
+    if block.type == 'message'
+      assign msg_count = msg_count | plus: 1
+    endif
+  endfor
 -%}
 
-{%- if msgs.size > 0 -%}
+{%- if msg_count > 0 -%}
   <announcement-rotator
     class="arot arot--{{ section.settings.arrow_position }}"
     id="Arot-{{ section.id }}"
@@ -26,7 +34,7 @@
     "
   >
     <div class="arot__inner">
-      {%- if section.settings.show_arrows and msgs.size > 1 -%}
+      {%- if section.settings.show_arrows and msg_count > 1 -%}
         <button class="arot__arrow" type="button" data-arot-prev aria-label="Previous announcement">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -35,23 +43,27 @@
       {%- endif -%}
 
       <div class="arot__slides" data-arot-slides aria-live="polite" aria-atomic="true">
-        {%- for block in msgs -%}
-          <div
-            class="arot__slide{% if forloop.first %} is-active{% endif %}"
-            data-arot-slide
-            {% unless forloop.first %}aria-hidden="true"{% endunless %}
-            {{ block.shopify_attributes }}
-          >
-            {%- if block.settings.link != blank -%}
-              <a class="arot__text arot__text--link" href="{{ block.settings.link }}">{{ block.settings.text }}</a>
-            {%- else -%}
-              <span class="arot__text">{{ block.settings.text }}</span>
-            {%- endif -%}
-          </div>
+        {%- assign shown = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type == 'message' -%}
+            {%- assign shown = shown | plus: 1 -%}
+            <div
+              class="arot__slide{% if shown == 1 %} is-active{% endif %}"
+              data-arot-slide
+              {% unless shown == 1 %}aria-hidden="true"{% endunless %}
+              {{ block.shopify_attributes }}
+            >
+              {%- if block.settings.link != blank -%}
+                <a class="arot__text arot__text--link" href="{{ block.settings.link }}">{{ block.settings.text }}</a>
+              {%- else -%}
+                <span class="arot__text">{{ block.settings.text }}</span>
+              {%- endif -%}
+            </div>
+          {%- endif -%}
         {%- endfor -%}
       </div>
 
-      {%- if section.settings.show_arrows and msgs.size > 1 -%}
+      {%- if section.settings.show_arrows and msg_count > 1 -%}
         <button class="arot__arrow" type="button" data-arot-next aria-label="Next announcement">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
