@@ -45,14 +45,6 @@
 >
   <div class="pab__inner">
     <div class="pab__stage">
-      {%- if preset_count > 1 -%}
-        <button class="pab__nav pab__nav--prev" type="button" data-pab-prev aria-label="Previous preset">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="pab__nav pab__nav--next" type="button" data-pab-next aria-label="Next preset">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      {%- endif -%}
 
       <div class="pab__track" data-pab-track>
         {%- assign p_index = 0 -%}
@@ -216,7 +208,52 @@
     </div>
 
     {%- if preset_count > 1 -%}
-      <div class="pab__dots" data-pab-dots role="tablist" aria-label="Choose a preset"></div>
+      <div class="pab__browse">
+        <button class="pab__browse-nav" type="button" data-pab-thumbs-prev aria-label="Scroll presets left">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <ul class="pab__thumbs" data-pab-thumbs role="tablist" aria-label="Choose a preset">
+          {%- assign t_index = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'preset' -%}{%- continue -%}{%- endif -%}
+            {%- assign t_index = t_index | plus: 1 -%}
+            {%- liquid
+              assign thumb_art = block.settings.image
+              if thumb_art == blank and block.settings.product != blank
+                assign thumb_art = block.settings.product.featured_image
+              endif
+            -%}
+            <li class="pab__thumb-item">
+              <button
+                class="pab__thumb{% if t_index == 1 %} is-active{% endif %}"
+                type="button"
+                data-pab-thumb
+                data-index="{{ t_index | minus: 1 }}"
+                role="tab"
+                aria-selected="{% if t_index == 1 %}true{% else %}false{% endif %}"
+              >
+                <span class="pab__thumb-art">
+                  {%- if thumb_art != blank -%}
+                    {{ thumb_art | image_url: width: 240 | image_tag:
+                        widths: '120, 240', sizes: '84px',
+                        alt: block.settings.title, loading: 'lazy', class: 'pab__thumb-img' }}
+                  {%- else -%}
+                    <span class="pab__thumb-ph"></span>
+                  {%- endif -%}
+                </span>
+                {%- if block.settings.title != blank -%}
+                  <span class="pab__thumb-name">{{ block.settings.title }}</span>
+                {%- endif -%}
+              </button>
+            </li>
+          {%- endfor -%}
+        </ul>
+
+        <button class="pab__browse-nav" type="button" data-pab-thumbs-next aria-label="Scroll presets right">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
     {%- endif -%}
   </div>
 </preset-ab-player>
@@ -583,22 +620,24 @@
         }
 
         this.index = 0;
-        this.prevBtn = this.querySelector('[data-pab-prev]');
-        this.nextBtn = this.querySelector('[data-pab-next]');
-        this.dotsEl = this.querySelector('[data-pab-dots]');
+        this.thumbsEl = this.querySelector('[data-pab-thumbs]');
+        this.thumbs = [].slice.call(this.querySelectorAll('[data-pab-thumb]'));
+        this.thumbPrev = this.querySelector('[data-pab-thumbs-prev]');
+        this.thumbNext = this.querySelector('[data-pab-thumbs-next]');
 
-        if (this.prevBtn) this.prevBtn.addEventListener('click', function () { self.go(self.index - 1); });
-        if (this.nextBtn) this.nextBtn.addEventListener('click', function () { self.go(self.index + 1); });
-
-        if (this.dotsEl && this.slides.length > 1) {
-          this.slides.forEach(function (s, i) {
-            var d = document.createElement('button');
-            d.className = 'pab__dot';
-            d.type = 'button';
-            d.setAttribute('aria-label', 'Preset ' + (i + 1));
-            d.addEventListener('click', function () { self.go(i); });
-            self.dotsEl.appendChild(d);
+        // clicking a cover art jumps straight to that preset
+        this.thumbs.forEach(function (t) {
+          t.addEventListener('click', function () {
+            self.click_();
+            self.go(parseInt(t.dataset.index, 10) || 0);
           });
+        });
+
+        // the arrows scroll the strip, they do not change preset
+        if (this.thumbPrev) this.thumbPrev.addEventListener('click', function () { self.scrollThumbs(-1); });
+        if (this.thumbNext) this.thumbNext.addEventListener('click', function () { self.scrollThumbs(1); });
+        if (this.thumbsEl) {
+          this.thumbsEl.addEventListener('scroll', function () { self.syncThumbNav(); }, { passive: true });
         }
 
         if (this.track) {
@@ -648,14 +687,41 @@
         this.update();
       }
 
+      scrollThumbs(dir) {
+        if (!this.thumbsEl) return;
+        var item = this.thumbsEl.querySelector('.pab__thumb-item');
+        var gap = parseFloat(getComputedStyle(this.thumbsEl).columnGap) || 0;
+        var step = item ? (item.offsetWidth + gap) * 2 : this.thumbsEl.clientWidth * 0.7;
+        this.thumbsEl.scrollBy({ left: dir * step, behavior: 'smooth' });
+      }
+
+      syncThumbNav() {
+        if (!this.thumbsEl || !this.thumbPrev || !this.thumbNext) return;
+        var max = this.thumbsEl.scrollWidth - this.thumbsEl.clientWidth - 2;
+        var overflowing = max > 2;
+        this.thumbPrev.toggleAttribute('disabled', !overflowing || this.thumbsEl.scrollLeft <= 2);
+        this.thumbNext.toggleAttribute('disabled', !overflowing || this.thumbsEl.scrollLeft >= max);
+      }
+
       update() {
-        var last = this.slides.length - 1;
-        if (this.prevBtn) this.prevBtn.toggleAttribute('disabled', this.index <= 0);
-        if (this.nextBtn) this.nextBtn.toggleAttribute('disabled', this.index >= last);
-        if (this.dotsEl) {
-          var kids = this.dotsEl.children;
-          for (var i = 0; i < kids.length; i++) kids[i].classList.toggle('is-active', i === this.index);
-        }
+        var self = this;
+        this.thumbs.forEach(function (t, k) {
+          var on = k === self.index;
+          t.classList.toggle('is-active', on);
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+          if (on && self.thumbsEl) {
+            // keep the active cover in view without yanking the whole page
+            var tr = t.getBoundingClientRect();
+            var sr = self.thumbsEl.getBoundingClientRect();
+            if (tr.left < sr.left || tr.right > sr.right) {
+              self.thumbsEl.scrollBy({
+                left: tr.left - sr.left - (sr.width - tr.width) / 2,
+                behavior: 'smooth'
+              });
+            }
+          }
+        });
+        this.syncThumbNav();
         this.slides.forEach(function (s) { s.positionThumb(); });
       }
     }
@@ -691,29 +757,6 @@
   .pab__track::-webkit-scrollbar { display: none; }
 
   .pab__slide { scroll-snap-align: center; min-inline-size: 0; }
-
-  .pab__nav {
-    position: absolute;
-    top: 32%;
-    z-index: 3;
-    inline-size: 44px;
-    block-size: 44px;
-    border-radius: 50%;
-    border: 1px solid rgb(0 0 0 / 0.14);
-    background: rgb(255 255 255 / 0.86);
-    backdrop-filter: blur(6px);
-    color: var(--pab-ink, #111);
-    display: grid;
-    place-items: center;
-    cursor: pointer;
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, background 0.25s ease;
-  }
-
-  .pab__nav svg { inline-size: 20px; block-size: 20px; }
-  .pab__nav--prev { inset-inline-start: -8px; }
-  .pab__nav--next { inset-inline-end: -8px; }
-  .pab__nav:hover:not([disabled]) { transform: scale(1.08); background: #fff; }
-  .pab__nav[disabled] { opacity: 0.28; cursor: default; }
 
   /* ---------- headline + art ---------- */
   .pab__head {
@@ -1051,26 +1094,125 @@
   .pab__cta:hover .pab__cta-arrow { transform: translateX(3px); }
   .pab__cta-arrow svg { inline-size: 17px; block-size: 17px; }
 
-  /* dots */
-  .pab__dots { display: flex; justify-content: center; gap: 7px; margin-block-start: 18px; }
-
-  .pab__dot {
-    inline-size: 7px;
-    block-size: 7px;
-    padding: 0;
-    border: 0;
-    border-radius: 50%;
-    background: rgb(0 0 0 / 0.2);
-    cursor: pointer;
-    transition: inline-size 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.3s ease;
+  /* ---------- cover-art browser ---------- */
+  .pab__browse {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-block-start: 20px;
   }
 
-  .pab__dot.is-active { inline-size: 22px; border-radius: 999px; background: var(--pab-accent, #1242fd); }
+  .pab__browse-nav {
+    flex: 0 0 auto;
+    inline-size: 34px;
+    block-size: 34px;
+    border-radius: 50%;
+    border: 1px solid rgb(0 0 0 / 0.14);
+    background: transparent;
+    color: var(--pab-ink, #111);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__browse-nav svg { inline-size: 17px; block-size: 17px; }
+  .pab__browse-nav:hover:not([disabled]) { background: rgb(0 0 0 / 0.06); transform: scale(1.07); }
+  .pab__browse-nav[disabled] { opacity: 0.22; cursor: default; }
+
+  .pab__thumbs {
+    flex: 1 1 auto;
+    display: flex;
+    gap: 12px;
+    margin: 0;
+    padding: 4px 2px 6px;
+    list-style: none;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .pab__thumbs::-webkit-scrollbar { display: none; }
+
+  .pab__thumb-item { flex: 0 0 auto; scroll-snap-align: start; }
+
+  .pab__thumb {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    inline-size: 84px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__thumb:hover { transform: translateY(-3px); }
+
+  .pab__thumb-art {
+    position: relative;
+    display: block;
+    inline-size: 84px;
+    block-size: 84px;
+    border-radius: 9px;
+    overflow: hidden;
+    background: rgb(0 0 0 / 0.08);
+    box-shadow: 0 0 0 0 rgb(0 0 0 / 0);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    opacity: 0.55;
+    filter: saturate(0.7);
+    transition: opacity 0.28s ease, outline-color 0.28s ease, filter 0.28s ease, box-shadow 0.28s ease;
+  }
+
+  .pab__thumb-img,
+  .pab__thumb-ph {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .pab__thumb-ph { background: linear-gradient(135deg, #1b1b1b, #0d1540); }
+
+  .pab__thumb.is-active .pab__thumb-art,
+  .pab__thumb:hover .pab__thumb-art {
+    opacity: 1;
+    filter: saturate(1);
+  }
+
+  .pab__thumb.is-active .pab__thumb-art {
+    outline-color: var(--pab-accent, #1242fd);
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.18);
+  }
+
+  .pab__thumb:focus-visible .pab__thumb-art {
+    outline-color: var(--pab-ink, #111);
+    opacity: 1;
+  }
+
+  .pab__thumb-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+    color: var(--pab-muted, #6b6b68);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    transition: color 0.28s ease;
+  }
+
+  .pab__thumb.is-active .pab__thumb-name { color: var(--pab-ink, #111); }
 
   @media (prefers-reduced-motion: reduce) {
     .pab__slide.is-playing .pab__bar { animation: none; }
     .pab__track { scroll-behavior: auto; }
-    .pab__nav, .pab__play, .pab__cta, .pab__cta-arrow,
+    .pab__play, .pab__cta, .pab__cta-arrow, .pab__thumb, .pab__browse-nav,
     .pab__switch-thumb, .pab__art-img, .pab__daw, .pab__dot { transition: none; }
   }
 
@@ -1089,10 +1231,12 @@
     .pab__title { font-size: var(--pab-title-mobile, 46px); }
     .pab__subline { text-align: left; }
     .pab__panel { padding: 16px; border-radius: calc(var(--pab-radius, 22px) * 0.8); }
-    .pab__nav { top: 26%; inline-size: 38px; block-size: 38px; }
-    .pab__nav--prev { inset-inline-start: -6px; }
-    .pab__nav--next { inset-inline-end: -6px; }
     .pab__cta { inline-size: 100%; justify-content: space-between; }
+    .pab__browse { gap: 6px; margin-block-start: 16px; }
+    .pab__browse-nav { inline-size: 30px; block-size: 30px; }
+    .pab__thumbs { gap: 9px; }
+    .pab__thumb, .pab__thumb-art { inline-size: 68px; }
+    .pab__thumb-art { block-size: 68px; }
     .pab__time { font-size: 13px; }
     .pab__ab-label { display: none; }
 
