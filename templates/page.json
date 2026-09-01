@@ -113,14 +113,6 @@
             "wide": false
           }
         },
-        "photo_QchPay": {
-          "type": "photo",
-          "settings": {
-            "caption": "Monitoring",
-            "ratio": "1",
-            "wide": false
-          }
-        },
         "credit_jCMn8K": {
           "type": "credit",
           "settings": {
@@ -237,7 +229,6 @@
         "photo_hPDLX6",
         "photo_DbebkP",
         "photo_BdxV7U",
-        "photo_QchPay",
         "credit_jCMn8K",
         "credit_JBJUR8",
         "credit_iFbdBa",
