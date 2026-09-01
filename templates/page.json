@@ -92,7 +92,8 @@
         "photo_hPDLX6": {
           "type": "photo",
           "settings": {
-            "caption": "In the studio",
+            "image": "shopify://shop_images/IMG_6073.jpg",
+            "caption": "live show",
             "ratio": "1",
             "wide": false
           }
@@ -100,7 +101,8 @@
         "photo_DbebkP": {
           "type": "photo",
           "settings": {
-            "caption": "Session work",
+            "image": "shopify://shop_images/IMG_6445_a9473297-64d1-4161-a33e-c31da08d7bbf.png",
+            "caption": "session work",
             "ratio": "1",
             "wide": false
           }
@@ -108,7 +110,8 @@
         "photo_BdxV7U": {
           "type": "photo",
           "settings": {
-            "caption": "The desk",
+            "image": "shopify://shop_images/IMG_6445_1.png",
+            "caption": "the studio",
             "ratio": "1",
             "wide": false
           }
