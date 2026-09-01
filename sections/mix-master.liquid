@@ -1,0 +1,925 @@
+
+{%- comment -%}
+  Mix & Master
+  Five-part service page section: hero + trust stats, engineering credits reel,
+  pricing card, client-journey steps, closing statement.
+  Blocks: stat / credit / deliverable / step.
+{%- endcomment -%}
+
+{%- liquid
+  # Counted with explicit loops rather than `| where:` — that filter is
+  # unreliable against locally-defined section blocks.
+  assign stat_count = 0
+  assign credit_count = 0
+  assign deliv_count = 0
+  assign step_count = 0
+  for block in section.blocks
+    case block.type
+      when 'stat'
+        assign stat_count = stat_count | plus: 1
+      when 'credit'
+        assign credit_count = credit_count | plus: 1
+      when 'deliverable'
+        assign deliv_count = deliv_count | plus: 1
+      when 'step'
+        assign step_count = step_count | plus: 1
+    endcase
+  endfor
+-%}
+
+<mix-master
+  class="mm"
+  id="MixMaster-{{ section.id }}"
+  data-reel-speed="{{ section.settings.reel_speed }}"
+  style="
+    --mm-bg: {{ section.settings.background_color }};
+    --mm-ink: {{ section.settings.heading_color }};
+    --mm-muted: {{ section.settings.body_color }};
+    --mm-accent: {{ section.settings.accent_color }};
+    --mm-line: {{ section.settings.line_color }};
+    --mm-card: {{ section.settings.card_color }};
+    --mm-card-ink: {{ section.settings.card_text_color }};
+    --mm-max: {{ section.settings.max_width }}px;
+    --mm-radius: {{ section.settings.corner_radius }}px;
+    --mm-h1: {{ section.settings.headline_size }}px;
+    --mm-h1-mobile: {{ section.settings.headline_size_mobile }}px;
+    --mm-pad-top: {{ section.settings.padding_top }}px;
+    --mm-pad-bottom: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="mm__inner">
+
+    {%- comment -%} ---------- 1. HERO + TRUST ---------- {%- endcomment -%}
+    <header class="mm__hero">
+      {%- if section.settings.hero_eyebrow != blank -%}
+        <p class="mm__eyebrow" data-reveal>{{ section.settings.hero_eyebrow }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.hero_headline != blank -%}
+        <h2 class="mm__headline" data-reveal style="--d:60ms">{{ section.settings.hero_headline }}</h2>
+      {%- endif -%}
+
+      {%- if section.settings.hero_body != blank -%}
+        <div class="mm__lede" data-reveal style="--d:120ms">{{ section.settings.hero_body }}</div>
+      {%- endif -%}
+
+      {%- if stat_count > 0 -%}
+        <ul class="mm__stats" role="list">
+          {%- assign si = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'stat' -%}{%- continue -%}{%- endif -%}
+            {%- assign si = si | plus: 1 -%}
+            <li class="mm__stat" data-reveal style="--d:{{ si | times: 90 | plus: 160 }}ms" {{ block.shopify_attributes }}>
+              <span class="mm__stat-value">
+                <span
+                  class="mm__stat-num"
+                  data-count-to="{{ block.settings.value }}"
+                  data-decimals="{{ block.settings.decimals }}"
+                >0</span><span class="mm__stat-suffix">{{ block.settings.suffix }}</span>
+              </span>
+              <span class="mm__stat-label">{{ block.settings.label }}</span>
+            </li>
+          {%- endfor -%}
+        </ul>
+      {%- endif -%}
+    </header>
+
+    {%- comment -%} ---------- 2. ENGINEERING CREDITS ---------- {%- endcomment -%}
+    {%- if credit_count > 0 -%}
+      <section class="mm__block mm__credits">
+        <div class="mm__block-head" data-reveal>
+          {%- if section.settings.credits_headline != blank -%}
+            <h3 class="mm__h3">{{ section.settings.credits_headline }}</h3>
+          {%- endif -%}
+          {%- if section.settings.credits_body != blank -%}
+            <div class="mm__block-body">{{ section.settings.credits_body }}</div>
+          {%- endif -%}
+        </div>
+
+        <div class="mm__reel" data-mm-reel data-reveal style="--d:80ms">
+          <div class="mm__reel-track" data-mm-reel-track>
+            {%- for pass in (1..2) -%}
+              {%- for block in section.blocks -%}
+                {%- if block.type != 'credit' -%}{%- continue -%}{%- endif -%}
+                <figure class="mm__cover" {% if pass == 2 %}aria-hidden="true"{% endif %} {{ block.shopify_attributes }}>
+                  <span class="mm__cover-art">
+                    {%- if block.settings.image != blank -%}
+                      {{ block.settings.image | image_url: width: 600 | image_tag:
+                          widths: '200, 300, 450, 600', sizes: '200px',
+                          alt: block.settings.title, loading: 'lazy', class: 'mm__cover-img' }}
+                    {%- else -%}
+                      <span class="mm__cover-ph"></span>
+                    {%- endif -%}
+                    {%- if block.settings.streams != blank -%}
+                      <span class="mm__cover-streams">
+                        <span class="mm__cover-streams-num">{{ block.settings.streams }}</span>
+                        {%- if section.settings.streams_label != blank -%}
+                          <span class="mm__cover-streams-label">{{ section.settings.streams_label }}</span>
+                        {%- endif -%}
+                      </span>
+                    {%- endif -%}
+                  </span>
+                  {%- if block.settings.title != blank -%}
+                    <figcaption class="mm__cover-title">{{ block.settings.title }}</figcaption>
+                  {%- endif -%}
+                </figure>
+              {%- endfor -%}
+            {%- endfor -%}
+          </div>
+        </div>
+      </section>
+    {%- endif -%}
+
+    {%- comment -%} ---------- 3. PRICING CARD ---------- {%- endcomment -%}
+    <section class="mm__block">
+      <article class="mm__card" data-reveal>
+        <div class="mm__card-top">
+          <div>
+            {%- if section.settings.price_kicker != blank -%}
+              <p class="mm__card-kicker">{{ section.settings.price_kicker }}</p>
+            {%- endif -%}
+            {%- if section.settings.price_title != blank -%}
+              <h3 class="mm__card-title">{{ section.settings.price_title }}</h3>
+            {%- endif -%}
+            {%- if section.settings.price_body != blank -%}
+              <div class="mm__card-body">{{ section.settings.price_body }}</div>
+            {%- endif -%}
+          </div>
+
+          {%- if section.settings.price != blank -%}
+            <p class="mm__price">
+              <span class="mm__price-value">{{ section.settings.price }}</span>
+              {%- if section.settings.price_note != blank -%}
+                <span class="mm__price-note">{{ section.settings.price_note }}</span>
+              {%- endif -%}
+            </p>
+          {%- endif -%}
+        </div>
+
+        {%- if deliv_count > 0 -%}
+          <ul class="mm__deliverables" role="list">
+            {%- assign di = 0 -%}
+            {%- for block in section.blocks -%}
+              {%- if block.type != 'deliverable' -%}{%- continue -%}{%- endif -%}
+              {%- assign di = di | plus: 1 -%}
+              <li class="mm__deliverable" style="--d:{{ di | times: 45 }}ms" {{ block.shopify_attributes }}>
+                <span class="mm__tick" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+                {{ block.settings.text }}
+              </li>
+            {%- endfor -%}
+          </ul>
+        {%- endif -%}
+
+        <div class="mm__actions">
+          {%- if section.settings.primary_label != blank -%}
+            <a class="mm__btn mm__btn--primary" href="{{ section.settings.primary_link | default: '#' }}">
+              <span>{{ section.settings.primary_label }}</span>
+              <span class="mm__btn-arrow" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+            </a>
+          {%- endif -%}
+          {%- if section.settings.secondary_label != blank -%}
+            <a class="mm__btn mm__btn--ghost" href="{{ section.settings.secondary_link | default: '#' }}">
+              {{ section.settings.secondary_label }}
+            </a>
+          {%- endif -%}
+        </div>
+      </article>
+    </section>
+
+    {%- comment -%} ---------- 4. CLIENT JOURNEY ---------- {%- endcomment -%}
+    {%- if step_count > 0 -%}
+      <section class="mm__block">
+        <div class="mm__block-head" data-reveal>
+          {%- if section.settings.process_headline != blank -%}
+            <h3 class="mm__h3">{{ section.settings.process_headline }}</h3>
+          {%- endif -%}
+          {%- if section.settings.process_body != blank -%}
+            <div class="mm__block-body">{{ section.settings.process_body }}</div>
+          {%- endif -%}
+        </div>
+
+        <ol class="mm__steps" role="list">
+          {%- assign pi = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'step' -%}{%- continue -%}{%- endif -%}
+            {%- assign pi = pi | plus: 1 -%}
+            <li class="mm__step" data-reveal style="--d:{{ pi | times: 90 }}ms" {{ block.shopify_attributes }}>
+              <span class="mm__step-num">{{ block.settings.number | default: pi }}</span>
+              {%- if block.settings.title != blank -%}
+                <h4 class="mm__step-title">{{ block.settings.title }}</h4>
+              {%- endif -%}
+              {%- if block.settings.text != blank -%}
+                <p class="mm__step-text">{{ block.settings.text }}</p>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ol>
+      </section>
+    {%- endif -%}
+
+    {%- comment -%} ---------- 5. CLOSING ---------- {%- endcomment -%}
+    {%- if section.settings.closing_headline != blank or section.settings.closing_body != blank -%}
+      <section class="mm__closing" data-reveal>
+        {%- if section.settings.closing_headline != blank -%}
+          <h3 class="mm__closing-headline">{{ section.settings.closing_headline }}</h3>
+        {%- endif -%}
+        {%- if section.settings.closing_body != blank -%}
+          <div class="mm__closing-body">{{ section.settings.closing_body }}</div>
+        {%- endif -%}
+      </section>
+    {%- endif -%}
+
+  </div>
+</mix-master>
+
+<script>
+  (function () {
+    if (customElements.get('mix-master')) return;
+
+    class MixMaster extends HTMLElement {
+      connectedCallback() {
+        if (this.dataset.ready === '1') return;
+        this.dataset.ready = '1';
+
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var self = this;
+
+        // ---- reveal on scroll -------------------------------------------------
+        var targets = this.querySelectorAll('[data-reveal]');
+        if (reduced || !('IntersectionObserver' in window)) {
+          targets.forEach(function (el) { el.classList.add('is-in'); });
+        } else {
+          var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add('is-in');
+              io.unobserve(entry.target);
+              if (entry.target.classList.contains('mm__stat')) self.countUp(entry.target);
+            });
+          }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
+          targets.forEach(function (el) { io.observe(el); });
+        }
+
+        // ---- credits reel -----------------------------------------------------
+        var reel = this.querySelector('[data-mm-reel-track]');
+        if (reel && !reduced) {
+          // one full pass covers half the track, since the list is duplicated
+          var speed = parseFloat(this.dataset.reelSpeed) || 40;
+          var setDuration = function () {
+            var half = reel.scrollWidth / 2;
+            if (half > 0) reel.style.setProperty('--mm-reel-duration', (half / speed) + 's');
+          };
+          setDuration();
+          if ('ResizeObserver' in window) {
+            this.ro = new ResizeObserver(setDuration);
+            this.ro.observe(reel);
+          }
+          reel.classList.add('is-rolling');
+        }
+      }
+
+      disconnectedCallback() { if (this.ro) this.ro.disconnect(); }
+
+      countUp(statEl) {
+        var num = statEl.querySelector('[data-count-to]');
+        if (!num || num.dataset.done === '1') return;
+        num.dataset.done = '1';
+
+        var target = parseFloat(num.dataset.countTo);
+        if (!isFinite(target)) { num.textContent = num.dataset.countTo; return; }
+        var dp = parseInt(num.dataset.decimals, 10) || 0;
+        var dur = 1100;
+        var start = null;
+
+        function frame(ts) {
+          if (start === null) start = ts;
+          var p = Math.min(1, (ts - start) / dur);
+          // ease-out so it settles rather than stopping dead
+          var eased = 1 - Math.pow(1 - p, 3);
+          num.textContent = (target * eased).toFixed(dp);
+          if (p < 1) requestAnimationFrame(frame);
+          else num.textContent = target.toFixed(dp);
+        }
+        requestAnimationFrame(frame);
+      }
+    }
+
+    customElements.define('mix-master', MixMaster);
+  })();
+</script>
+
+{% stylesheet %}
+  .mm {
+    display: block;
+    background: var(--mm-bg, #f1f1ef);
+    color: var(--mm-muted, #6b6b68);
+    padding-block: var(--mm-pad-top, 96px) var(--mm-pad-bottom, 96px);
+    padding-inline: var(--page-margin, 24px);
+  }
+
+  .mm__inner {
+    max-width: var(--mm-max, 1160px);
+    margin-inline: auto;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(56px, 7vw, 104px);
+  }
+
+  /* ---------- reveal ---------- */
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(22px);
+    transition:
+      opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms),
+      transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms);
+  }
+
+  [data-reveal].is-in { opacity: 1; transform: none; }
+
+  /* ---------- 1. hero ---------- */
+  .mm__eyebrow {
+    margin: 0 0 1rem;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--mm-accent, #1242fd);
+  }
+
+  .mm__headline {
+    font-family: var(--font-heading--family, inherit);
+    font-size: min(var(--mm-h1, 84px), 8.2vw);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    color: var(--mm-ink, #111);
+    margin: 0;
+    max-width: 16ch;
+    overflow-wrap: normal;
+  }
+
+  .mm__lede {
+    margin-block-start: 1.6rem;
+    font-size: clamp(15px, 1.35vw, 18px);
+    line-height: 1.6;
+    max-width: 60ch;
+  }
+
+  .mm__lede > :first-child { margin-block-start: 0; }
+  .mm__lede > :last-child { margin-block-end: 0; }
+
+  .mm__stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1px;
+    margin: 3rem 0 0;
+    padding: 0;
+    list-style: none;
+    background: var(--mm-line, #d9d9d4);
+    border-block: 1px solid var(--mm-line, #d9d9d4);
+  }
+
+  .mm__stat {
+    background: var(--mm-bg, #f1f1ef);
+    padding: 26px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .mm__stat-value {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(34px, 4vw, 52px);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    color: var(--mm-ink, #111);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mm__stat-suffix { color: var(--mm-accent, #1242fd); }
+
+  .mm__stat-label {
+    font-size: 13px;
+    line-height: 1.45;
+    max-width: 24ch;
+  }
+
+  /* ---------- shared block heads ---------- */
+  .mm__block-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-block-end: 2rem;
+  }
+
+  .mm__h3 {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(26px, 3.4vw, 44px);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--mm-ink, #111);
+    margin: 0;
+  }
+
+  .mm__block-body {
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 46ch;
+  }
+
+  .mm__block-body > :first-child { margin-block-start: 0; }
+  .mm__block-body > :last-child { margin-block-end: 0; }
+
+  /* ---------- 2. credits reel ---------- */
+  .mm__reel {
+    overflow: hidden;
+    /* fade the ends so covers slide in and out rather than getting chopped */
+    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  }
+
+  .mm__reel-track {
+    display: flex;
+    gap: 18px;
+    width: max-content;
+  }
+
+  .mm__reel-track.is-rolling {
+    animation: mm-roll var(--mm-reel-duration, 40s) linear infinite;
+  }
+
+  .mm__reel:hover .mm__reel-track.is-rolling,
+  .mm__reel:focus-within .mm__reel-track.is-rolling {
+    animation-play-state: paused;
+  }
+
+  @keyframes mm-roll {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(-50%, 0, 0); }
+  }
+
+  .mm__cover {
+    flex: 0 0 auto;
+    inline-size: 200px;
+    margin: 0;
+  }
+
+  .mm__cover-art {
+    position: relative;
+    display: block;
+    inline-size: 200px;
+    block-size: 200px;
+    border-radius: var(--mm-radius, 14px);
+    overflow: hidden;
+    background: var(--mm-line, #d9d9d4);
+    transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.45s ease;
+  }
+
+  .mm__cover:hover .mm__cover-art {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 18px 40px rgb(0 0 0 / 0.2);
+  }
+
+  .mm__cover-img,
+  .mm__cover-ph {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .mm__cover-ph { background: linear-gradient(135deg, #1b1b1b, #0d1540); }
+
+  .mm__cover-streams {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 12px;
+    text-align: center;
+    color: #fff;
+    background: linear-gradient(180deg, rgb(6 10 40 / 0.55), rgb(6 10 40 / 0.85));
+    opacity: 0;
+    transition: opacity 0.35s ease;
+  }
+
+  .mm__cover:hover .mm__cover-streams,
+  .mm__cover:focus-within .mm__cover-streams { opacity: 1; }
+
+  .mm__cover-streams-num {
+    font-family: var(--font-heading--family, inherit);
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+
+  .mm__cover-streams-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  .mm__cover-title {
+    margin-block-start: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--mm-ink, #111);
+    line-height: 1.3;
+  }
+
+  /* ---------- 3. pricing card ---------- */
+  .mm__card {
+    background: var(--mm-card, #0d1231);
+    color: var(--mm-card-ink, #fff);
+    border-radius: calc(var(--mm-radius, 14px) + 8px);
+    padding: clamp(26px, 3.4vw, 44px);
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.18);
+  }
+
+  .mm__card-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .mm__card-kicker {
+    margin: 0 0 0.6rem;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    opacity: 0.62;
+  }
+
+  .mm__card-title {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(28px, 3.6vw, 46px);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    text-transform: uppercase;
+    margin: 0;
+  }
+
+  .mm__card-body {
+    margin-block-start: 1rem;
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 48ch;
+    opacity: 0.78;
+  }
+
+  .mm__card-body > :first-child { margin-block-start: 0; }
+  .mm__card-body > :last-child { margin-block-end: 0; }
+
+  .mm__price {
+    margin: 0;
+    text-align: right;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+
+  .mm__price-value {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(40px, 5.2vw, 68px);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+
+  .mm__price-note {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  .mm__deliverables {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px 28px;
+    margin: 0;
+    padding: 24px 0 0;
+    list-style: none;
+    border-block-start: 1px solid rgb(255 255 255 / 0.14);
+  }
+
+  .mm__deliverable {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .mm__tick {
+    flex: 0 0 auto;
+    inline-size: 20px;
+    block-size: 20px;
+    margin-block-start: 1px;
+    border-radius: 50%;
+    background: var(--mm-accent, #1242fd);
+    color: #fff;
+    display: grid;
+    place-items: center;
+  }
+
+  .mm__tick svg { inline-size: 12px; block-size: 12px; }
+
+  .mm__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .mm__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px 14px 28px;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.28s ease, box-shadow 0.28s ease;
+  }
+
+  .mm__btn--primary { background: #fff; color: #111; }
+  .mm__btn--primary:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgb(0 0 0 / 0.28); }
+
+  .mm__btn-arrow {
+    inline-size: 32px;
+    block-size: 32px;
+    border-radius: 50%;
+    background: var(--mm-accent, #1242fd);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .mm__btn--primary:hover .mm__btn-arrow { transform: translateX(4px); }
+  .mm__btn-arrow svg { inline-size: 16px; block-size: 16px; }
+
+  .mm__btn--ghost {
+    padding: 14px 26px;
+    border: 1px solid rgb(255 255 255 / 0.4);
+    color: inherit;
+  }
+
+  .mm__btn--ghost:hover { background: rgb(255 255 255 / 0.1); transform: translateY(-2px); }
+
+  /* ---------- 4. steps ---------- */
+  .mm__steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--mm-line, #d9d9d4);
+    border: 1px solid var(--mm-line, #d9d9d4);
+    border-radius: var(--mm-radius, 14px);
+    overflow: hidden;
+  }
+
+  .mm__step {
+    background: var(--mm-bg, #f1f1ef);
+    padding: 28px 24px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: background 0.35s ease;
+  }
+
+  .mm__step:hover { background: #fff; }
+
+  .mm__step-num {
+    font-family: var(--font-heading--family, inherit);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    color: var(--mm-accent, #1242fd);
+  }
+
+  .mm__step-title {
+    font-family: var(--font-heading--family, inherit);
+    font-size: 17px;
+    font-weight: 900;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    color: var(--mm-ink, #111);
+    margin: 0;
+  }
+
+  .mm__step-text { margin: 0; font-size: 14px; line-height: 1.55; }
+
+  /* ---------- 5. closing ---------- */
+  .mm__closing {
+    border-block-start: 1px solid var(--mm-line, #d9d9d4);
+    padding-block-start: clamp(36px, 4vw, 56px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 3rem;
+    align-items: flex-start;
+  }
+
+  .mm__closing-headline {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(24px, 3.2vw, 40px);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
+    text-transform: uppercase;
+    color: var(--mm-ink, #111);
+    margin: 0;
+    flex: 1 1 320px;
+    max-width: 18ch;
+  }
+
+  .mm__closing-body {
+    flex: 1 1 340px;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 56ch;
+  }
+
+  .mm__closing-body > :first-child { margin-block-start: 0; }
+  .mm__closing-body > :last-child { margin-block-end: 0; }
+
+  /* ---------- motion off ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] { opacity: 1; transform: none; transition: none; }
+    .mm__reel-track.is-rolling { animation: none; }
+    .mm__cover-art, .mm__btn, .mm__btn-arrow, .mm__step, .mm__cover-streams { transition: none; }
+  }
+
+  /* ---------- mobile ---------- */
+  @media screen and (max-width: 749px) {
+    .mm { padding-block: calc(var(--mm-pad-top, 96px) * 0.65) calc(var(--mm-pad-bottom, 96px) * 0.65); }
+    .mm__headline { font-size: var(--mm-h1-mobile, 40px); max-width: none; }
+    .mm__stats { grid-template-columns: 1fr; margin-block-start: 2.2rem; }
+    .mm__cover, .mm__cover-art { inline-size: 150px; }
+    .mm__cover-art { block-size: 150px; }
+    .mm__price { text-align: left; align-items: flex-start; }
+    .mm__card-top { flex-direction: column; }
+    .mm__btn { inline-size: 100%; justify-content: space-between; }
+    .mm__btn--ghost { justify-content: center; }
+    .mm__steps { grid-template-columns: 1fr; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Mix & Master",
+  "tag": "section",
+  "class": "mix-master-wrapper section-wrapper",
+  "disabled_on": { "groups": ["header", "footer"] },
+  "settings": [
+    { "type": "header", "content": "1 · Hero" },
+    { "type": "text", "id": "hero_eyebrow", "label": "Eyebrow", "default": "MIX & MASTER" },
+    { "type": "text", "id": "hero_headline", "label": "Headline", "default": "Release-ready engineering." },
+    { "type": "richtext", "id": "hero_body", "label": "Description",
+      "default": "<p>Professional vocal mixing, mastering, and custom vocal systems built personally by DJ HTSW. Every project is handled directly from intake to final delivery — no outsourcing, no assistants, and no automated replacement for creative judgment.</p>" },
+
+    { "type": "header", "content": "2 · Engineering credits" },
+    { "type": "text", "id": "credits_headline", "label": "Headline", "default": "Engineering credits" },
+    { "type": "richtext", "id": "credits_body", "label": "Description",
+      "default": "<p>Selected projects mixed, mastered, or engineered by DJ HTSW. Hover a cover to reveal its cumulative stream count — the reel pauses while you browse.</p>" },
+    { "type": "text", "id": "streams_label", "label": "Stream count label", "default": "Streams" },
+    { "type": "range", "id": "reel_speed", "label": "Reel speed", "min": 10, "max": 120, "step": 5, "unit": "px/s", "default": 40,
+      "info": "Pixels travelled per second. Lower is slower." },
+
+    { "type": "header", "content": "3 · Pricing card" },
+    { "type": "text", "id": "price_kicker", "label": "Kicker", "default": "THE SERVICE" },
+    { "type": "text", "id": "price_title", "label": "Title", "default": "Mix & Master" },
+    { "type": "text", "id": "price", "label": "Price", "default": "$150" },
+    { "type": "text", "id": "price_note", "label": "Price note", "default": "Per song" },
+    { "type": "richtext", "id": "price_body", "label": "Description",
+      "default": "<p>Full vocal engineering and mastering for artists preparing a polished, streaming-ready release.</p>" },
+    { "type": "text", "id": "primary_label", "label": "Primary button", "default": "Buy now" },
+    { "type": "url", "id": "primary_link", "label": "Primary link" },
+    { "type": "text", "id": "secondary_label", "label": "Secondary button", "default": "Learn more" },
+    { "type": "url", "id": "secondary_link", "label": "Secondary link" },
+
+    { "type": "header", "content": "4 · Client journey" },
+    { "type": "text", "id": "process_headline", "label": "Headline", "default": "What happens next." },
+    { "type": "richtext", "id": "process_body", "label": "Description",
+      "default": "<p>A straightforward, transparent workflow from purchase to final delivery.</p>" },
+
+    { "type": "header", "content": "5 · Closing" },
+    { "type": "text", "id": "closing_headline", "label": "Headline", "default": "Every project is handled personally." },
+    { "type": "richtext", "id": "closing_body", "label": "Description",
+      "default": "<p>No outsourcing. No assistants. No AI-generated processing decisions. You are hiring the artist and engineer behind more than 30 million streams, with direct communication from intake through final delivery.</p>" },
+
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "max_width", "label": "Maximum width", "min": 900, "max": 1500, "step": 20, "unit": "px", "default": 1160 },
+    { "type": "range", "id": "corner_radius", "label": "Corner radius", "min": 0, "max": 32, "step": 2, "unit": "px", "default": 14 },
+    { "type": "range", "id": "padding_top", "label": "Padding top", "min": 0, "max": 200, "step": 4, "unit": "px", "default": 96 },
+    { "type": "range", "id": "padding_bottom", "label": "Padding bottom", "min": 0, "max": 200, "step": 4, "unit": "px", "default": 96 },
+
+    { "type": "header", "content": "Appearance" },
+    { "type": "color", "id": "background_color", "label": "Background", "default": "#f1f1ef" },
+    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#1242fd" },
+    { "type": "color", "id": "heading_color", "label": "Headings", "default": "#111111" },
+    { "type": "color", "id": "body_color", "label": "Body text", "default": "#6b6b68" },
+    { "type": "color", "id": "line_color", "label": "Rules & dividers", "default": "#d9d9d4" },
+    { "type": "color", "id": "card_color", "label": "Pricing card background", "default": "#0d1231" },
+    { "type": "color", "id": "card_text_color", "label": "Pricing card text", "default": "#ffffff" },
+    { "type": "range", "id": "headline_size", "label": "Headline size (desktop)", "min": 40, "max": 140, "step": 2, "unit": "px", "default": 84 },
+    { "type": "range", "id": "headline_size_mobile", "label": "Headline size (mobile)", "min": 24, "max": 72, "step": 2, "unit": "px", "default": 40 }
+  ],
+  "blocks": [
+    {
+      "type": "stat",
+      "name": "Stat",
+      "settings": [
+        { "type": "text", "id": "value", "label": "Number", "default": "30", "info": "Digits only — it counts up when scrolled into view." },
+        { "type": "text", "id": "suffix", "label": "Suffix", "default": "M+" },
+        { "type": "range", "id": "decimals", "label": "Decimal places", "min": 0, "max": 2, "step": 1, "default": 0 },
+        { "type": "text", "id": "label", "label": "Label", "default": "Engineering-credit streams" }
+      ]
+    },
+    {
+      "type": "credit",
+      "name": "Credit",
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Cover art" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Project title" },
+        { "type": "text", "id": "streams", "label": "Stream count", "default": "1.2M", "info": "Shown on hover." }
+      ]
+    },
+    {
+      "type": "deliverable",
+      "name": "Deliverable",
+      "settings": [
+        { "type": "text", "id": "text", "label": "Text", "default": "Vocal tuning and time alignment" }
+      ]
+    },
+    {
+      "type": "step",
+      "name": "Process step",
+      "settings": [
+        { "type": "text", "id": "number", "label": "Number", "default": "01" },
+        { "type": "text", "id": "title", "label": "Title", "default": "Purchase" },
+        { "type": "textarea", "id": "text", "label": "Description", "default": "Choose the package that best matches your project." }
+      ]
+    }
+  ],
+  "max_blocks": 40,
+  "presets": [
+    {
+      "name": "Mix & Master",
+      "category": "Services",
+      "blocks": {
+        "s1": { "type": "stat", "settings": { "value": "30", "suffix": "M+", "label": "Engineering-credit streams" } },
+        "s2": { "type": "stat", "settings": { "value": "18", "suffix": "M+", "label": "Streams as an artist" } },
+        "s3": { "type": "stat", "settings": { "value": "100", "suffix": "%", "label": "Personally engineered by DJ HTSW" } },
+        "d1": { "type": "deliverable", "settings": { "text": "Vocal tuning and time alignment" } },
+        "d2": { "type": "deliverable", "settings": { "text": "Noise cleanup and vocal processing" } },
+        "d3": { "type": "deliverable", "settings": { "text": "Instrumental balancing and stereo imaging" } },
+        "d4": { "type": "deliverable", "settings": { "text": "Streaming-ready WAV master" } },
+        "d5": { "type": "deliverable", "settings": { "text": "Two collaborative revision rounds" } },
+        "d6": { "type": "deliverable", "settings": { "text": "7–14 day turnaround" } },
+        "p1": { "type": "step", "settings": { "number": "01", "title": "Purchase", "text": "Choose the package that best matches your project." } },
+        "p2": { "type": "step", "settings": { "number": "02", "title": "Intake", "text": "Complete the brief. You'll be directed to a detailed form covering your song, references, goals, and Drive upload." } },
+        "p3": { "type": "step", "settings": { "number": "03", "title": "Production", "text": "Project review. I review the files, confirm creative direction, and begin the mix or master." } },
+        "p4": { "type": "step", "settings": { "number": "04", "title": "Delivery", "text": "Preview to final. You receive a preview by email. Once approved, final files are delivered." } },
+        "c1": { "type": "credit", "settings": { "title": "Project one", "streams": "4.2M" } },
+        "c2": { "type": "credit", "settings": { "title": "Project two", "streams": "2.8M" } },
+        "c3": { "type": "credit", "settings": { "title": "Project three", "streams": "1.5M" } },
+        "c4": { "type": "credit", "settings": { "title": "Project four", "streams": "980K" } },
+        "c5": { "type": "credit", "settings": { "title": "Project five", "streams": "760K" } },
+        "c6": { "type": "credit", "settings": { "title": "Project six", "streams": "540K" } }
+      },
+      "block_order": ["s1","s2","s3","c1","c2","c3","c4","c5","c6","d1","d2","d3","d4","d5","d6","p1","p2","p3","p4"]
+    }
+  ]
+}
+{% endschema %}
