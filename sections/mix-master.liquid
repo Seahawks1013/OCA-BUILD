@@ -11,18 +11,21 @@
   # unreliable against locally-defined section blocks.
   assign stat_count = 0
   assign credit_count = 0
-  assign deliv_count = 0
   assign step_count = 0
+  assign gallery_count = 0
+  assign plan_count = 0
   for block in section.blocks
     case block.type
       when 'stat'
         assign stat_count = stat_count | plus: 1
       when 'credit'
         assign credit_count = credit_count | plus: 1
-      when 'deliverable'
-        assign deliv_count = deliv_count | plus: 1
       when 'step'
         assign step_count = step_count | plus: 1
+      when 'photo'
+        assign gallery_count = gallery_count | plus: 1
+      when 'plan'
+        assign plan_count = plan_count | plus: 1
     endcase
   endfor
 -%}
@@ -84,6 +87,49 @@
       {%- endif -%}
     </header>
 
+    {%- comment -%} ---------- 1b. PHOTO GALLERY ---------- {%- endcomment -%}
+    {%- if gallery_count > 0 -%}
+      <section class="mm__block mm__gallery-block">
+        {%- if section.settings.gallery_headline != blank or section.settings.gallery_body != blank -%}
+          <div class="mm__block-head" data-reveal>
+            {%- if section.settings.gallery_headline != blank -%}
+              <h3 class="mm__h3">{{ section.settings.gallery_headline }}</h3>
+            {%- endif -%}
+            {%- if section.settings.gallery_body != blank -%}
+              <div class="mm__block-body">{{ section.settings.gallery_body }}</div>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        <ul class="mm__gallery" role="list" style="--mm-gallery-cols: {{ section.settings.gallery_columns }};">
+          {%- assign gi = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'photo' -%}{%- continue -%}{%- endif -%}
+            {%- assign gi = gi | plus: 1 -%}
+            <li
+              class="mm__photo{% if block.settings.wide %} mm__photo--wide{% endif %}"
+              data-reveal
+              style="--d:{{ gi | times: 70 }}ms; --mm-photo-ratio: {{ block.settings.ratio }};"
+              {{ block.shopify_attributes }}
+            >
+              {%- if block.settings.image != blank -%}
+                {{ block.settings.image | image_url: width: 1400 | image_tag:
+                    widths: '400, 700, 1000, 1400',
+                    sizes: '(min-width: 750px) 40vw, 90vw',
+                    alt: block.settings.caption,
+                    loading: 'lazy', class: 'mm__photo-img' }}
+              {%- else -%}
+                <span class="mm__photo-ph"></span>
+              {%- endif -%}
+              {%- if block.settings.caption != blank -%}
+                <span class="mm__photo-caption">{{ block.settings.caption }}</span>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      </section>
+    {%- endif -%}
+
     {%- comment -%} ---------- 2. ENGINEERING CREDITS ---------- {%- endcomment -%}
     {%- if credit_count > 0 -%}
       <section class="mm__block mm__credits">
@@ -130,65 +176,108 @@
       </section>
     {%- endif -%}
 
-    {%- comment -%} ---------- 3. PRICING CARD ---------- {%- endcomment -%}
-    <section class="mm__block">
-      <article class="mm__card" data-reveal>
-        <div class="mm__card-top">
-          <div>
-            {%- if section.settings.price_kicker != blank -%}
-              <p class="mm__card-kicker">{{ section.settings.price_kicker }}</p>
+    {%- comment -%} ---------- 3. PRICING TIERS ---------- {%- endcomment -%}
+    {%- if plan_count > 0 -%}
+      <section class="mm__block">
+        {%- if section.settings.plans_headline != blank or section.settings.plans_body != blank -%}
+          <div class="mm__block-head" data-reveal>
+            {%- if section.settings.plans_headline != blank -%}
+              <h3 class="mm__h3">{{ section.settings.plans_headline }}</h3>
             {%- endif -%}
-            {%- if section.settings.price_title != blank -%}
-              <h3 class="mm__card-title">{{ section.settings.price_title }}</h3>
-            {%- endif -%}
-            {%- if section.settings.price_body != blank -%}
-              <div class="mm__card-body">{{ section.settings.price_body }}</div>
+            {%- if section.settings.plans_body != blank -%}
+              <div class="mm__block-body">{{ section.settings.plans_body }}</div>
             {%- endif -%}
           </div>
-
-          {%- if section.settings.price != blank -%}
-            <p class="mm__price">
-              <span class="mm__price-value">{{ section.settings.price }}</span>
-              {%- if section.settings.price_note != blank -%}
-                <span class="mm__price-note">{{ section.settings.price_note }}</span>
-              {%- endif -%}
-            </p>
-          {%- endif -%}
-        </div>
-
-        {%- if deliv_count > 0 -%}
-          <ul class="mm__deliverables" role="list">
-            {%- assign di = 0 -%}
-            {%- for block in section.blocks -%}
-              {%- if block.type != 'deliverable' -%}{%- continue -%}{%- endif -%}
-              {%- assign di = di | plus: 1 -%}
-              <li class="mm__deliverable" style="--d:{{ di | times: 45 }}ms" {{ block.shopify_attributes }}>
-                <span class="mm__tick" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                </span>
-                {{ block.settings.text }}
-              </li>
-            {%- endfor -%}
-          </ul>
         {%- endif -%}
 
-        <div class="mm__actions">
-          {%- if section.settings.primary_label != blank -%}
-            <a class="mm__btn mm__btn--primary" href="{{ section.settings.primary_link | default: '#' }}">
-              <span>{{ section.settings.primary_label }}</span>
-              <span class="mm__btn-arrow" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </span>
-            </a>
-          {%- endif -%}
-          {%- if section.settings.secondary_label != blank -%}
-            <a class="mm__btn mm__btn--ghost" href="{{ section.settings.secondary_link | default: '#' }}">
-              {{ section.settings.secondary_label }}
-            </a>
-          {%- endif -%}
+        {%- liquid
+          assign any_badge = false
+          for block in section.blocks
+            if block.type == 'plan' and block.settings.badge != blank
+              assign any_badge = true
+            endif
+          endfor
+        -%}
+        <div class="mm__plans">
+          {%- assign pl = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'plan' -%}{%- continue -%}{%- endif -%}
+            {%- assign pl = pl | plus: 1 -%}
+            <article
+              class="mm__card{% if block.settings.featured %} mm__card--featured{% endif %}"
+              data-reveal
+              style="--d:{{ pl | times: 90 }}ms"
+              {{ block.shopify_attributes }}
+            >
+              {%- if block.settings.badge != blank -%}
+                <span class="mm__badge">{{ block.settings.badge }}</span>
+              {%- elsif any_badge -%}
+                {%- comment -%} keeps headings aligned across cards {%- endcomment -%}
+                <span class="mm__badge mm__badge--ghost" aria-hidden="true"></span>
+              {%- endif -%}
+
+              <div class="mm__card-top">
+                <div>
+                  {%- if block.settings.kicker != blank -%}
+                    <p class="mm__card-kicker">{{ block.settings.kicker }}</p>
+                  {%- endif -%}
+                  {%- if block.settings.name != blank -%}
+                    <h4 class="mm__card-title">{{ block.settings.name }}</h4>
+                  {%- endif -%}
+                </div>
+
+                {%- if block.settings.price != blank -%}
+                  <p class="mm__price">
+                    <span class="mm__price-value">{{ block.settings.price }}</span>
+                    {%- if block.settings.price_note != blank -%}
+                      <span class="mm__price-note">{{ block.settings.price_note }}</span>
+                    {%- endif -%}
+                  </p>
+                {%- endif -%}
+              </div>
+
+              {%- if block.settings.description != blank -%}
+                <div class="mm__card-body">{{ block.settings.description }}</div>
+              {%- endif -%}
+
+              {%- if block.settings.features != blank -%}
+                {%- comment -%} one deliverable per line {%- endcomment -%}
+                {%- assign feature_lines = block.settings.features | newline_to_br | split: '<br />' -%}
+                <ul class="mm__deliverables" role="list">
+                  {%- for line in feature_lines -%}
+                    {%- assign clean = line | strip -%}
+                    {%- if clean != blank -%}
+                      <li class="mm__deliverable">
+                        <span class="mm__tick" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                        </span>
+                        {{ clean }}
+                      </li>
+                    {%- endif -%}
+                  {%- endfor -%}
+                </ul>
+              {%- endif -%}
+
+              <div class="mm__actions">
+                {%- if block.settings.primary_label != blank -%}
+                  <a class="mm__btn mm__btn--primary" href="{{ block.settings.primary_link | default: '#' }}">
+                    <span>{{ block.settings.primary_label }}</span>
+                    <span class="mm__btn-arrow" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                  </a>
+                {%- endif -%}
+                {%- if block.settings.secondary_label != blank -%}
+                  <a class="mm__btn mm__btn--ghost" href="{{ block.settings.secondary_link | default: '#' }}">
+                    {{ block.settings.secondary_label }}
+                  </a>
+                {%- endif -%}
+              </div>
+            </article>
+          {%- endfor -%}
         </div>
-      </article>
-    </section>
+      </section>
+    {%- endif -%}
 
     {%- comment -%} ---------- 4. CLIENT JOURNEY ---------- {%- endcomment -%}
     {%- if step_count > 0 -%}
@@ -543,7 +632,91 @@
     line-height: 1.3;
   }
 
-  /* ---------- 3. pricing card ---------- */
+  /* ---------- 1b. photo gallery ---------- */
+  .mm__gallery {
+    display: grid;
+    grid-template-columns: repeat(var(--mm-gallery-cols, 3), minmax(0, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .mm__photo {
+    position: relative;
+    margin: 0;
+    border-radius: var(--mm-radius, 14px);
+    overflow: hidden;
+    background: var(--mm-line, #d9d9d4);
+    aspect-ratio: var(--mm-photo-ratio, 1);
+  }
+
+  .mm__photo--wide { grid-column: span 2; }
+
+  .mm__photo-img,
+  .mm__photo-ph {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.65s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .mm__photo-ph { background: linear-gradient(135deg, #1b1b1b, #0d1540); }
+  .mm__photo:hover .mm__photo-img { transform: scale(1.05); }
+
+  .mm__photo-caption {
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    padding: 26px 16px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #fff;
+    background: linear-gradient(180deg, rgb(6 10 40 / 0), rgb(6 10 40 / 0.75));
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .mm__photo:hover .mm__photo-caption { opacity: 1; transform: none; }
+
+  /* ---------- 3. pricing tiers ---------- */
+  .mm__plans {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 18px;
+    align-items: stretch;
+  }
+
+  .mm__badge {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    block-size: 26px;
+    padding: 0 13px;
+    border-radius: 999px;
+    background: var(--mm-accent, #1242fd);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .mm__badge--ghost {
+    background: transparent;
+    padding: 0;
+  }
+
+  .mm__card--featured {
+    outline: 2px solid var(--mm-accent, #1242fd);
+    outline-offset: 3px;
+  }
+
+
   .mm__card {
     background: var(--mm-card, #0d1231);
     color: var(--mm-card-ink, #fff);
@@ -551,16 +724,18 @@
     padding: clamp(26px, 3.4vw, 44px);
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 22px;
     box-shadow: 0 24px 60px rgb(0 0 0 / 0.18);
+    block-size: 100%;
   }
+
+  .mm__card .mm__actions { margin-block-start: auto; }
 
   .mm__card-top {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 1.5rem;
+    gap: 1.1rem;
   }
 
   .mm__card-kicker {
@@ -595,11 +770,11 @@
 
   .mm__price {
     margin: 0;
-    text-align: right;
+    text-align: left;
     flex: 0 0 auto;
     display: flex;
     flex-direction: column;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 2px;
   }
 
@@ -621,8 +796,8 @@
 
   .mm__deliverables {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 12px 28px;
+    grid-template-columns: 1fr;
+    gap: 11px;
     margin: 0;
     padding: 24px 0 0;
     list-style: none;
@@ -792,6 +967,9 @@
     .mm__btn { inline-size: 100%; justify-content: space-between; }
     .mm__btn--ghost { justify-content: center; }
     .mm__steps { grid-template-columns: 1fr; }
+    .mm__gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .mm__photo--wide { grid-column: span 2; }
+    .mm__plans { grid-template-columns: 1fr; }
   }
 {% endstylesheet %}
 
@@ -800,95 +978,457 @@
   "name": "Mix & Master",
   "tag": "section",
   "class": "mix-master-wrapper section-wrapper",
-  "disabled_on": { "groups": ["header", "footer"] },
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer"
+    ]
+  },
   "settings": [
-    { "type": "header", "content": "1 · Hero" },
-    { "type": "text", "id": "hero_eyebrow", "label": "Eyebrow", "default": "MIX & MASTER" },
-    { "type": "text", "id": "hero_headline", "label": "Headline", "default": "Release-ready engineering." },
-    { "type": "richtext", "id": "hero_body", "label": "Description",
-      "default": "<p>Professional vocal mixing, mastering, and custom vocal systems built personally by DJ HTSW. Every project is handled directly from intake to final delivery — no outsourcing, no assistants, and no automated replacement for creative judgment.</p>" },
-
-    { "type": "header", "content": "2 · Engineering credits" },
-    { "type": "text", "id": "credits_headline", "label": "Headline", "default": "Engineering credits" },
-    { "type": "richtext", "id": "credits_body", "label": "Description",
-      "default": "<p>Selected projects mixed, mastered, or engineered by DJ HTSW. Hover a cover to reveal its cumulative stream count — the reel pauses while you browse.</p>" },
-    { "type": "text", "id": "streams_label", "label": "Stream count label", "default": "Streams" },
-    { "type": "range", "id": "reel_speed", "label": "Reel speed", "min": 10, "max": 120, "step": 5, "unit": "px", "default": 40,
-      "info": "Pixels travelled per second. Lower is slower." },
-
-    { "type": "header", "content": "3 · Pricing card" },
-    { "type": "text", "id": "price_kicker", "label": "Kicker", "default": "THE SERVICE" },
-    { "type": "text", "id": "price_title", "label": "Title", "default": "Mix & Master" },
-    { "type": "text", "id": "price", "label": "Price", "default": "$150" },
-    { "type": "text", "id": "price_note", "label": "Price note", "default": "Per song" },
-    { "type": "richtext", "id": "price_body", "label": "Description",
-      "default": "<p>Full vocal engineering and mastering for artists preparing a polished, streaming-ready release.</p>" },
-    { "type": "text", "id": "primary_label", "label": "Primary button", "default": "Buy now" },
-    { "type": "url", "id": "primary_link", "label": "Primary link" },
-    { "type": "text", "id": "secondary_label", "label": "Secondary button", "default": "Learn more" },
-    { "type": "url", "id": "secondary_link", "label": "Secondary link" },
-
-    { "type": "header", "content": "4 · Client journey" },
-    { "type": "text", "id": "process_headline", "label": "Headline", "default": "What happens next." },
-    { "type": "richtext", "id": "process_body", "label": "Description",
-      "default": "<p>A straightforward, transparent workflow from purchase to final delivery.</p>" },
-
-    { "type": "header", "content": "5 · Closing" },
-    { "type": "text", "id": "closing_headline", "label": "Headline", "default": "Every project is handled personally." },
-    { "type": "richtext", "id": "closing_body", "label": "Description",
-      "default": "<p>No outsourcing. No assistants. No AI-generated processing decisions. You are hiring the artist and engineer behind more than 30 million streams, with direct communication from intake through final delivery.</p>" },
-
-    { "type": "header", "content": "Layout" },
-    { "type": "range", "id": "max_width", "label": "Maximum width", "min": 900, "max": 1500, "step": 20, "unit": "px", "default": 1160 },
-    { "type": "range", "id": "corner_radius", "label": "Corner radius", "min": 0, "max": 32, "step": 2, "unit": "px", "default": 14 },
-    { "type": "range", "id": "padding_top", "label": "Padding top", "min": 0, "max": 200, "step": 4, "unit": "px", "default": 96 },
-    { "type": "range", "id": "padding_bottom", "label": "Padding bottom", "min": 0, "max": 200, "step": 4, "unit": "px", "default": 96 },
-
-    { "type": "header", "content": "Appearance" },
-    { "type": "color", "id": "background_color", "label": "Background", "default": "#f1f1ef" },
-    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#1242fd" },
-    { "type": "color", "id": "heading_color", "label": "Headings", "default": "#111111" },
-    { "type": "color", "id": "body_color", "label": "Body text", "default": "#6b6b68" },
-    { "type": "color", "id": "line_color", "label": "Rules & dividers", "default": "#d9d9d4" },
-    { "type": "color", "id": "card_color", "label": "Pricing card background", "default": "#0d1231" },
-    { "type": "color", "id": "card_text_color", "label": "Pricing card text", "default": "#ffffff" },
-    { "type": "range", "id": "headline_size", "label": "Headline size (desktop)", "min": 40, "max": 140, "step": 2, "unit": "px", "default": 84 },
-    { "type": "range", "id": "headline_size_mobile", "label": "Headline size (mobile)", "min": 24, "max": 72, "step": 2, "unit": "px", "default": 40 }
+    {
+      "type": "header",
+      "content": "1 · Hero"
+    },
+    {
+      "type": "text",
+      "id": "hero_eyebrow",
+      "label": "Eyebrow",
+      "default": "MIX & MASTER"
+    },
+    {
+      "type": "text",
+      "id": "hero_headline",
+      "label": "Headline",
+      "default": "Release-ready engineering."
+    },
+    {
+      "type": "richtext",
+      "id": "hero_body",
+      "label": "Description",
+      "default": "<p>Professional vocal mixing, mastering, and custom vocal systems built personally by DJ HTSW. Every project is handled directly from intake to final delivery — no outsourcing, no assistants, and no automated replacement for creative judgment.</p>"
+    },
+    {
+      "type": "header",
+      "content": "1b · Photo gallery"
+    },
+    {
+      "type": "text",
+      "id": "gallery_headline",
+      "label": "Headline",
+      "default": "Inside the room."
+    },
+    {
+      "type": "richtext",
+      "id": "gallery_body",
+      "label": "Description",
+      "default": "<p>The studio, the sessions, the process.</p>"
+    },
+    {
+      "type": "range",
+      "id": "gallery_columns",
+      "label": "Columns",
+      "min": 2,
+      "max": 5,
+      "step": 1,
+      "default": 3
+    },
+    {
+      "type": "header",
+      "content": "2 · Engineering credits"
+    },
+    {
+      "type": "text",
+      "id": "credits_headline",
+      "label": "Headline",
+      "default": "Engineering credits"
+    },
+    {
+      "type": "richtext",
+      "id": "credits_body",
+      "label": "Description",
+      "default": "<p>Selected projects mixed, mastered, or engineered by DJ HTSW. Hover a cover to reveal its cumulative stream count — the reel pauses while you browse.</p>"
+    },
+    {
+      "type": "text",
+      "id": "streams_label",
+      "label": "Stream count label",
+      "default": "Streams"
+    },
+    {
+      "type": "range",
+      "id": "reel_speed",
+      "label": "Reel speed",
+      "min": 10,
+      "max": 120,
+      "step": 5,
+      "unit": "px",
+      "default": 40,
+      "info": "Pixels travelled per second. Lower is slower."
+    },
+    {
+      "type": "header",
+      "content": "3 · Pricing tiers"
+    },
+    {
+      "type": "text",
+      "id": "plans_headline",
+      "label": "Headline",
+      "default": "Choose your service."
+    },
+    {
+      "type": "richtext",
+      "id": "plans_body",
+      "label": "Description",
+      "default": "<p>Two ways to work together. Both are engineered personally, start to finish.</p>"
+    },
+    {
+      "type": "header",
+      "content": "4 · Client journey"
+    },
+    {
+      "type": "text",
+      "id": "process_headline",
+      "label": "Headline",
+      "default": "What happens next."
+    },
+    {
+      "type": "richtext",
+      "id": "process_body",
+      "label": "Description",
+      "default": "<p>A straightforward, transparent workflow from purchase to final delivery.</p>"
+    },
+    {
+      "type": "header",
+      "content": "5 · Closing"
+    },
+    {
+      "type": "text",
+      "id": "closing_headline",
+      "label": "Headline",
+      "default": "Every project is handled personally."
+    },
+    {
+      "type": "richtext",
+      "id": "closing_body",
+      "label": "Description",
+      "default": "<p>No outsourcing. No assistants. No AI-generated processing decisions. You are hiring the artist and engineer behind more than 30 million streams, with direct communication from intake through final delivery.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Maximum width",
+      "min": 900,
+      "max": 1500,
+      "step": 20,
+      "unit": "px",
+      "default": 1160
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#f1f1ef"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent",
+      "default": "#1242fd"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Headings",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Body text",
+      "default": "#6b6b68"
+    },
+    {
+      "type": "color",
+      "id": "line_color",
+      "label": "Rules & dividers",
+      "default": "#d9d9d4"
+    },
+    {
+      "type": "color",
+      "id": "card_color",
+      "label": "Pricing card background",
+      "default": "#0d1231"
+    },
+    {
+      "type": "color",
+      "id": "card_text_color",
+      "label": "Pricing card text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "headline_size",
+      "label": "Headline size (desktop)",
+      "min": 40,
+      "max": 140,
+      "step": 2,
+      "unit": "px",
+      "default": 84
+    },
+    {
+      "type": "range",
+      "id": "headline_size_mobile",
+      "label": "Headline size (mobile)",
+      "min": 24,
+      "max": 72,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    }
   ],
   "blocks": [
     {
       "type": "stat",
       "name": "Stat",
       "settings": [
-        { "type": "text", "id": "value", "label": "Number", "default": "30", "info": "Digits only — it counts up when scrolled into view." },
-        { "type": "text", "id": "suffix", "label": "Suffix", "default": "M+" },
-        { "type": "range", "id": "decimals", "label": "Decimal places", "min": 0, "max": 2, "step": 1, "default": 0 },
-        { "type": "text", "id": "label", "label": "Label", "default": "Engineering-credit streams" }
+        {
+          "type": "text",
+          "id": "value",
+          "label": "Number",
+          "default": "30",
+          "info": "Digits only — it counts up when scrolled into view."
+        },
+        {
+          "type": "text",
+          "id": "suffix",
+          "label": "Suffix",
+          "default": "M+"
+        },
+        {
+          "type": "range",
+          "id": "decimals",
+          "label": "Decimal places",
+          "min": 0,
+          "max": 2,
+          "step": 1,
+          "default": 0
+        },
+        {
+          "type": "text",
+          "id": "label",
+          "label": "Label",
+          "default": "Engineering-credit streams"
+        }
       ]
     },
     {
       "type": "credit",
       "name": "Credit",
       "settings": [
-        { "type": "image_picker", "id": "image", "label": "Cover art" },
-        { "type": "text", "id": "title", "label": "Title", "default": "Project title" },
-        { "type": "text", "id": "streams", "label": "Stream count", "default": "1.2M", "info": "Shown on hover." }
-      ]
-    },
-    {
-      "type": "deliverable",
-      "name": "Deliverable",
-      "settings": [
-        { "type": "text", "id": "text", "label": "Text", "default": "Vocal tuning and time alignment" }
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Cover art"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Project title"
+        },
+        {
+          "type": "text",
+          "id": "streams",
+          "label": "Stream count",
+          "default": "1.2M",
+          "info": "Shown on hover."
+        }
       ]
     },
     {
       "type": "step",
       "name": "Process step",
       "settings": [
-        { "type": "text", "id": "number", "label": "Number", "default": "01" },
-        { "type": "text", "id": "title", "label": "Title", "default": "Purchase" },
-        { "type": "textarea", "id": "text", "label": "Description", "default": "Choose the package that best matches your project." }
+        {
+          "type": "text",
+          "id": "number",
+          "label": "Number",
+          "default": "01"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Purchase"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Description",
+          "default": "Choose the package that best matches your project."
+        }
+      ]
+    },
+    {
+      "type": "photo",
+      "name": "Photo",
+      "settings": [
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Image"
+        },
+        {
+          "type": "text",
+          "id": "caption",
+          "label": "Caption",
+          "info": "Optional. Shows on hover."
+        },
+        {
+          "type": "select",
+          "id": "ratio",
+          "label": "Shape",
+          "options": [
+            {
+              "value": "1",
+              "label": "Square"
+            },
+            {
+              "value": "4/3",
+              "label": "Landscape"
+            },
+            {
+              "value": "3/4",
+              "label": "Portrait"
+            },
+            {
+              "value": "16/9",
+              "label": "Wide"
+            }
+          ],
+          "default": "1"
+        },
+        {
+          "type": "checkbox",
+          "id": "wide",
+          "label": "Span two columns",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "plan",
+      "name": "Pricing tier",
+      "settings": [
+        {
+          "type": "text",
+          "id": "kicker",
+          "label": "Kicker",
+          "default": "THE SERVICE"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "Mix & Master Pro"
+        },
+        {
+          "type": "text",
+          "id": "price",
+          "label": "Price",
+          "default": "$150"
+        },
+        {
+          "type": "text",
+          "id": "price_note",
+          "label": "Price note",
+          "default": "Per song"
+        },
+        {
+          "type": "richtext",
+          "id": "description",
+          "label": "Description",
+          "default": "<p>Full vocal engineering and mastering for a polished, streaming-ready release.</p>"
+        },
+        {
+          "type": "textarea",
+          "id": "features",
+          "label": "What's included",
+          "info": "One item per line.",
+          "default": "Vocal tuning and time alignment\nNoise cleanup and vocal processing"
+        },
+        {
+          "type": "checkbox",
+          "id": "featured",
+          "label": "Highlight this tier",
+          "default": false
+        },
+        {
+          "type": "text",
+          "id": "badge",
+          "label": "Badge",
+          "info": "Optional, e.g. Most popular."
+        },
+        {
+          "type": "text",
+          "id": "primary_label",
+          "label": "Primary button",
+          "default": "Buy now"
+        },
+        {
+          "type": "url",
+          "id": "primary_link",
+          "label": "Primary link"
+        },
+        {
+          "type": "text",
+          "id": "secondary_label",
+          "label": "Secondary button",
+          "default": "Learn more"
+        },
+        {
+          "type": "url",
+          "id": "secondary_link",
+          "label": "Secondary link"
+        }
       ]
     }
   ],
@@ -898,27 +1438,188 @@
       "name": "Mix & Master",
       "category": "Services",
       "blocks": {
-        "s1": { "type": "stat", "settings": { "value": "30", "suffix": "M+", "label": "Engineering-credit streams" } },
-        "s2": { "type": "stat", "settings": { "value": "18", "suffix": "M+", "label": "Streams as an artist" } },
-        "s3": { "type": "stat", "settings": { "value": "100", "suffix": "%", "label": "Personally engineered by DJ HTSW" } },
-        "d1": { "type": "deliverable", "settings": { "text": "Vocal tuning and time alignment" } },
-        "d2": { "type": "deliverable", "settings": { "text": "Noise cleanup and vocal processing" } },
-        "d3": { "type": "deliverable", "settings": { "text": "Instrumental balancing and stereo imaging" } },
-        "d4": { "type": "deliverable", "settings": { "text": "Streaming-ready WAV master" } },
-        "d5": { "type": "deliverable", "settings": { "text": "Two collaborative revision rounds" } },
-        "d6": { "type": "deliverable", "settings": { "text": "7–14 day turnaround" } },
-        "p1": { "type": "step", "settings": { "number": "01", "title": "Purchase", "text": "Choose the package that best matches your project." } },
-        "p2": { "type": "step", "settings": { "number": "02", "title": "Intake", "text": "Complete the brief. You'll be directed to a detailed form covering your song, references, goals, and Drive upload." } },
-        "p3": { "type": "step", "settings": { "number": "03", "title": "Production", "text": "Project review. I review the files, confirm creative direction, and begin the mix or master." } },
-        "p4": { "type": "step", "settings": { "number": "04", "title": "Delivery", "text": "Preview to final. You receive a preview by email. Once approved, final files are delivered." } },
-        "c1": { "type": "credit", "settings": { "title": "Project one", "streams": "4.2M" } },
-        "c2": { "type": "credit", "settings": { "title": "Project two", "streams": "2.8M" } },
-        "c3": { "type": "credit", "settings": { "title": "Project three", "streams": "1.5M" } },
-        "c4": { "type": "credit", "settings": { "title": "Project four", "streams": "980K" } },
-        "c5": { "type": "credit", "settings": { "title": "Project five", "streams": "760K" } },
-        "c6": { "type": "credit", "settings": { "title": "Project six", "streams": "540K" } }
+        "s1": {
+          "type": "stat",
+          "settings": {
+            "value": "30",
+            "suffix": "M+",
+            "label": "Engineering-credit streams"
+          }
+        },
+        "s2": {
+          "type": "stat",
+          "settings": {
+            "value": "18",
+            "suffix": "M+",
+            "label": "Streams as an artist"
+          }
+        },
+        "s3": {
+          "type": "stat",
+          "settings": {
+            "value": "100",
+            "suffix": "%",
+            "label": "Personally engineered by DJ HTSW"
+          }
+        },
+        "p1": {
+          "type": "step",
+          "settings": {
+            "number": "01",
+            "title": "Purchase",
+            "text": "Choose the package that best matches your project."
+          }
+        },
+        "p2": {
+          "type": "step",
+          "settings": {
+            "number": "02",
+            "title": "Intake",
+            "text": "Complete the brief. You'll be directed to a detailed form covering your song, references, goals, and Drive upload."
+          }
+        },
+        "p3": {
+          "type": "step",
+          "settings": {
+            "number": "03",
+            "title": "Production",
+            "text": "Project review. I review the files, confirm creative direction, and begin the mix or master."
+          }
+        },
+        "p4": {
+          "type": "step",
+          "settings": {
+            "number": "04",
+            "title": "Delivery",
+            "text": "Preview to final. You receive a preview by email. Once approved, final files are delivered."
+          }
+        },
+        "c1": {
+          "type": "credit",
+          "settings": {
+            "title": "Project one",
+            "streams": "4.2M"
+          }
+        },
+        "c2": {
+          "type": "credit",
+          "settings": {
+            "title": "Project two",
+            "streams": "2.8M"
+          }
+        },
+        "c3": {
+          "type": "credit",
+          "settings": {
+            "title": "Project three",
+            "streams": "1.5M"
+          }
+        },
+        "c4": {
+          "type": "credit",
+          "settings": {
+            "title": "Project four",
+            "streams": "980K"
+          }
+        },
+        "c5": {
+          "type": "credit",
+          "settings": {
+            "title": "Project five",
+            "streams": "760K"
+          }
+        },
+        "c6": {
+          "type": "credit",
+          "settings": {
+            "title": "Project six",
+            "streams": "540K"
+          }
+        },
+        "plan1": {
+          "type": "plan",
+          "settings": {
+            "kicker": "THE SERVICE",
+            "name": "Mix & Master Pro",
+            "price": "$150",
+            "price_note": "Per song",
+            "featured": true,
+            "badge": "Most complete",
+            "description": "<p>Full vocal engineering and mastering for artists preparing a polished, streaming-ready release.</p>",
+            "features": "Vocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nStreaming-ready WAV master\nTwo collaborative revision rounds\n7–14 day turnaround",
+            "primary_label": "Buy now",
+            "secondary_label": "Learn more"
+          }
+        },
+        "plan2": {
+          "type": "plan",
+          "settings": {
+            "kicker": "THE SERVICE",
+            "name": "Mix",
+            "price": "$100",
+            "price_note": "Per song",
+            "featured": false,
+            "badge": "",
+            "description": "<p>Vocal mixing for artists who already have mastering handled, or want the mix first.</p>",
+            "features": "Vocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nMixed WAV, ready to master\nOne revision round\n5–10 day turnaround",
+            "primary_label": "Buy now",
+            "secondary_label": "Learn more"
+          }
+        },
+        "ph1": {
+          "type": "photo",
+          "settings": {
+            "caption": "In the studio",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "ph2": {
+          "type": "photo",
+          "settings": {
+            "caption": "Session work",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "ph3": {
+          "type": "photo",
+          "settings": {
+            "caption": "The desk",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "ph4": {
+          "type": "photo",
+          "settings": {
+            "caption": "Monitoring",
+            "ratio": "1",
+            "wide": false
+          }
+        }
       },
-      "block_order": ["s1","s2","s3","c1","c2","c3","c4","c5","c6","d1","d2","d3","d4","d5","d6","p1","p2","p3","p4"]
+      "block_order": [
+        "s1",
+        "s2",
+        "s3",
+        "ph1",
+        "ph2",
+        "ph3",
+        "ph4",
+        "c1",
+        "c2",
+        "c3",
+        "c4",
+        "c5",
+        "c6",
+        "plan1",
+        "plan2",
+        "p1",
+        "p2",
+        "p3",
+        "p4"
+      ]
     }
   ]
 }
