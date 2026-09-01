@@ -132,8 +132,9 @@
         "credit_iFbdBa": {
           "type": "credit",
           "settings": {
-            "title": "Project three",
-            "streams": "1.5M"
+            "image": "shopify://shop_images/ksee_undercover.jpg",
+            "title": "KSEE UNDERCOVER",
+            "streams": "800k+"
           }
         },
         "credit_a8wnFG": {
