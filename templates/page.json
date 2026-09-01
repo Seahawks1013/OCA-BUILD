@@ -59,10 +59,10 @@
         "padding-block-end": 80
       }
     },
-    "mix_master_HMwmLq": {
+    "mix_master_cmzXqK": {
       "type": "mix-master",
       "blocks": {
-        "stat_HMFWWE": {
+        "stat_7ebpmw": {
           "type": "stat",
           "settings": {
             "value": "30",
@@ -71,7 +71,7 @@
             "label": "Engineering-credit streams"
           }
         },
-        "stat_jBY4Qx": {
+        "stat_fgAnhF": {
           "type": "stat",
           "settings": {
             "value": "18",
@@ -80,7 +80,7 @@
             "label": "Streams as an artist"
           }
         },
-        "stat_FMWWgB": {
+        "stat_rXD8eB": {
           "type": "stat",
           "settings": {
             "value": "100",
@@ -89,85 +89,115 @@
             "label": "Personally engineered by DJ HTSW"
           }
         },
-        "credit_BM64mH": {
+        "photo_hPDLX6": {
+          "type": "photo",
+          "settings": {
+            "caption": "In the studio",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "photo_DbebkP": {
+          "type": "photo",
+          "settings": {
+            "caption": "Session work",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "photo_BdxV7U": {
+          "type": "photo",
+          "settings": {
+            "caption": "The desk",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "photo_QchPay": {
+          "type": "photo",
+          "settings": {
+            "caption": "Monitoring",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "credit_jCMn8K": {
           "type": "credit",
           "settings": {
             "title": "Project one",
             "streams": "4.2M"
           }
         },
-        "credit_DLpPLd": {
+        "credit_JBJUR8": {
           "type": "credit",
           "settings": {
             "title": "Project two",
             "streams": "2.8M"
           }
         },
-        "credit_cGKMd6": {
+        "credit_iFbdBa": {
           "type": "credit",
           "settings": {
             "title": "Project three",
             "streams": "1.5M"
           }
         },
-        "credit_8X6fDa": {
+        "credit_a8wnFG": {
           "type": "credit",
           "settings": {
             "title": "Project four",
             "streams": "980K"
           }
         },
-        "credit_K3D9Mb": {
+        "credit_XT8nww": {
           "type": "credit",
           "settings": {
             "title": "Project five",
             "streams": "760K"
           }
         },
-        "credit_ziHfrq": {
+        "credit_gyFF4U": {
           "type": "credit",
           "settings": {
             "title": "Project six",
             "streams": "540K"
           }
         },
-        "deliverable_8Xkm4z": {
-          "type": "deliverable",
+        "plan_6qLyDL": {
+          "type": "plan",
           "settings": {
-            "text": "Vocal tuning and time alignment"
+            "kicker": "THE SERVICE",
+            "name": "Mix & Master Pro",
+            "price": "$150",
+            "price_note": "Per song",
+            "description": "<p>Full vocal engineering and mastering for artists preparing a polished, streaming-ready release.</p>",
+            "features": "Vocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nStreaming-ready WAV master\nTwo collaborative revision rounds\n7–14 day turnaround",
+            "featured": true,
+            "badge": "Most complete",
+            "primary_label": "Buy now",
+            "primary_link": "",
+            "secondary_label": "Learn more",
+            "secondary_link": ""
           }
         },
-        "deliverable_9n9mmM": {
-          "type": "deliverable",
+        "plan_y9RBJ8": {
+          "type": "plan",
           "settings": {
-            "text": "Noise cleanup and vocal processing"
+            "kicker": "THE SERVICE",
+            "name": "Mix",
+            "price": "$100",
+            "price_note": "Per song",
+            "description": "<p>Vocal mixing for artists who already have mastering handled, or want the mix first.</p>",
+            "features": "Vocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nMixed WAV, ready to master\nOne revision round\n5–10 day turnaround",
+            "featured": false,
+            "badge": "",
+            "primary_label": "Buy now",
+            "primary_link": "",
+            "secondary_label": "Learn more",
+            "secondary_link": ""
           }
         },
-        "deliverable_nUaWji": {
-          "type": "deliverable",
-          "settings": {
-            "text": "Instrumental balancing and stereo imaging"
-          }
-        },
-        "deliverable_iQTKPE": {
-          "type": "deliverable",
-          "settings": {
-            "text": "Streaming-ready WAV master"
-          }
-        },
-        "deliverable_bPbgRH": {
-          "type": "deliverable",
-          "settings": {
-            "text": "Two collaborative revision rounds"
-          }
-        },
-        "deliverable_JxFben": {
-          "type": "deliverable",
-          "settings": {
-            "text": "7–14 day turnaround"
-          }
-        },
-        "step_CrVNLF": {
+        "step_qTF6MW": {
           "type": "step",
           "settings": {
             "number": "01",
@@ -175,7 +205,7 @@
             "text": "Choose the package that best matches your project."
           }
         },
-        "step_6gG8VR": {
+        "step_DMWabh": {
           "type": "step",
           "settings": {
             "number": "02",
@@ -183,7 +213,7 @@
             "text": "Complete the brief. You'll be directed to a detailed form covering your song, references, goals, and Drive upload."
           }
         },
-        "step_Y9CGwW": {
+        "step_TNPPza": {
           "type": "step",
           "settings": {
             "number": "03",
@@ -191,7 +221,7 @@
             "text": "Project review. I review the files, confirm creative direction, and begin the mix or master."
           }
         },
-        "step_9b39kw": {
+        "step_FEzUVP": {
           "type": "step",
           "settings": {
             "number": "04",
@@ -201,44 +231,40 @@
         }
       },
       "block_order": [
-        "stat_HMFWWE",
-        "stat_jBY4Qx",
-        "stat_FMWWgB",
-        "credit_BM64mH",
-        "credit_DLpPLd",
-        "credit_cGKMd6",
-        "credit_8X6fDa",
-        "credit_K3D9Mb",
-        "credit_ziHfrq",
-        "deliverable_8Xkm4z",
-        "deliverable_9n9mmM",
-        "deliverable_nUaWji",
-        "deliverable_iQTKPE",
-        "deliverable_bPbgRH",
-        "deliverable_JxFben",
-        "step_CrVNLF",
-        "step_6gG8VR",
-        "step_Y9CGwW",
-        "step_9b39kw"
+        "stat_7ebpmw",
+        "stat_fgAnhF",
+        "stat_rXD8eB",
+        "photo_hPDLX6",
+        "photo_DbebkP",
+        "photo_BdxV7U",
+        "photo_QchPay",
+        "credit_jCMn8K",
+        "credit_JBJUR8",
+        "credit_iFbdBa",
+        "credit_a8wnFG",
+        "credit_XT8nww",
+        "credit_gyFF4U",
+        "plan_6qLyDL",
+        "plan_y9RBJ8",
+        "step_qTF6MW",
+        "step_DMWabh",
+        "step_TNPPza",
+        "step_FEzUVP"
       ],
       "name": "Mix & Master",
       "settings": {
         "hero_eyebrow": "MIX & MASTER",
         "hero_headline": "Release-ready engineering.",
         "hero_body": "<p>Professional vocal mixing, mastering, and custom vocal systems built personally by DJ HTSW. Every project is handled directly from intake to final delivery — no outsourcing, no assistants, and no automated replacement for creative judgment.</p>",
+        "gallery_headline": "Inside the room.",
+        "gallery_body": "<p>The studio, the sessions, the process.</p>",
+        "gallery_columns": 3,
         "credits_headline": "Engineering credits",
         "credits_body": "<p>Selected projects mixed, mastered, or engineered by DJ HTSW. Hover a cover to reveal its cumulative stream count — the reel pauses while you browse.</p>",
         "streams_label": "Streams",
         "reel_speed": 40,
-        "price_kicker": "THE SERVICE",
-        "price_title": "Mix & Master",
-        "price": "$150",
-        "price_note": "Per song",
-        "price_body": "<p>Full vocal engineering and mastering for artists preparing a polished, streaming-ready release.</p>",
-        "primary_label": "Buy now",
-        "primary_link": "",
-        "secondary_label": "Learn more",
-        "secondary_link": "",
+        "plans_headline": "Choose your service.",
+        "plans_body": "<p>Two ways to work together. Both are engineered personally, start to finish.</p>",
         "process_headline": "What happens next.",
         "process_body": "<p>A straightforward, transparent workflow from purchase to final delivery.</p>",
         "closing_headline": "Every project is handled personally.",
@@ -261,6 +287,6 @@
   },
   "order": [
     "main",
-    "mix_master_HMwmLq"
+    "mix_master_cmzXqK"
   ]
 }
