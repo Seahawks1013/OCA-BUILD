@@ -116,15 +116,17 @@
         "credit_jCMn8K": {
           "type": "credit",
           "settings": {
-            "title": "Project one",
-            "streams": "4.2M"
+            "image": "shopify://shop_images/sorisa_dela.jpg",
+            "title": "Sorriso Dela",
+            "streams": "150k+"
           }
         },
         "credit_JBJUR8": {
           "type": "credit",
           "settings": {
-            "title": "Project two",
-            "streams": "2.8M"
+            "image": "shopify://shop_images/8eb5c6728141d23cea359ae21e58d523.1000x1000x1.png",
+            "title": "RIDING THRU YOUR CITY",
+            "streams": "9M+"
           }
         },
         "credit_iFbdBa": {
@@ -137,22 +139,25 @@
         "credit_a8wnFG": {
           "type": "credit",
           "settings": {
-            "title": "Project four",
-            "streams": "980K"
+            "image": "shopify://shop_images/ab67616d00001e02ce59ae14f8ae4153f294e583.jpg",
+            "title": "DON'T SAY YOU LOVE ME, Pt. 2",
+            "streams": "15M"
           }
         },
         "credit_XT8nww": {
           "type": "credit",
           "settings": {
-            "title": "Project five",
-            "streams": "760K"
+            "image": "shopify://shop_images/maxresdefault.jpg",
+            "title": "miles away",
+            "streams": "550k+"
           }
         },
         "credit_gyFF4U": {
           "type": "credit",
           "settings": {
-            "title": "Project six",
-            "streams": "540K"
+            "image": "shopify://shop_images/0x1900-000000-80-0-0.jpg",
+            "title": "ION WANT CASH - OVI WOOD",
+            "streams": "5M+"
           }
         },
         "plan_6qLyDL": {
