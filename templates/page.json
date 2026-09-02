@@ -251,6 +251,7 @@
         "step_TNPPza",
         "step_FEzUVP"
       ],
+      "disabled": true,
       "name": "Mix & Master",
       "settings": {
         "hero_eyebrow": "MIX & MASTER",
