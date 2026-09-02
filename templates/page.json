@@ -164,23 +164,6 @@
             "streams": "5M+"
           }
         },
-        "plan_6qLyDL": {
-          "type": "plan",
-          "settings": {
-            "kicker": "THE SERVICE",
-            "name": "Mix & Master Pro",
-            "price": "$150",
-            "price_note": "Per song · 8+ stems",
-            "description": "<p>Full vocal engineering and mastering for sessions of 8 stems or more.</p>",
-            "features": "8+ stems\nVocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nStreaming-ready WAV master\nTwo collaborative revision rounds",
-            "featured": true,
-            "badge": "Most complete",
-            "primary_label": "Buy now",
-            "primary_link": "",
-            "secondary_label": "Learn more",
-            "secondary_link": ""
-          }
-        },
         "plan_y9RBJ8": {
           "type": "plan",
           "settings": {
@@ -192,6 +175,23 @@
             "features": "Up to 7 stems\nVocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nMixed WAV, ready to master\nOne revision round",
             "featured": false,
             "badge": "",
+            "primary_label": "Buy now",
+            "primary_link": "",
+            "secondary_label": "Learn more",
+            "secondary_link": ""
+          }
+        },
+        "plan_6qLyDL": {
+          "type": "plan",
+          "settings": {
+            "kicker": "THE SERVICE",
+            "name": "Mix & Master Pro",
+            "price": "$150",
+            "price_note": "Per song · 8+ stems",
+            "description": "<p>Full vocal engineering and mastering for sessions of 8 stems or more.</p>",
+            "features": "8+ stems\nVocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nStreaming-ready WAV master\nTwo collaborative revision rounds",
+            "featured": true,
+            "badge": "Most complete",
             "primary_label": "Buy now",
             "primary_link": "",
             "secondary_label": "Learn more",
@@ -256,12 +256,15 @@
         "hero_eyebrow": "MIX & MASTER",
         "hero_headline": "Release-ready engineering.",
         "hero_body": "<p>Professional vocal mixing, mastering, and custom vocal systems built personally by DJ HTSW. Every project is handled directly from intake to final delivery — no outsourcing, no assistants, and no automated replacement for creative judgment.</p>",
+        "instagram_url": "",
+        "instagram_label": "Follow on Instagram",
         "gallery_headline": "Inside the room.",
         "gallery_body": "<p>The studio, the sessions, the process.</p>",
         "gallery_columns": 3,
         "credits_headline": "Engineering credits",
         "credits_body": "<p>Selected projects mixed, mastered, or engineered by DJ HTSW. Scroll through and hover a cover to reveal its cumulative stream count.</p>",
         "streams_label": "Streams",
+        "credits_autoscroll": false,
         "reel_speed": 40,
         "plans_headline": "Choose your service.",
         "plans_body": "<p>Two ways to work together. Both are engineered personally, start to finish.</p>",
@@ -281,13 +284,241 @@
         "card_color": "#0d1231",
         "card_text_color": "#ffffff",
         "headline_size": 84,
-        "headline_size_mobile": 40,
-        "credits_autoscroll": false
+        "headline_size_mobile": 40
+      }
+    },
+    "mix_master_xnpBUy": {
+      "type": "mix-master",
+      "blocks": {
+        "stat_4ac9be": {
+          "type": "stat",
+          "settings": {
+            "value": "30",
+            "suffix": "M+",
+            "decimals": 0,
+            "label": "Engineering-credit streams"
+          }
+        },
+        "stat_aM97zC": {
+          "type": "stat",
+          "settings": {
+            "value": "18",
+            "suffix": "M+",
+            "decimals": 0,
+            "label": "Streams as an artist"
+          }
+        },
+        "stat_wjUkyY": {
+          "type": "stat",
+          "settings": {
+            "value": "100",
+            "suffix": "%",
+            "decimals": 0,
+            "label": "Personally engineered by DJ HTSW"
+          }
+        },
+        "photo_gAEPda": {
+          "type": "photo",
+          "settings": {
+            "caption": "In the studio",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "photo_FrrgfY": {
+          "type": "photo",
+          "settings": {
+            "caption": "Session work",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "photo_ggLaxC": {
+          "type": "photo",
+          "settings": {
+            "caption": "The desk",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "photo_QYNUGd": {
+          "type": "photo",
+          "settings": {
+            "caption": "Monitoring",
+            "ratio": "1",
+            "wide": false
+          }
+        },
+        "credit_HEBCbj": {
+          "type": "credit",
+          "settings": {
+            "title": "Project one",
+            "streams": "4.2M"
+          }
+        },
+        "credit_nhiK9B": {
+          "type": "credit",
+          "settings": {
+            "title": "Project two",
+            "streams": "2.8M"
+          }
+        },
+        "credit_jFnfcC": {
+          "type": "credit",
+          "settings": {
+            "title": "Project three",
+            "streams": "1.5M"
+          }
+        },
+        "credit_hVUhLV": {
+          "type": "credit",
+          "settings": {
+            "title": "Project four",
+            "streams": "980K"
+          }
+        },
+        "credit_FEgD9M": {
+          "type": "credit",
+          "settings": {
+            "title": "Project five",
+            "streams": "760K"
+          }
+        },
+        "credit_YRtwma": {
+          "type": "credit",
+          "settings": {
+            "title": "Project six",
+            "streams": "540K"
+          }
+        },
+        "plan_cJL3LH": {
+          "type": "plan",
+          "settings": {
+            "kicker": "THE SERVICE",
+            "name": "Mix",
+            "price": "$100",
+            "price_note": "Per song · up to 7 stems",
+            "description": "<p>Vocal mixing for sessions of up to 7 stems.</p>",
+            "features": "Up to 7 stems\nVocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nMixed WAV, ready to master\nOne revision round",
+            "featured": false,
+            "badge": "",
+            "primary_label": "Buy now",
+            "primary_link": "",
+            "secondary_label": "Learn more",
+            "secondary_link": ""
+          }
+        },
+        "plan_mX4w6p": {
+          "type": "plan",
+          "settings": {
+            "kicker": "THE SERVICE",
+            "name": "Mix & Master Pro",
+            "price": "$150",
+            "price_note": "Per song · 8+ stems",
+            "description": "<p>Full vocal engineering and mastering for sessions of 8 stems or more.</p>",
+            "features": "8+ stems\nVocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nStreaming-ready WAV master\nTwo collaborative revision rounds",
+            "featured": true,
+            "badge": "Most complete",
+            "primary_label": "Buy now",
+            "primary_link": "",
+            "secondary_label": "Learn more",
+            "secondary_link": ""
+          }
+        },
+        "step_yWrTKP": {
+          "type": "step",
+          "settings": {
+            "number": "01",
+            "title": "Purchase",
+            "text": "Choose the package that best matches your project."
+          }
+        },
+        "step_NYMxDV": {
+          "type": "step",
+          "settings": {
+            "number": "02",
+            "title": "Intake",
+            "text": "Complete the brief. You'll be directed to a detailed form covering your song, references, goals, and Drive upload."
+          }
+        },
+        "step_J6b7a6": {
+          "type": "step",
+          "settings": {
+            "number": "03",
+            "title": "Production",
+            "text": "Project review. I review the files, confirm creative direction, and begin the mix or master."
+          }
+        },
+        "step_yxp63n": {
+          "type": "step",
+          "settings": {
+            "number": "04",
+            "title": "Delivery",
+            "text": "Preview to final. You receive a preview by email. Once approved, final files are delivered."
+          }
+        }
+      },
+      "block_order": [
+        "stat_4ac9be",
+        "stat_aM97zC",
+        "stat_wjUkyY",
+        "photo_gAEPda",
+        "photo_FrrgfY",
+        "photo_ggLaxC",
+        "photo_QYNUGd",
+        "credit_HEBCbj",
+        "credit_nhiK9B",
+        "credit_jFnfcC",
+        "credit_hVUhLV",
+        "credit_FEgD9M",
+        "credit_YRtwma",
+        "plan_cJL3LH",
+        "plan_mX4w6p",
+        "step_yWrTKP",
+        "step_NYMxDV",
+        "step_J6b7a6",
+        "step_yxp63n"
+      ],
+      "name": "Mix & Master",
+      "settings": {
+        "hero_eyebrow": "MIX & MASTER",
+        "hero_headline": "Release-ready engineering.",
+        "hero_body": "<p>Professional vocal mixing, mastering, and custom vocal systems built personally by DJ HTSW. Every project is handled directly from intake to final delivery — no outsourcing, no assistants, and no automated replacement for creative judgment.</p>",
+        "instagram_url": "",
+        "instagram_label": "Follow on Instagram",
+        "gallery_headline": "Inside the room.",
+        "gallery_body": "<p>The studio, the sessions, the process.</p>",
+        "gallery_columns": 3,
+        "credits_headline": "Engineering credits",
+        "credits_body": "<p>Selected projects mixed, mastered, or engineered by DJ HTSW. Scroll through and hover a cover to reveal its cumulative stream count.</p>",
+        "streams_label": "Streams",
+        "credits_autoscroll": false,
+        "reel_speed": 40,
+        "plans_headline": "Choose your service.",
+        "plans_body": "<p>Two ways to work together. Both are engineered personally, start to finish.</p>",
+        "process_headline": "What happens next.",
+        "process_body": "<p>A straightforward, transparent workflow from purchase to final delivery.</p>",
+        "closing_headline": "Every project is handled personally.",
+        "closing_body": "<p>No outsourcing. No assistants. No AI-generated processing decisions. You are hiring the artist and engineer behind more than 30 million streams, with direct communication from intake through final delivery.</p>",
+        "max_width": 1160,
+        "corner_radius": 14,
+        "padding_top": 96,
+        "padding_bottom": 96,
+        "background_color": "#f1f1ef",
+        "accent_color": "#1242fd",
+        "heading_color": "#111111",
+        "body_color": "#6b6b68",
+        "line_color": "#d9d9d4",
+        "card_color": "#0d1231",
+        "card_text_color": "#ffffff",
+        "headline_size": 84,
+        "headline_size_mobile": 40
       }
     }
   },
   "order": [
     "main",
-    "mix_master_cmzXqK"
+    "mix_master_cmzXqK",
+    "mix_master_xnpBUy"
   ]
 }
