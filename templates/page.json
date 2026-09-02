@@ -333,7 +333,7 @@
           "type": "photo",
           "settings": {
             "image": "shopify://shop_images/IMG_6073.jpg",
-            "caption": "In the studio",
+            "caption": "live performance.",
             "ratio": "1",
             "wide": false
           }
@@ -342,7 +342,7 @@
           "type": "photo",
           "settings": {
             "image": "shopify://shop_images/IMG_6445_a9473297-64d1-4161-a33e-c31da08d7bbf.png",
-            "caption": "Session work",
+            "caption": "session work.",
             "ratio": "1",
             "wide": false
           }
@@ -351,7 +351,7 @@
           "type": "photo",
           "settings": {
             "image": "shopify://shop_images/IMG_6445_1.png",
-            "caption": "The desk",
+            "caption": "LA session.",
             "ratio": "1",
             "wide": false
           }
@@ -360,7 +360,7 @@
           "type": "photo",
           "settings": {
             "image": "shopify://shop_images/IMG_6106.jpg",
-            "caption": "Monitoring",
+            "caption": "LA session, pt. 2.",
             "ratio": "1",
             "wide": false
           }
