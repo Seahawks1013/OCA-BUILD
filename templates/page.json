@@ -357,43 +357,49 @@
         "credit_HEBCbj": {
           "type": "credit",
           "settings": {
-            "title": "Project one",
-            "streams": "4.2M"
+            "image": "shopify://shop_images/ab67616d00001e02ce59ae14f8ae4153f294e583.jpg",
+            "title": "Don't Say You Love Me, Pt. 2",
+            "streams": "15M+"
           }
         },
         "credit_nhiK9B": {
           "type": "credit",
           "settings": {
-            "title": "Project two",
-            "streams": "2.8M"
+            "image": "shopify://shop_images/maxresdefault.jpg",
+            "title": "miles away",
+            "streams": "550k+"
           }
         },
         "credit_jFnfcC": {
           "type": "credit",
           "settings": {
-            "title": "Project three",
-            "streams": "1.5M"
+            "image": "shopify://shop_images/8eb5c6728141d23cea359ae21e58d523.1000x1000x1.png",
+            "title": "RIDING THRU YOUR CITY",
+            "streams": "12M+"
           }
         },
         "credit_hVUhLV": {
           "type": "credit",
           "settings": {
-            "title": "Project four",
-            "streams": "980K"
+            "image": "shopify://shop_images/ksee_undercover.jpg",
+            "title": "KSEE UNDERCOVER",
+            "streams": "850k+"
           }
         },
         "credit_FEgD9M": {
           "type": "credit",
           "settings": {
-            "title": "Project five",
-            "streams": "760K"
+            "image": "shopify://shop_images/0x1900-000000-80-0-0.jpg",
+            "title": "ION WANT CASH",
+            "streams": "6M+"
           }
         },
         "credit_YRtwma": {
           "type": "credit",
           "settings": {
-            "title": "Project six",
-            "streams": "540K"
+            "image": "shopify://shop_images/sorisa_dela.jpg",
+            "title": "Sorriso Dela",
+            "streams": "250K+"
           }
         },
         "plan_cJL3LH": {
