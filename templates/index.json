@@ -187,6 +187,9 @@
         "animate_panel": true,
         "max_width": 1120,
         "corner_radius": 22,
+        "thumb_shape": "50%",
+        "show_key_hint": true,
+        "key_hint_text": "Use arrow keys",
         "padding_top": 72,
         "padding_bottom": 72,
         "background_color": "#f1f1ef",
@@ -433,7 +436,7 @@
         "artist_6zhAke": {
           "type": "artist",
           "settings": {
-            "thumbnail": "shopify://shop_images/MC_JOSH_2.jpg",
+            "thumbnail": "shopify://shop_images/MC_JOSH_UPDATED.jpg",
             "card_color": "",
             "media_type": "shopify",
             "video_url": "",
