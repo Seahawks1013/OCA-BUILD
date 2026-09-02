@@ -321,7 +321,8 @@
         "photo_gAEPda": {
           "type": "photo",
           "settings": {
-            "caption": "In the studio",
+            "image": "shopify://shop_images/IMG_6073.jpg",
+            "caption": "live",
             "ratio": "1",
             "wide": false
           }
@@ -329,7 +330,8 @@
         "photo_FrrgfY": {
           "type": "photo",
           "settings": {
-            "caption": "Session work",
+            "image": "shopify://shop_images/IMG_6445_a9473297-64d1-4161-a33e-c31da08d7bbf.png",
+            "caption": "home studio work",
             "ratio": "1",
             "wide": false
           }
@@ -337,7 +339,8 @@
         "photo_ggLaxC": {
           "type": "photo",
           "settings": {
-            "caption": "The desk",
+            "image": "shopify://shop_images/IMG_6445_1.png",
+            "caption": "LA Studio Session",
             "ratio": "1",
             "wide": false
           }
@@ -345,7 +348,8 @@
         "photo_QYNUGd": {
           "type": "photo",
           "settings": {
-            "caption": "Monitoring",
+            "image": "shopify://shop_images/IMG_6106.jpg",
+            "caption": "LA Studio Session pt. 2",
             "ratio": "1",
             "wide": false
           }
@@ -485,7 +489,7 @@
         "hero_eyebrow": "MIX & MASTER",
         "hero_headline": "Release-ready engineering.",
         "hero_body": "<p>Professional vocal mixing, mastering, and custom vocal systems built personally by DJ HTSW. Every project is handled directly from intake to final delivery — no outsourcing, no assistants, and no automated replacement for creative judgment.</p>",
-        "instagram_url": "",
+        "instagram_url": "https://www.instagram.com/brabodagringa/",
         "instagram_label": "Follow on Instagram",
         "gallery_headline": "Inside the room.",
         "gallery_body": "<p>The studio, the sessions, the process.</p>",
