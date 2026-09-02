@@ -1,9 +1,9 @@
 
 {%- comment -%}
   Mix & Master
-  Five-part service page section: hero + trust stats, engineering credits reel,
+  Five-part service page section: hero + trust stats, engineering credits carousel,
   pricing card, client-journey steps, closing statement.
-  Blocks: stat / credit / deliverable / step.
+  Blocks: stat / credit / photo / plan / step.
 {%- endcomment -%}
 
 {%- liquid
@@ -64,6 +64,29 @@
 
       {%- if section.settings.hero_body != blank -%}
         <div class="mm__lede" data-reveal style="--d:120ms">{{ section.settings.hero_body }}</div>
+      {%- endif -%}
+
+      {%- if section.settings.instagram_url != blank -%}
+        <a
+          class="mm__ig"
+          href="{{ section.settings.instagram_url }}"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-reveal
+          style="--d:150ms"
+        >
+          <span class="mm__ig-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+              <rect x="2.5" y="2.5" width="19" height="19" rx="5.4"/>
+              <circle cx="12" cy="12" r="4.2"/>
+              <circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/>
+            </svg>
+          </span>
+          <span class="mm__ig-text">
+            {{- section.settings.instagram_label | default: 'Follow on Instagram' -}}
+          </span>
+          <span class="mm__sr">(opens in a new tab)</span>
+        </a>
       {%- endif -%}
 
       {%- if stat_count > 0 -%}
@@ -142,9 +165,36 @@
           {%- endif -%}
         </div>
 
-        <div class="mm__reel" data-mm-reel data-reveal style="--d:80ms">
-          <div class="mm__reel-track" data-mm-reel-track>
-            {%- for pass in (1..2) -%}
+        {%- liquid
+          assign autoscroll = section.settings.credits_autoscroll
+          if autoscroll
+            assign passes = 2
+          else
+            assign passes = 1
+          endif
+        -%}
+        <div class="mm__reel-wrap" data-reveal style="--d:80ms">
+          <button
+            class="mm__reel-arrow mm__reel-arrow--prev"
+            type="button"
+            data-mm-reel-prev
+            aria-label="Previous credits"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+              <path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
+
+          <div
+            class="mm__reel"
+            data-mm-reel
+            {% if autoscroll %}data-mm-autoscroll="true"{% endif %}
+            tabindex="0"
+            role="region"
+            aria-label="{{ section.settings.credits_headline | default: 'Engineering credits' | escape }}"
+          >
+            <div class="mm__reel-track" data-mm-reel-track>
+            {%- for pass in (1..passes) -%}
               {%- for block in section.blocks -%}
                 {%- if block.type != 'credit' -%}{%- continue -%}{%- endif -%}
                 <figure class="mm__cover" {% if pass == 2 %}aria-hidden="true"{% endif %} {{ block.shopify_attributes }}>
@@ -171,7 +221,19 @@
                 </figure>
               {%- endfor -%}
             {%- endfor -%}
+            </div>
           </div>
+
+          <button
+            class="mm__reel-arrow mm__reel-arrow--next"
+            type="button"
+            data-mm-reel-next
+            aria-label="Next credits"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+              <path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
       </section>
     {%- endif -%}
@@ -353,25 +415,147 @@
           targets.forEach(function (el) { io.observe(el); });
         }
 
-        // ---- credits reel -----------------------------------------------------
-        var reel = this.querySelector('[data-mm-reel-track]');
-        if (reel && !reduced) {
-          // one full pass covers half the track, since the list is duplicated
-          var speed = parseFloat(this.dataset.reelSpeed) || 40;
-          var setDuration = function () {
-            var half = reel.scrollWidth / 2;
-            if (half > 0) reel.style.setProperty('--mm-reel-duration', (half / speed) + 's');
-          };
-          setDuration();
-          if ('ResizeObserver' in window) {
-            this.ro = new ResizeObserver(setDuration);
-            this.ro.observe(reel);
-          }
-          reel.classList.add('is-rolling');
-        }
+        // ---- credits carousel -------------------------------------------------
+        this.initReel(reduced);
       }
 
-      disconnectedCallback() { if (this.ro) this.ro.disconnect(); }
+      initReel(reduced) {
+        var reel = this.querySelector('[data-mm-reel]');
+        var track = this.querySelector('[data-mm-reel-track]');
+        if (!reel || !track) return;
+
+        var self = this;
+        var prev = this.querySelector('[data-mm-reel-prev]');
+        var next = this.querySelector('[data-mm-reel-next]');
+        var looping = reel.dataset.mmAutoscroll === 'true' && !reduced;
+        var speed = parseFloat(this.dataset.reelSpeed) || 40;
+
+        // width of one cover + the flex gap, so a click advances by whole cards
+        var stepSize = function () {
+          var card = track.querySelector('.mm__cover');
+          if (!card) return 220;
+          var gap = parseFloat(getComputedStyle(track).columnGap || getComputedStyle(track).gap) || 0;
+          return card.getBoundingClientRect().width + gap;
+        };
+
+        // how far you can scroll; when looping, the list is duplicated so the
+        // meaningful range is only the first copy
+        var maxScroll = function () {
+          return looping
+            ? track.scrollWidth / 2
+            : Math.max(0, reel.scrollWidth - reel.clientWidth);
+        };
+
+        var syncArrows = function () {
+          if (looping || !prev || !next) return;
+          var max = maxScroll();
+          prev.disabled = reel.scrollLeft <= 1;
+          next.disabled = reel.scrollLeft >= max - 1;
+          // nothing to scroll at all — hide rather than show two dead buttons
+          var idle = max <= 1;
+          prev.hidden = idle;
+          next.hidden = idle;
+        };
+
+        var page = function (dir) {
+          var perView = Math.max(1, Math.floor(reel.clientWidth / stepSize()));
+          reel.scrollBy({ left: dir * stepSize() * perView, behavior: 'smooth' });
+        };
+
+        if (prev) prev.addEventListener('click', function () { page(-1); });
+        if (next) next.addEventListener('click', function () { page(1); });
+
+        // ---- drag to scroll (mouse); touch already scrolls natively ----------
+        var dragging = false, startX = 0, startLeft = 0, moved = 0;
+
+        reel.addEventListener('pointerdown', function (e) {
+          if (e.pointerType === 'touch') return;
+          dragging = true; moved = 0;
+          startX = e.clientX;
+          startLeft = reel.scrollLeft;
+          reel.classList.add('is-dragging');
+        });
+
+        reel.addEventListener('pointermove', function (e) {
+          if (!dragging) return;
+          var dx = e.clientX - startX;
+          if (Math.abs(dx) > 3) moved = 1;
+          reel.scrollLeft = startLeft - dx;
+        });
+
+        var endDrag = function () {
+          if (!dragging) return;
+          dragging = false;
+          reel.classList.remove('is-dragging');
+        };
+        reel.addEventListener('pointerup', endDrag);
+        reel.addEventListener('pointercancel', endDrag);
+        reel.addEventListener('pointerleave', endDrag);
+        // a drag that ended on a cover shouldn't also fire its click
+        reel.addEventListener('click', function (e) {
+          if (moved) { e.preventDefault(); e.stopPropagation(); moved = 0; }
+        }, true);
+
+        // ---- keyboard --------------------------------------------------------
+        reel.addEventListener('keydown', function (e) {
+          if (e.key === 'ArrowLeft') { page(-1); e.preventDefault(); }
+          if (e.key === 'ArrowRight') { page(1); e.preventDefault(); }
+        });
+
+        // ---- optional auto-advance ------------------------------------------
+        if (looping) {
+          // snap points would yank the covers back between frames
+          reel.style.scrollSnapType = 'none';
+          var paused = false, last = 0;
+          var pause = function () { paused = true; };
+          var resume = function () { paused = false; };
+
+          reel.addEventListener('pointerenter', pause);
+          reel.addEventListener('pointerleave', resume);
+          reel.addEventListener('focusin', pause);
+          reel.addEventListener('focusout', resume);
+          reel.addEventListener('pointerdown', pause);
+          document.addEventListener('visibilitychange', function () {
+            if (document.hidden) pause(); else resume();
+          });
+
+          // Chrome rounds scrollLeft to whole pixels. Reading it back each
+          // frame and adding a sub-pixel delta rounds UP every time, which
+          // runs the reel ~50% fast. Keep the true position as a float here
+          // and only ever write it out.
+          var pos = reel.scrollLeft;
+
+          var tick = function (now) {
+            self.raf = requestAnimationFrame(tick);
+            if (!last) { last = now; return; }
+            var dt = (now - last) / 1000;
+            last = now;
+            if (paused || dragging || dt > 0.5) return;
+
+            // user scrolled or dragged out from under us — adopt their position
+            if (Math.abs(reel.scrollLeft - pos) > 2) pos = reel.scrollLeft;
+
+            pos += speed * dt;
+            // seamless wrap: the second copy is pixel-identical to the first
+            var half = maxScroll();
+            if (half > 0 && pos >= half) pos -= half;
+            reel.scrollLeft = pos;
+          };
+          this.raf = requestAnimationFrame(tick);
+        }
+
+        reel.addEventListener('scroll', syncArrows, { passive: true });
+        if ('ResizeObserver' in window) {
+          this.ro = new ResizeObserver(syncArrows);
+          this.ro.observe(reel);
+        }
+        syncArrows();
+      }
+
+      disconnectedCallback() {
+        if (this.ro) this.ro.disconnect();
+        if (this.raf) cancelAnimationFrame(this.raf);
+      }
 
       countUp(statEl) {
         var num = statEl.querySelector('[data-count-to]');
@@ -462,6 +646,56 @@
   .mm__lede > :first-child { margin-block-start: 0; }
   .mm__lede > :last-child { margin-block-end: 0; }
 
+  /* screen-reader-only, scoped so it can't collide with the theme's helper */
+  .mm__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .mm__ig {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-block-start: 1.6rem;
+    padding: 11px 20px 11px 15px;
+    border: 1px solid var(--mm-line, #d9d9d4);
+    border-radius: 999px;
+    color: var(--mm-ink, #111);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    text-decoration: none;
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+  }
+
+  .mm__ig-icon {
+    display: inline-flex;
+    color: var(--mm-accent, #1242fd);
+    transition: color 0.3s ease;
+  }
+
+  .mm__ig:hover {
+    background: var(--mm-accent, #1242fd);
+    border-color: var(--mm-accent, #1242fd);
+    color: #fff;
+    transform: translateY(-2px);
+  }
+
+  .mm__ig:hover .mm__ig-icon { color: #fff; }
+
+  .mm__ig:focus-visible {
+    outline: 2px solid var(--mm-accent, #1242fd);
+    outline-offset: 3px;
+  }
+
   .mm__stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
@@ -529,38 +763,86 @@
   .mm__block-body > :first-child { margin-block-start: 0; }
   .mm__block-body > :last-child { margin-block-end: 0; }
 
-  /* ---------- 2. credits reel ---------- */
-  .mm__reel {
-    overflow: hidden;
-    /* fade the ends so covers slide in and out rather than getting chopped */
-    mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
-    -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  /* ---------- 2. credits carousel ---------- */
+  .mm__reel-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
+
+  .mm__reel {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    /* deliberately NOT scroll-behavior:smooth — that would fight the
+       per-frame scrollLeft writes of auto-scroll. The arrows pass
+       behavior:'smooth' explicitly instead. */
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* fade the ends so covers slide in and out rather than getting chopped */
+    mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  }
+
+  .mm__reel::-webkit-scrollbar { display: none; }
+
+  .mm__reel:focus-visible {
+    outline: 2px solid var(--mm-accent, #1242fd);
+    outline-offset: 4px;
+    border-radius: var(--mm-radius, 14px);
+  }
+
+  /* snapping mid-drag fights the cursor */
+  .mm__reel.is-dragging {
+    scroll-snap-type: none;
+    cursor: grabbing;
+  }
+
+  .mm__reel.is-dragging .mm__cover { pointer-events: none; }
 
   .mm__reel-track {
     display: flex;
     gap: 18px;
     width: max-content;
+    padding-block-end: 4px;
   }
 
-  .mm__reel-track.is-rolling {
-    animation: mm-roll var(--mm-reel-duration, 40s) linear infinite;
+  .mm__reel-arrow {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 40px;
+    block-size: 40px;
+    padding: 0;
+    border: 1px solid var(--mm-line, #d9d9d4);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--mm-ink, #111);
+    cursor: pointer;
+    transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, opacity 0.25s ease;
   }
 
-  .mm__reel:hover .mm__reel-track.is-rolling,
-  .mm__reel:focus-within .mm__reel-track.is-rolling {
-    animation-play-state: paused;
+  .mm__reel-arrow:hover:not(:disabled) {
+    background: var(--mm-accent, #1242fd);
+    border-color: var(--mm-accent, #1242fd);
+    color: #fff;
   }
 
-  @keyframes mm-roll {
-    from { transform: translate3d(0, 0, 0); }
-    to   { transform: translate3d(-50%, 0, 0); }
+  .mm__reel-arrow:disabled {
+    opacity: 0.28;
+    cursor: default;
   }
 
   .mm__cover {
     flex: 0 0 auto;
     inline-size: 200px;
     margin: 0;
+    scroll-snap-align: start;
   }
 
   .mm__cover-art {
@@ -951,8 +1233,8 @@
   /* ---------- motion off ---------- */
   @media (prefers-reduced-motion: reduce) {
     [data-reveal] { opacity: 1; transform: none; transition: none; }
-    .mm__reel-track.is-rolling { animation: none; }
-    .mm__cover-art, .mm__btn, .mm__btn-arrow, .mm__step, .mm__cover-streams { transition: none; }
+    .mm__reel { scroll-snap-type: none; }
+    .mm__cover-art, .mm__btn, .mm__btn-arrow, .mm__step, .mm__cover-streams, .mm__reel-arrow { transition: none; }
   }
 
   /* ---------- mobile ---------- */
@@ -962,6 +1244,9 @@
     .mm__stats { grid-template-columns: 1fr; margin-block-start: 2.2rem; }
     .mm__cover, .mm__cover-art { inline-size: 150px; }
     .mm__cover-art { block-size: 150px; }
+    /* touch devices swipe — the arrows just eat width */
+    .mm__reel-arrow { display: none; }
+    .mm__reel { mask-image: linear-gradient(90deg, #000 92%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); }
     .mm__price { text-align: left; align-items: flex-start; }
     .mm__card-top { flex-direction: column; }
     .mm__btn { inline-size: 100%; justify-content: space-between; }
@@ -1008,6 +1293,18 @@
       "default": "<p>Professional vocal mixing, mastering, and custom vocal systems built personally by DJ HTSW. Every project is handled directly from intake to final delivery — no outsourcing, no assistants, and no automated replacement for creative judgment.</p>"
     },
     {
+      "type": "url",
+      "id": "instagram_url",
+      "label": "Instagram link",
+      "info": "Paste the full profile URL, e.g. https://www.instagram.com/yourhandle. Leave empty to hide the button."
+    },
+    {
+      "type": "text",
+      "id": "instagram_label",
+      "label": "Instagram button text",
+      "default": "Follow on Instagram"
+    },
+    {
       "type": "header",
       "content": "1b · Photo gallery"
     },
@@ -1046,7 +1343,7 @@
       "type": "richtext",
       "id": "credits_body",
       "label": "Description",
-      "default": "<p>Selected projects mixed, mastered, or engineered by DJ HTSW. Hover a cover to reveal its cumulative stream count — the reel pauses while you browse.</p>"
+      "default": "<p>Selected projects mixed, mastered, or engineered by DJ HTSW. Scroll through and hover a cover to reveal its cumulative stream count.</p>"
     },
     {
       "type": "text",
@@ -1055,15 +1352,22 @@
       "default": "Streams"
     },
     {
+      "type": "checkbox",
+      "id": "credits_autoscroll",
+      "label": "Auto-scroll the carousel",
+      "default": false,
+      "info": "Off: visitors scroll, swipe, or use the arrows. On: the covers drift on their own and loop, pausing whenever someone interacts."
+    },
+    {
       "type": "range",
       "id": "reel_speed",
-      "label": "Reel speed",
+      "label": "Auto-scroll speed",
       "min": 10,
       "max": 120,
       "step": 5,
       "unit": "px",
       "default": 40,
-      "info": "Pixels travelled per second. Lower is slower."
+      "info": "Pixels travelled per second. Only applies when auto-scroll is on."
     },
     {
       "type": "header",
@@ -1432,7 +1736,7 @@
       ]
     }
   ],
-  "max_blocks": 40,
+  "max_blocks": 50,
   "presets": [
     {
       "name": "Mix & Master",
@@ -1540,13 +1844,13 @@
           "type": "plan",
           "settings": {
             "kicker": "THE SERVICE",
-            "name": "Mix & Master Pro",
-            "price": "$150",
-            "price_note": "Per song",
-            "featured": true,
-            "badge": "Most complete",
-            "description": "<p>Full vocal engineering and mastering for artists preparing a polished, streaming-ready release.</p>",
-            "features": "Vocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nStreaming-ready WAV master\nTwo collaborative revision rounds\n7–14 day turnaround",
+            "name": "Mix",
+            "price": "$100",
+            "price_note": "Per song · up to 7 stems",
+            "featured": false,
+            "badge": "",
+            "description": "<p>Vocal mixing for sessions of up to 7 stems.</p>",
+            "features": "Up to 7 stems\nVocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nMixed WAV, ready to master\nOne revision round",
             "primary_label": "Buy now",
             "secondary_label": "Learn more"
           }
@@ -1555,13 +1859,13 @@
           "type": "plan",
           "settings": {
             "kicker": "THE SERVICE",
-            "name": "Mix",
-            "price": "$100",
-            "price_note": "Per song",
-            "featured": false,
-            "badge": "",
-            "description": "<p>Vocal mixing for artists who already have mastering handled, or want the mix first.</p>",
-            "features": "Vocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nMixed WAV, ready to master\nOne revision round\n5–10 day turnaround",
+            "name": "Mix & Master Pro",
+            "price": "$150",
+            "price_note": "Per song · 8+ stems",
+            "featured": true,
+            "badge": "Most complete",
+            "description": "<p>Full vocal engineering and mastering for sessions of 8 stems or more.</p>",
+            "features": "8+ stems\nVocal tuning and time alignment\nNoise cleanup and vocal processing\nInstrumental balancing and stereo imaging\nStreaming-ready WAV master\nTwo collaborative revision rounds",
             "primary_label": "Buy now",
             "secondary_label": "Learn more"
           }
