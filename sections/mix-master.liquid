@@ -173,7 +173,11 @@
             assign passes = 1
           endif
         -%}
-        <div class="mm__reel-wrap" data-reveal style="--d:80ms">
+        <div
+          class="mm__reel-wrap mm__reel-wrap--{{ section.settings.credits_nav | default: 'below' }}"
+          data-reveal
+          style="--d:80ms"
+        >
           <button
             class="mm__reel-arrow mm__reel-arrow--prev"
             type="button"
@@ -766,10 +770,32 @@
   /* ---------- 2. credits carousel ---------- */
   .mm__reel-wrap {
     position: relative;
+  }
+
+  /* arrows flanking the covers */
+  .mm__reel-wrap--sides {
     display: flex;
     align-items: center;
     gap: 10px;
   }
+
+  /* arrows centred underneath the covers — DOM order stays prev / reel / next
+     for screen readers, grid placement moves them visually */
+  .mm__reel-wrap--below {
+    display: grid;
+    /* 1fr gutters either side keep the pair centred under the full-width reel */
+    grid-template-columns: 1fr auto auto 1fr;
+    column-gap: 10px;
+    row-gap: 16px;
+  }
+
+  .mm__reel-wrap--below .mm__reel {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .mm__reel-wrap--below .mm__reel-arrow--prev { grid-column: 2; grid-row: 2; }
+  .mm__reel-wrap--below .mm__reel-arrow--next { grid-column: 3; grid-row: 2; }
 
   .mm__reel {
     flex: 1 1 auto;
@@ -967,9 +993,19 @@
   /* ---------- 3. pricing tiers ---------- */
   .mm__plans {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 18px;
     align-items: stretch;
+  }
+
+  /* Card type sizes off the CARD's width, not the viewport's, so a third
+     plan (narrower columns) shrinks the headings instead of wrapping
+     "MIX & MASTER PRO" onto three lines. */
+  @supports (container-type: inline-size) {
+    .mm__card { container-type: inline-size; }
+    .mm__card .mm__card-title { font-size: clamp(24px, 11cqi, 46px); }
+    .mm__card .mm__price-value { font-size: clamp(34px, 17cqi, 68px); }
+    .mm__card { padding: clamp(24px, 7cqi, 44px); }
   }
 
   .mm__badge {
@@ -1244,8 +1280,8 @@
     .mm__stats { grid-template-columns: 1fr; margin-block-start: 2.2rem; }
     .mm__cover, .mm__cover-art { inline-size: 150px; }
     .mm__cover-art { block-size: 150px; }
-    /* touch devices swipe — the arrows just eat width */
-    .mm__reel-arrow { display: none; }
+    /* flanking arrows eat width on a phone; the ones underneath don't */
+    .mm__reel-wrap--sides .mm__reel-arrow { display: none; }
     .mm__reel { mask-image: linear-gradient(90deg, #000 92%, transparent); -webkit-mask-image: linear-gradient(90deg, #000 92%, transparent); }
     .mm__price { text-align: left; align-items: flex-start; }
     .mm__card-top { flex-direction: column; }
@@ -1350,6 +1386,16 @@
       "id": "streams_label",
       "label": "Stream count label",
       "default": "Streams"
+    },
+    {
+      "type": "select",
+      "id": "credits_nav",
+      "label": "Arrow position",
+      "options": [
+        { "value": "below", "label": "Underneath the covers" },
+        { "value": "sides", "label": "Either side of the covers" }
+      ],
+      "default": "below"
     },
     {
       "type": "checkbox",
@@ -1870,6 +1916,21 @@
             "secondary_label": "Learn more"
           }
         },
+        "plan3": {
+          "type": "plan",
+          "settings": {
+            "kicker": "THE SERVICE",
+            "name": "Master Only",
+            "price": "$50",
+            "price_note": "Per song",
+            "featured": false,
+            "badge": "",
+            "description": "<p>Send a mixed file or mixed stems and get back a finished master.</p>",
+            "features": "Mixed file or mixed stems accepted\nLoudness and tonal balance for streaming\nStreaming-ready WAV master",
+            "primary_label": "Buy now",
+            "secondary_label": "Learn more"
+          }
+        },
         "ph1": {
           "type": "photo",
           "settings": {
@@ -1919,6 +1980,7 @@
         "c6",
         "plan1",
         "plan2",
+        "plan3",
         "p1",
         "p2",
         "p3",
