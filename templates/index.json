@@ -145,7 +145,7 @@
           "type": "preset",
           "settings": {
             "eyebrow": "the vocal chain of..",
-            "title": "‎ ‎ ‎ ‎   OVI WOOD",
+            "title": "OVI WOOD",
             "subline": "& it works in any DAW...",
             "product": "ovi-wood-preset",
             "image": "shopify://shop_images/Gemini_Generated_Image_o1p5t5o1p5t5o1p5.jpg",
@@ -161,6 +161,18 @@
             "title": "NETTSPEND VOCAL PRESET",
             "subline": "& it works in any DAW...",
             "product": "the-nettspend-preset",
+            "button_link": "",
+            "raw_audio": "",
+            "preset_audio": ""
+          }
+        },
+        "preset_pWrpWA": {
+          "type": "preset",
+          "settings": {
+            "eyebrow": "sound like",
+            "title": "THE KID LAROI",
+            "subline": "& it works in any DAW...",
+            "product": "the-kid-laroi-preset",
             "button_link": "",
             "raw_audio": "",
             "preset_audio": ""
@@ -195,6 +207,7 @@
         "preset_cECjh8",
         "preset_YeGy4Q",
         "preset_ygHCRn",
+        "preset_pWrpWA",
         "daw_KaAM4B",
         "daw_qFWjzC",
         "daw_rq63tK",
@@ -568,162 +581,6 @@
         "heading_size_mobile": 44,
         "question_size": 19
       }
-    },
-    "preset_ab_player_XPUJ4W": {
-      "type": "preset-ab-player",
-      "blocks": {
-        "preset_iUntYb": {
-          "type": "preset",
-          "settings": {
-            "eyebrow": "sound like",
-            "title": "MAINSTREAM",
-            "subline": "& it works in any DAW...",
-            "product": "",
-            "button_link": "",
-            "raw_audio": "",
-            "preset_audio": ""
-          }
-        },
-        "daw_AqHzBT": {
-          "type": "daw",
-          "settings": {
-            "name": "FL Studio"
-          }
-        },
-        "daw_wxdyex": {
-          "type": "daw",
-          "settings": {
-            "name": "Ableton Live"
-          }
-        },
-        "daw_GTgKD7": {
-          "type": "daw",
-          "settings": {
-            "name": "Logic Pro"
-          }
-        },
-        "daw_rmT7kN": {
-          "type": "daw",
-          "settings": {
-            "name": "Pro Tools"
-          }
-        }
-      },
-      "block_order": [
-        "preset_iUntYb",
-        "daw_AqHzBT",
-        "daw_wxdyex",
-        "daw_GTgKD7",
-        "daw_rmT7kN"
-      ],
-      "disabled": true,
-      "name": "Preset A/B Player",
-      "settings": {
-        "toggle_label": "Hear the preset",
-        "raw_label": "RAW",
-        "preset_label": "PRESET",
-        "button_label": "GET THE PRESET",
-        "pills": "Instant download, One-time payment, Lifetime access",
-        "loop_audio": true,
-        "wave_detail": 4,
-        "click_sound": true,
-        "click_volume": 50,
-        "animate_panel": true,
-        "max_width": 1120,
-        "corner_radius": 22,
-        "thumb_shape": "50%",
-        "show_key_hint": true,
-        "key_hint_text": "Use arrow keys",
-        "padding_top": 72,
-        "padding_bottom": 72,
-        "background_color": "#f1f1ef",
-        "accent_color": "#1242fd",
-        "heading_color": "#111111",
-        "body_color": "#6b6b68",
-        "panel_color": "#3a3a3a",
-        "panel_text_color": "#ffffff",
-        "title_size": 76,
-        "title_size_mobile": 46
-      }
-    },
-    "preset_ab_player_this_one_Ja4BEE": {
-      "type": "preset-ab-player-this-one",
-      "blocks": {
-        "preset_GUzUwC": {
-          "type": "preset",
-          "settings": {
-            "eyebrow": "the flagship",
-            "title": "GABE CHAIN",
-            "subline": "& it works in any DAW...",
-            "product": "gabe-chain",
-            "button_link": "",
-            "raw_audio": "Bandit_DRY.wav",
-            "preset_audio": "Bandit_WET.wav"
-          }
-        },
-        "daw_YL9fGf": {
-          "type": "daw",
-          "settings": {
-            "name": "FL Studio"
-          }
-        },
-        "daw_PyxmNc": {
-          "type": "daw",
-          "settings": {
-            "name": "Ableton Live"
-          }
-        },
-        "daw_beEPzF": {
-          "type": "daw",
-          "settings": {
-            "name": "Logic Pro"
-          }
-        },
-        "daw_VV3BW3": {
-          "type": "daw",
-          "settings": {
-            "name": "Pro Tools"
-          }
-        }
-      },
-      "block_order": [
-        "preset_GUzUwC",
-        "daw_YL9fGf",
-        "daw_PyxmNc",
-        "daw_beEPzF",
-        "daw_VV3BW3"
-      ],
-      "name": "Preset A/B Player",
-      "settings": {
-        "toggle_label": "Hear the preset",
-        "raw_label": "RAW",
-        "preset_label": "PRESET",
-        "button_label": "GET THE PRESET",
-        "pills": "Instant download, One-time payment, Lifetime access",
-        "loop_audio": true,
-        "wave_detail": 4,
-        "click_sound": true,
-        "click_volume": 50,
-        "animate_panel": true,
-        "max_width": 1120,
-        "corner_radius": 22,
-        "browse_display": "always",
-        "thumb_size": 84,
-        "thumb_labels": true,
-        "thumb_shape": "50%",
-        "show_key_hint": true,
-        "key_hint_text": "Use arrow keys",
-        "padding_top": 72,
-        "padding_bottom": 72,
-        "background_color": "#f1f1ef",
-        "accent_color": "#1242fd",
-        "heading_color": "#111111",
-        "body_color": "#6b6b68",
-        "panel_color": "#3a3a3a",
-        "panel_text_color": "#ffffff",
-        "title_size": 76,
-        "title_size_mobile": 46
-      }
     }
   },
   "order": [
@@ -732,8 +589,6 @@
     "preset_ab_player_GAwyiF",
     "product_list_fa6P9H",
     "artist_video_carousel_1_iEzYKG",
-    "faq_buying_aUpQHi",
-    "preset_ab_player_XPUJ4W",
-    "preset_ab_player_this_one_Ja4BEE"
+    "faq_buying_aUpQHi"
   ]
 }
