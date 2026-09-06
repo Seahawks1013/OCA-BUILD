@@ -242,6 +242,61 @@
       </section>
     {%- endif -%}
 
+    {%- comment -%} ---------- 2b. SPOTIFY PLAYLIST ---------- {%- endcomment -%}
+    {%- liquid
+      # Accepts any Spotify share link, with or without the ?si= tracking tail,
+      # and the intl-xx/ prefix Spotify adds for some regions. The last path
+      # segment is the id, the one before it the kind of thing it points at.
+      assign sp_id = ''
+      assign sp_kind = 'playlist'
+      assign sp_raw = section.settings.spotify_url | strip
+
+      if sp_raw != blank
+        assign sp_clean = sp_raw | split: '?' | first
+        assign sp_clean = sp_clean | replace: 'spotify:', '' | replace: ':', '/'
+        assign sp_parts = sp_clean | split: '/'
+        assign sp_size = sp_parts.size
+
+        if sp_size > 1
+          assign sp_id = sp_parts | last
+          assign sp_kind_index = sp_size | minus: 2
+          assign sp_maybe_kind = sp_parts[sp_kind_index]
+          assign sp_allowed = 'playlist,album,track,artist,show,episode' | split: ','
+          if sp_allowed contains sp_maybe_kind
+            assign sp_kind = sp_maybe_kind
+          endif
+        endif
+      endif
+    -%}
+
+    {%- if sp_id != blank -%}
+      <section class="mm__block mm__spotify-block">
+        {%- if section.settings.spotify_headline != blank or section.settings.spotify_body != blank -%}
+          <div class="mm__block-head" data-reveal>
+            {%- if section.settings.spotify_headline != blank -%}
+              <h3 class="mm__h3">{{ section.settings.spotify_headline }}</h3>
+            {%- endif -%}
+            {%- if section.settings.spotify_body != blank -%}
+              <div class="mm__block-body">{{ section.settings.spotify_body }}</div>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        <div class="mm__spotify" data-reveal style="--d:80ms; --mm-spotify-h: {{ section.settings.spotify_height }}px;">
+          <iframe
+            class="mm__spotify-frame"
+            src="https://open.spotify.com/embed/{{ sp_kind }}/{{ sp_id }}?utm_source=generator&amp;theme={{ section.settings.spotify_theme }}"
+            title="{{ section.settings.spotify_headline | default: 'Spotify playlist' | escape }}"
+            height="{{ section.settings.spotify_height }}"
+            frameborder="0"
+            loading="lazy"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            allowfullscreen
+          ></iframe>
+        </div>
+      </section>
+    {%- endif -%}
+
     {%- comment -%} ---------- 3. PRICING TIERS ---------- {%- endcomment -%}
     {%- if plan_count > 0 -%}
       <section class="mm__block">
@@ -940,6 +995,22 @@
     line-height: 1.3;
   }
 
+  /* ---------- 2b. spotify embed ---------- */
+  .mm__spotify {
+    border-radius: calc(var(--mm-radius, 14px) + 4px);
+    overflow: hidden;
+    background: var(--mm-card, #0d1231);
+    box-shadow: 0 18px 44px rgb(0 0 0 / 0.14);
+    line-height: 0;
+  }
+
+  .mm__spotify-frame {
+    display: block;
+    inline-size: 100%;
+    block-size: var(--mm-spotify-h, 380px);
+    border: 0;
+  }
+
   /* ---------- 1b. photo gallery ---------- */
   .mm__gallery {
     display: grid;
@@ -1414,6 +1485,50 @@
       "unit": "px",
       "default": 40,
       "info": "Pixels travelled per second. Only applies when auto-scroll is on."
+    },
+    {
+      "type": "header",
+      "content": "2b · Spotify playlist"
+    },
+    {
+      "type": "text",
+      "id": "spotify_url",
+      "label": "Spotify link",
+      "default": "https://open.spotify.com/playlist/5suxiy10uTCE0wTzYILPPI",
+      "info": "Paste any Spotify share link — playlist, album, track or artist. The ?si= tail is fine. Leave empty to hide this block."
+    },
+    {
+      "type": "text",
+      "id": "spotify_headline",
+      "label": "Headline",
+      "default": "Hear the catalogue."
+    },
+    {
+      "type": "richtext",
+      "id": "spotify_body",
+      "label": "Description",
+      "default": "<p>A running playlist of records mixed, mastered, or engineered by DJ HTSW.</p>"
+    },
+    {
+      "type": "select",
+      "id": "spotify_theme",
+      "label": "Player theme",
+      "options": [
+        { "value": "0", "label": "Dark" },
+        { "value": "1", "label": "Light" }
+      ],
+      "default": "0"
+    },
+    {
+      "type": "range",
+      "id": "spotify_height",
+      "label": "Player height",
+      "min": 152,
+      "max": 700,
+      "step": 8,
+      "unit": "px",
+      "default": 400,
+      "info": "152 is the compact single-row player. 400 and up shows the track list."
     },
     {
       "type": "header",
