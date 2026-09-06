@@ -281,6 +281,7 @@
         "step_37aegc",
         "step_baGwUp"
       ],
+      "disabled": true,
       "name": "Mix & Master",
       "settings": {
         "hero_eyebrow": "MIX & MASTER",
@@ -322,10 +323,85 @@
         "headline_size": 84,
         "headline_size_mobile": 40
       }
+    },
+    "drum_kits_eaMtiw": {
+      "type": "drum-kits",
+      "blocks": {
+        "point_UNUtfL": {
+          "type": "point",
+          "settings": {
+            "title": "Sourced on the ground",
+            "text": "Collected in Brazil with the people making this music, not rebuilt from other sample packs."
+          }
+        },
+        "point_h4tKVX": {
+          "type": "point",
+          "settings": {
+            "title": "Not a re-flip",
+            "text": "Most funk kits sold abroad are copies of copies. Nothing here is lifted from another pack."
+          }
+        },
+        "point_eXxynn": {
+          "type": "point",
+          "settings": {
+            "title": "Royalty-free",
+            "text": "Use it on anything you release. One payment, no clearance, no splits."
+          }
+        },
+        "kit_iqnXeR": {
+          "type": "kit",
+          "settings": {
+            "badge": "New",
+            "name": "Brazilian Funk Vol. 1",
+            "subtitle": "Sourced in Brazil",
+            "tags": "One-shots, Loops, Percussion",
+            "description": "<p>Drums, percussion and vocal chops pulled from the real thing — not recycled from other sample packs.</p>",
+            "audio": "",
+            "product": "",
+            "price": "",
+            "price_note": "One-time",
+            "button_label": "Get the kit",
+            "button_link": "",
+            "featured": true
+          }
+        }
+      },
+      "block_order": [
+        "point_UNUtfL",
+        "point_h4tKVX",
+        "point_eXxynn",
+        "kit_iqnXeR"
+      ],
+      "name": "Drum Kits",
+      "settings": {
+        "hero_eyebrow": "DRUM KITS",
+        "hero_headline": "Real Brazilian funk. Not a knock-off.",
+        "hero_body": "<p>Most funk kits on the market are second-hand imitations, put together by people who have never worked with the artists making this music. Ours was sourced at the source.</p>",
+        "points_headline": "Why this one is different.",
+        "kits_headline": "The kits.",
+        "kits_body": "<p>Every kit is royalty-free, instantly downloadable, and yours for good.</p>",
+        "columns": 3,
+        "closing_headline": "Straight from the source.",
+        "closing_body": "<p>Recorded and collected on the ground in Brazil, not rebuilt from other people's sample packs. Instant download, one-time payment, yours to keep.</p>",
+        "max_width": 1160,
+        "corner_radius": 14,
+        "padding_top": 96,
+        "padding_bottom": 96,
+        "headline_size": 76,
+        "headline_size_mobile": 40,
+        "background_color": "#f1f1ef",
+        "accent_color": "#1242fd",
+        "heading_color": "#111111",
+        "body_color": "#6b6b68",
+        "line_color": "#d9d9d4",
+        "card_color": "#0d1231",
+        "card_text_color": "#ffffff"
+      }
     }
   },
   "order": [
     "main",
-    "mix_master_z3iT6T"
+    "mix_master_z3iT6T",
+    "drum_kits_eaMtiw"
   ]
 }
