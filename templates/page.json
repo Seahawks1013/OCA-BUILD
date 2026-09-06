@@ -100,6 +100,7 @@
         },
         "photo_BDdHeQ": {
           "type": "photo",
+          "disabled": true,
           "settings": {
             "image": "shopify://shop_images/IMG_6445_a9473297-64d1-4161-a33e-c31da08d7bbf.png",
             "caption": "session work.",
@@ -118,6 +119,7 @@
         },
         "photo_KLkQBD": {
           "type": "photo",
+          "disabled": true,
           "settings": {
             "image": "shopify://shop_images/IMG_6106.jpg",
             "caption": "LA session, pt. 2.",
@@ -295,6 +297,11 @@
         "credits_nav": "below",
         "credits_autoscroll": false,
         "reel_speed": 40,
+        "spotify_url": "https://open.spotify.com/playlist/5suxiy10uTCE0wTzYILPPI",
+        "spotify_headline": "Hear the catalogue.",
+        "spotify_body": "<p>A running playlist of records mixed, mastered, or engineered by DJ HTSW.</p>",
+        "spotify_theme": "0",
+        "spotify_height": 400,
         "plans_headline": "Choose your service.",
         "plans_body": "<p>Two ways to work together. Both are engineered personally, start to finish.</p>",
         "process_headline": "What happens next.",
