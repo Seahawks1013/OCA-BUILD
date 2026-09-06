@@ -255,6 +255,34 @@
         "title_size_mobile": 46
       }
     },
+    "product_grid_YcwGd4": {
+      "type": "product-grid",
+      "name": "Products",
+      "settings": {
+        "eyebrow": "THE CATALOGUE",
+        "heading": "Every preset we make.",
+        "body": "<p>Instant download, one-time payment, yours for good.</p>",
+        "view_all_label": "View all",
+        "view_all_link": "",
+        "collection": "vocal-presets",
+        "max_products": 8,
+        "show_price": true,
+        "columns": 5,
+        "grid_gap": 20,
+        "image_ratio": "1",
+        "max_width": 1160,
+        "corner_radius": 14,
+        "padding_top": 80,
+        "padding_bottom": 80,
+        "heading_size": 60,
+        "heading_size_mobile": 38,
+        "background_color": "#f1f1ef",
+        "accent_color": "#1242fd",
+        "heading_color": "#111111",
+        "body_color": "#6b6b68",
+        "line_color": "#d9d9d4"
+      }
+    },
     "product_list_fa6P9H": {
       "type": "product-list",
       "blocks": {
@@ -433,6 +461,7 @@
           ]
         }
       },
+      "disabled": true,
       "name": "t:names.product_list",
       "settings": {
         "collection": "all",
@@ -594,43 +623,15 @@
         "heading_size_mobile": 44,
         "question_size": 19
       }
-    },
-    "product_grid_YcwGd4": {
-      "type": "product-grid",
-      "name": "Products",
-      "settings": {
-        "eyebrow": "THE CATALOGUE",
-        "heading": "Every preset we make.",
-        "body": "<p>Instant download, one-time payment, yours for good.</p>",
-        "view_all_label": "View all",
-        "view_all_link": "",
-        "collection": "vocal-presets",
-        "max_products": 8,
-        "show_price": true,
-        "columns": 4,
-        "grid_gap": 20,
-        "image_ratio": "1",
-        "max_width": 1160,
-        "corner_radius": 14,
-        "padding_top": 80,
-        "padding_bottom": 80,
-        "heading_size": 60,
-        "heading_size_mobile": 38,
-        "background_color": "#f1f1ef",
-        "accent_color": "#1242fd",
-        "heading_color": "#111111",
-        "body_color": "#6b6b68",
-        "line_color": "#d9d9d4"
-      }
     }
   },
   "order": [
     "hero_dual_video_WpYMX9",
     "hero_jVaWmY",
     "preset_ab_player_GAwyiF",
+    "product_grid_YcwGd4",
     "product_list_fa6P9H",
     "artist_video_carousel_1_iEzYKG",
-    "faq_buying_aUpQHi",
-    "product_grid_YcwGd4"
+    "faq_buying_aUpQHi"
   ]
 }
