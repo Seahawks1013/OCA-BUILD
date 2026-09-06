@@ -1,0 +1,1759 @@
+
+{%- comment -%}
+  Preset A/B Player
+  Raw vs Preset audio comparison. Both files are the same take at the same
+  timestamp, so switching keeps the playhead exactly where it was.
+  Cards are blocks — add one per preset and the carousel grows on its own.
+{%- endcomment -%}
+
+{%- liquid
+  # Counted with explicit loops rather than `| where:` — that filter is
+  # unreliable against locally-defined section blocks, and an empty result
+  # would silently suppress the whole section.
+  assign preset_count = 0
+  assign daw_count = 0
+  for block in section.blocks
+    if block.type == 'preset'
+      assign preset_count = preset_count | plus: 1
+    endif
+    if block.type == 'daw'
+      assign daw_count = daw_count | plus: 1
+    endif
+  endfor
+-%}
+
+<preset-ab-player
+  class="pab{% if section.settings.animate_panel %} pab--animated{% endif %}"
+  id="Pab-{{ section.id }}"
+  data-bars-per-second="{{ section.settings.wave_detail }}"
+  data-click="{% if section.settings.click_sound %}true{% else %}false{% endif %}"
+  data-click-volume="{{ section.settings.click_volume | divided_by: 100.0 }}"
+  style="
+    --pab-bg: {{ section.settings.background_color }};
+    --pab-ink: {{ section.settings.heading_color }};
+    --pab-muted: {{ section.settings.body_color }};
+    --pab-accent: {{ section.settings.accent_color }};
+    --pab-panel: {{ section.settings.panel_color }};
+    --pab-panel-ink: {{ section.settings.panel_text_color }};
+    --pab-radius: {{ section.settings.corner_radius }}px;
+    --pab-max: {{ section.settings.max_width }}px;
+    --pab-thumb-radius: {{ section.settings.thumb_shape }};
+    --pab-title: {{ section.settings.title_size }}px;
+    --pab-title-mobile: {{ section.settings.title_size_mobile }}px;
+    --pab-pad-top: {{ section.settings.padding_top }}px;
+    --pab-pad-bottom: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="pab__inner">
+    <div class="pab__stage">
+      {%- if preset_count > 1 -%}
+        <button class="pab__nav pab__nav--prev" type="button" data-pab-prev aria-label="Previous preset">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="pab__nav pab__nav--next" type="button" data-pab-next aria-label="Next preset">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      {%- endif -%}
+
+      <div class="pab__track" data-pab-track>
+        {%- assign p_index = 0 -%}
+        {%- for block in section.blocks -%}
+          {%- if block.type != 'preset' -%}{%- continue -%}{%- endif -%}
+          {%- assign p_index = p_index | plus: 1 -%}
+          {%- liquid
+            # ---- Audio sources: accept a bare filename from Settings > Files, or a full URL
+            assign raw_src = ''
+            if block.settings.raw_audio != blank
+              if block.settings.raw_audio contains '//'
+                assign raw_src = block.settings.raw_audio
+              else
+                assign raw_src = block.settings.raw_audio | file_url
+              endif
+            endif
+
+            assign preset_src = ''
+            if block.settings.preset_audio != blank
+              if block.settings.preset_audio contains '//'
+                assign preset_src = block.settings.preset_audio
+              else
+                assign preset_src = block.settings.preset_audio | file_url
+              endif
+            endif
+
+            # ---- Artwork: custom upload wins, otherwise pull from the linked product
+            assign art = block.settings.image
+            if art == blank and block.settings.product != blank
+              assign art = block.settings.product.featured_image
+            endif
+
+            # ---- Buy link: custom link wins, otherwise the linked product
+            assign buy_url = block.settings.button_link
+            if buy_url == blank and block.settings.product != blank
+              assign buy_url = block.settings.product.url
+            endif
+          -%}
+
+          <article
+            class="pab__slide"
+            data-pab-slide
+            data-seed="{{ p_index }}{{ block.settings.title | size }}"
+            {{ block.shopify_attributes }}
+          >
+            <div class="pab__head">
+              <div class="pab__copy">
+                {%- if block.settings.eyebrow != blank -%}
+                  <p class="pab__eyebrow">{{ block.settings.eyebrow }}</p>
+                {%- endif -%}
+                {%- if block.settings.title != blank -%}
+                  <h3 class="pab__title">{{ block.settings.title }}</h3>
+                {%- endif -%}
+                {%- if block.settings.subline != blank -%}
+                  <p class="pab__subline">{{ block.settings.subline }}</p>
+                {%- endif -%}
+              </div>
+
+              <div class="pab__art">
+                {%- if art != blank -%}
+                  {{ art | image_url: width: 900 | image_tag:
+                      widths: '300, 500, 700, 900',
+                      sizes: '(min-width: 750px) 42vw, 80vw',
+                      alt: block.settings.title,
+                      loading: 'lazy',
+                      class: 'pab__art-img' }}
+                {%- else -%}
+                  <div class="pab__art-ph">{{ 'product-apparel-1' | placeholder_svg_tag: 'pab__art-img' }}</div>
+                {%- endif -%}
+              </div>
+            </div>
+
+            <div class="pab__panel">
+              <div class="pab__row pab__row--main">
+                <button class="pab__play" type="button" data-pab-play aria-label="Play">
+                  <svg class="pab__icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/></svg>
+                  <svg class="pab__icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z" fill="currentColor"/></svg>
+                </button>
+
+                <div
+                  class="pab__wave"
+                  data-pab-wave
+                  role="slider"
+                  tabindex="0"
+                  aria-label="Seek"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow="0"
+                ></div>
+
+                <p class="pab__time">
+                  <span class="pab__time-now" data-pab-now>0:00</span><span class="pab__time-sep"> / </span><span data-pab-dur>0:00</span>
+                </p>
+
+                <div class="pab__ab">
+                  <span class="pab__ab-label">{{ section.settings.toggle_label }}</span>
+                  <div class="pab__switch" data-pab-switch>
+                    <span class="pab__switch-thumb" data-pab-thumb></span>
+                    <button class="pab__switch-btn is-active" type="button" data-pab-mode="raw" aria-pressed="true">{{ section.settings.raw_label }}</button>
+                    <button class="pab__switch-btn" type="button" data-pab-mode="preset" aria-pressed="false">{{ section.settings.preset_label }}</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="pab__row pab__row--meta">
+                {%- if daw_count > 0 -%}
+                  <ul class="pab__daws" role="list">
+                    {%- for daw in section.blocks -%}
+                      {%- if daw.type != 'daw' -%}{%- continue -%}{%- endif -%}
+                      <li class="pab__daw{% if daw.settings.logo == blank %} pab__daw--text{% endif %}" {{ daw.shopify_attributes }}>
+                        {%- if daw.settings.logo != blank -%}
+                          {{ daw.settings.logo | image_url: width: 120 | image_tag: widths: '60, 120', alt: daw.settings.name, loading: 'lazy', class: 'pab__daw-img' }}
+                        {%- else -%}
+                          {{ daw.settings.name }}
+                        {%- endif -%}
+                      </li>
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+
+                {%- if section.settings.pills != blank -%}
+                  <ul class="pab__pills" role="list">
+                    {%- assign pill_items = section.settings.pills | split: ',' -%}
+                    {%- for pill in pill_items -%}
+                      <li class="pab__pill">{{ pill | strip }}</li>
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+
+                {%- if section.settings.button_label != blank -%}
+                  <a class="pab__cta" href="{{ buy_url | default: '#' }}">
+                    <span>{{ section.settings.button_label }}</span>
+                    <span class="pab__cta-arrow" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M5 12h13M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    </span>
+                  </a>
+                {%- endif -%}
+              </div>
+
+              {%- comment -%} preload=metadata so duration is known without pulling the whole file {%- endcomment -%}
+              {%- if raw_src != blank -%}
+                <audio data-pab-audio="raw" src="{{ raw_src }}" preload="metadata" playsinline{% if section.settings.loop_audio %} loop{% endif %}></audio>
+              {%- endif -%}
+              {%- if preset_src != blank -%}
+                <audio data-pab-audio="preset" src="{{ preset_src }}" preload="metadata" playsinline{% if section.settings.loop_audio %} loop{% endif %}></audio>
+              {%- endif -%}
+            </div>
+          </article>
+        {%- endfor -%}
+        {%- if preset_count == 0 -%}
+          <article class="pab__slide">
+            <div class="pab__head">
+              <div class="pab__copy">
+                <h3 class="pab__title">Add a preset</h3>
+                <p class="pab__subline">Add a “Preset” block to get started.</p>
+              </div>
+            </div>
+          </article>
+        {%- endif -%}
+      </div>
+    </div>
+
+    {%- if preset_count > 1 -%}
+      <div class="pab__browse">
+        <button class="pab__browse-nav" type="button" data-pab-thumbs-prev aria-label="Scroll presets left">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+
+        <ul class="pab__thumbs" data-pab-thumbs role="tablist" aria-label="Choose a preset">
+          {%- assign t_index = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'preset' -%}{%- continue -%}{%- endif -%}
+            {%- assign t_index = t_index | plus: 1 -%}
+            {%- liquid
+              assign thumb_art = block.settings.image
+              if thumb_art == blank and block.settings.product != blank
+                assign thumb_art = block.settings.product.featured_image
+              endif
+            -%}
+            <li class="pab__thumb-item">
+              <button
+                class="pab__thumb{% if t_index == 1 %} is-active{% endif %}"
+                type="button"
+                data-pab-thumb
+                data-index="{{ t_index | minus: 1 }}"
+                role="tab"
+                aria-selected="{% if t_index == 1 %}true{% else %}false{% endif %}"
+              >
+                <span class="pab__thumb-art">
+                  {%- if thumb_art != blank -%}
+                    {{ thumb_art | image_url: width: 240 | image_tag:
+                        widths: '120, 240', sizes: '84px',
+                        alt: block.settings.title, loading: 'lazy', class: 'pab__thumb-img' }}
+                  {%- else -%}
+                    <span class="pab__thumb-ph"></span>
+                  {%- endif -%}
+                </span>
+                {%- if block.settings.title != blank -%}
+                  <span class="pab__thumb-name">{{ block.settings.title }}</span>
+                {%- endif -%}
+              </button>
+            </li>
+          {%- endfor -%}
+        </ul>
+
+        <button class="pab__browse-nav" type="button" data-pab-thumbs-next aria-label="Scroll presets right">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+
+      {%- if section.settings.show_key_hint -%}
+        <p class="pab__hint" aria-hidden="true">
+          <span class="pab__hint-key">&#8592;</span>
+          {{ section.settings.key_hint_text }}
+          <span class="pab__hint-key">&#8594;</span>
+        </p>
+      {%- endif -%}
+    {%- endif -%}
+  </div>
+</preset-ab-player>
+
+<script>
+  (function () {
+    if (customElements.get('preset-ab-player')) return;
+
+    var BARS = 96;
+
+    // ---- UI click sound (inlined, ~4KB) -------------------------------------
+    var CLICK_B64 = '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qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//t0xHoDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpMQU1FMy4xMDCqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//t0xHoDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqpMQU1FMy4xMDCqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq//t0xHoDwAABpAAAACAAADSAAAAEqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq';
+    var actx = null, clickBuf = null, clickReady = false;
+
+    function initClickAudio() {
+      if (actx) return;
+      try {
+        var Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        actx = new Ctx();
+        var bin = atob(CLICK_B64);
+        var bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        var done = function (buf) { clickBuf = buf; clickReady = true; };
+        var p = actx.decodeAudioData(bytes.buffer, done, function () {});
+        if (p && p.then) p.then(done).catch(function () {});
+      } catch (e) { actx = null; }
+    }
+
+    function playClick(volume) {
+      if (!clickReady || !actx || !clickBuf) return;
+      try {
+        if (actx.state === 'suspended') actx.resume();
+        var src = actx.createBufferSource();
+        var gain = actx.createGain();
+        gain.gain.value = volume;
+        src.buffer = clickBuf;
+        src.connect(gain);
+        gain.connect(actx.destination);
+        src.start(0);
+      } catch (e) {}
+    }
+
+
+    // Deterministic pseudo-random so a card's waveform never changes between loads
+    function seededHeights(seed, count) {
+      var s = 0;
+      for (var i = 0; i < String(seed).length; i++) s = (s * 31 + String(seed).charCodeAt(i)) >>> 0;
+      var out = [];
+      for (var j = 0; j < count; j++) {
+        s = (s * 1664525 + 1013904223) >>> 0;
+        var n = (s / 4294967296);
+        s = (s * 1664525 + 1013904223) >>> 0;
+        var n2 = (s / 4294967296);
+        // envelope so it reads like a musical phrase rather than noise
+        var t = j / count;
+        var env = 0.45 + 0.55 * Math.sin(Math.PI * t) * (0.7 + 0.3 * Math.sin(t * 14));
+        out.push(Math.max(0.12, Math.min(1, (0.35 + 0.65 * ((n + n2) / 2)) * env)));
+      }
+      return out;
+    }
+
+    function fmt(sec) {
+      if (!isFinite(sec) || sec < 0) sec = 0;
+      var m = Math.floor(sec / 60);
+      var s = Math.floor(sec % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    function Slide(root, host) {
+      this.root = root;
+      this.host = host;
+      this.audio = {
+        raw: root.querySelector('[data-pab-audio="raw"]'),
+        preset: root.querySelector('[data-pab-audio="preset"]')
+      };
+      this.mode = 'raw';
+      this.wave = root.querySelector('[data-pab-wave]');
+      this.playBtn = root.querySelector('[data-pab-play]');
+      this.nowEl = root.querySelector('[data-pab-now]');
+      this.durEl = root.querySelector('[data-pab-dur]');
+      this.switchEl = root.querySelector('[data-pab-switch]');
+      this.thumb = root.querySelector('[data-pab-thumb]');
+      this.bars = [];
+      this.dragging = false;
+      this.init();
+    }
+
+    Slide.prototype.current = function () {
+      return this.audio[this.mode] || this.audio.raw || this.audio.preset;
+    };
+
+    Slide.prototype.init = function () {
+      var self = this;
+
+      // --- waveform bars
+      if (this.wave) {
+        this.renderWave();
+
+        this.wave.addEventListener('pointerdown', function (e) {
+          self.dragging = true;
+          // Seek FIRST — pointer capture is a nicety, and if it ever throws
+          // it must not take the seek down with it.
+          self.seekFromEvent(e);
+          try { self.wave.setPointerCapture(e.pointerId); } catch (err) {}
+          e.preventDefault();
+        });
+        this.wave.addEventListener('pointermove', function (e) {
+          if (self.dragging) self.seekFromEvent(e);
+        });
+        ['pointerup', 'pointercancel'].forEach(function (evt) {
+          self.wave.addEventListener(evt, function () { self.dragging = false; });
+        });
+        this.wave.addEventListener('keydown', function (e) {
+          var a = self.current();
+          if (!a || !isFinite(a.duration)) return;
+          if (e.key === 'ArrowRight') { a.currentTime = Math.min(a.duration, a.currentTime + 5); e.preventDefault(); }
+          if (e.key === 'ArrowLeft') { a.currentTime = Math.max(0, a.currentTime - 5); e.preventDefault(); }
+          if (e.key === ' ' || e.key === 'Enter') { self.toggle(); e.preventDefault(); }
+          self.sync();
+        });
+      }
+
+      // --- play / pause
+      if (this.playBtn) this.playBtn.addEventListener('click', function () {
+        self.host.click_();
+        self.toggle();
+      });
+
+      // --- A/B switch, preserving position
+      this.root.querySelectorAll('[data-pab-mode]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          self.host.click_();
+          self.setMode(btn.dataset.pabMode);
+        });
+      });
+
+      // --- audio wiring
+      Object.keys(this.audio).forEach(function (k) {
+        var a = self.audio[k];
+        if (!a) return;
+        a.addEventListener('loadedmetadata', function () {
+          // duration is finally known — rebuild the bars to match this take's length
+          self.renderWave();
+          self.sync();
+        });
+        a.addEventListener('durationchange', function () { self.renderWave(); });
+        a.addEventListener('timeupdate', function () { if (k === self.mode) self.sync(); });
+        a.addEventListener('ended', function () {
+          if (k !== self.mode) return;
+          self.root.classList.remove('is-playing');
+          if (self.playBtn) self.playBtn.setAttribute('aria-label', 'Play');
+        });
+      });
+
+      this.positionThumb();
+      this.sync();
+    };
+
+    // Bar count follows the real duration, so a 36s snippet reads as visibly
+    // denser than a 17s one. Capped by the available pixel width so bars never
+    // squash, and by the audio itself so the timeline always spans the whole take.
+    Slide.prototype.renderWave = function () {
+      if (!this.wave) return;
+      var self = this;
+      var width = this.wave.clientWidth || 600;
+      var perSec = this.host.barsPerSec || 4;
+      var dur = this.duration();
+
+      var wanted = dur ? Math.round(dur * perSec) : 96;
+      var maxByWidth = Math.max(24, Math.floor(width / 3));
+      var count = Math.max(28, Math.min(wanted, maxByWidth, 220));
+      if (count === this.barCount) return;
+
+      this.barCount = count;
+      this.bars = [];
+      var heights = seededHeights(this.root.dataset.seed || '1', count);
+      var frag = document.createDocumentFragment();
+      heights.forEach(function (h, idx) {
+        var b = document.createElement('span');
+        b.className = 'pab__bar';
+        b.style.setProperty('--h', (h * 100).toFixed(1) + '%');
+        // index drives the stagger so the pulse travels rather than throbbing as one
+        b.style.setProperty('--i', idx);
+        frag.appendChild(b);
+        self.bars.push(b);
+      });
+      this.wave.replaceChildren(frag);
+      this.sync();
+    };
+
+    // Both takes are the same length, so borrow the duration from whichever
+    // element already knows it — the other may not have metadata yet.
+    Slide.prototype.duration = function () {
+      var keys = ['raw', 'preset'];
+      for (var i = 0; i < keys.length; i++) {
+        var a = this.audio[keys[i]];
+        if (a && isFinite(a.duration) && a.duration > 0) return a.duration;
+      }
+      return 0;
+    };
+
+    // A seek silently does nothing while readyState is 0, so queue it until
+    // metadata lands. This is what makes scrub + A/B stay sample-aligned.
+    Slide.prototype.seekTo = function (t) {
+      var self = this;
+      Object.keys(this.audio).forEach(function (k) {
+        var a = self.audio[k];
+        if (!a) return;
+        if (a.readyState >= 1) {
+          try { a.currentTime = t; } catch (err) {}
+        } else {
+          a.dataset.pendingSeek = t;
+          a.addEventListener('loadedmetadata', function once() {
+            a.removeEventListener('loadedmetadata', once);
+            try { a.currentTime = parseFloat(a.dataset.pendingSeek) || 0; } catch (err) {}
+          });
+          a.preload = 'auto';
+        }
+      });
+      this.sync();
+    };
+
+    // Once someone engages with a card, buffer the *other* take so the
+    // A/B swap is instant. The active one buffers itself by playing.
+    Slide.prototype.warm = function () {
+      if (this.warmed) return;
+      this.warmed = true;
+      var self = this;
+      Object.keys(this.audio).forEach(function (k) {
+        var a = self.audio[k];
+        if (!a || k === self.mode) return;
+        a.preload = 'auto';
+        a.load();
+      });
+    };
+
+    Slide.prototype.seekFromEvent = function (e) {
+      var dur = this.duration();
+      if (!dur) return;
+      var r = this.wave.getBoundingClientRect();
+      var pct = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      this.seekTo(pct * dur);
+    };
+
+    Slide.prototype.toggle = function () {
+      var a = this.current();
+      if (!a) return;
+      if (a.paused) {
+        this.host.stopOthers(this);
+        this.warm();
+        var p = a.play();
+        if (p && p.catch) p.catch(function () {});
+        this.root.classList.add('is-playing');
+        if (this.playBtn) this.playBtn.setAttribute('aria-label', 'Pause');
+      } else {
+        a.pause();
+        this.root.classList.remove('is-playing');
+        if (this.playBtn) this.playBtn.setAttribute('aria-label', 'Play');
+      }
+    };
+
+    Slide.prototype.pause = function () {
+      var a = this.current();
+      if (a && !a.paused) a.pause();
+      this.root.classList.remove('is-playing');
+    };
+
+    Slide.prototype.setMode = function (mode) {
+      if (mode === this.mode) return;
+      var from = this.current();
+      var to = this.audio[mode];
+      if (!to) return;
+
+      var t = from ? from.currentTime : 0;
+      var wasPlaying = from ? !from.paused : false;
+
+      this.mode = mode;
+      if (from && !from.paused) from.pause();
+
+      // Land on the exact same moment in the other take. If the target has no
+      // metadata yet, wait for it — seeking a cold element is a no-op.
+      var start = function () {
+        try { to.currentTime = t; } catch (e) {}
+        if (wasPlaying) {
+          var p = to.play();
+          if (p && p.catch) p.catch(function () {});
+        }
+      };
+
+      if (to.readyState >= 1) {
+        start();
+      } else {
+        to.addEventListener('loadedmetadata', function once() {
+          to.removeEventListener('loadedmetadata', once);
+          start();
+        });
+        to.preload = 'auto';
+        to.load();
+      }
+
+      this.root.querySelectorAll('[data-pab-mode]').forEach(function (b) {
+        var on = b.dataset.pabMode === mode;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      });
+      this.root.classList.toggle('is-preset', mode === 'preset');
+      this.positionThumb();
+      this.sync();
+    };
+
+    Slide.prototype.positionThumb = function () {
+      if (!this.thumb) return;
+      var active = this.root.querySelector('[data-pab-mode].is-active');
+      if (!active) return;
+      this.thumb.style.width = active.offsetWidth + 'px';
+      this.thumb.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+    };
+
+    Slide.prototype.sync = function () {
+      var a = this.current();
+      if (!a) return;
+      var dur = this.duration();
+      var pct = dur ? a.currentTime / dur : 0;
+
+      if (this.nowEl) this.nowEl.textContent = fmt(a.currentTime);
+      if (this.durEl) this.durEl.textContent = fmt(dur);
+      if (this.wave) this.wave.setAttribute('aria-valuenow', Math.round(pct * 100));
+
+      var edge = pct * this.bars.length;
+      for (var i = 0; i < this.bars.length; i++) {
+        var on = i < edge;
+        if (this.bars[i].dataset.on !== String(on)) {
+          this.bars[i].dataset.on = String(on);
+          this.bars[i].classList.toggle('is-played', on);
+        }
+      }
+    };
+
+    function Player() {}
+    Player.prototype = Object.create(HTMLElement.prototype);
+
+    class PresetABPlayer extends HTMLElement {
+      connectedCallback() {
+        if (this.dataset.pabReady === '1') return;
+        this.dataset.pabReady = '1';
+
+        var self = this;
+        this.track = this.querySelector('[data-pab-track]');
+        this.slides = [].slice.call(this.querySelectorAll('[data-pab-slide]'))
+          .map(function (el) { return new Slide(el, self); });
+
+        this.barsPerSec = parseFloat(this.dataset.barsPerSecond || '4') || 4;
+        this.clickOn = this.dataset.click !== 'false';
+        this.clickVol = parseFloat(this.dataset.clickVolume || '0.5');
+        if (this.clickOn) {
+          initClickAudio();
+          // an AudioContext starts suspended until a real gesture unlocks it
+          var unlock = function () {
+            if (actx && actx.state === 'suspended') actx.resume();
+            window.removeEventListener('pointerdown', unlock);
+          };
+          window.addEventListener('pointerdown', unlock, { once: true });
+        }
+
+        this.index = 0;
+        this.thumbsEl = this.querySelector('[data-pab-thumbs]');
+        this.thumbs = [].slice.call(this.querySelectorAll('[data-pab-thumb]'));
+        this.thumbPrev = this.querySelector('[data-pab-thumbs-prev]');
+        this.thumbNext = this.querySelector('[data-pab-thumbs-next]');
+
+        // clicking a cover art jumps straight to that preset
+        this.thumbs.forEach(function (t) {
+          t.addEventListener('click', function () {
+            self.click_();
+            self.go(parseInt(t.dataset.index, 10) || 0);
+          });
+        });
+
+        // drag the cover strip with a mouse (touch already scrolls natively)
+        this.initThumbDrag();
+
+        // big arrows either side of the player change preset
+        this.prevBtn = this.querySelector('[data-pab-prev]');
+        this.nextBtn = this.querySelector('[data-pab-next]');
+        if (this.prevBtn) this.prevBtn.addEventListener('click', function () { self.click_(); self.go(self.index - 1); });
+        if (this.nextBtn) this.nextBtn.addEventListener('click', function () { self.click_(); self.go(self.index + 1); });
+
+        // arrow keys move between presets, unless focus is on the seek bar,
+        // which uses the same keys to scrub
+        this.addEventListener('keydown', function (e) {
+          if (e.target && e.target.closest && e.target.closest('[data-pab-wave]')) return;
+          if (e.key === 'ArrowLeft') { self.go(self.index - 1); e.preventDefault(); }
+          if (e.key === 'ArrowRight') { self.go(self.index + 1); e.preventDefault(); }
+        });
+
+        // the small arrows scroll the cover strip, they do not change preset
+        if (this.thumbPrev) this.thumbPrev.addEventListener('click', function () { self.scrollThumbs(-1); });
+        if (this.thumbNext) this.thumbNext.addEventListener('click', function () { self.scrollThumbs(1); });
+        if (this.thumbsEl) {
+          this.thumbsEl.addEventListener('scroll', function () { self.syncThumbNav(); }, { passive: true });
+        }
+
+        if (this.track) {
+          var raf;
+          this.track.addEventListener('scroll', function () {
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(function () { self.readIndex(); });
+          }, { passive: true });
+        }
+
+        var rt;
+        window.addEventListener('resize', function () {
+          clearTimeout(rt);
+          rt = setTimeout(function () {
+            self.slides.forEach(function (s) { s.positionThumb(); s.renderWave(); });
+          }, 150);
+        });
+
+        this.update();
+      }
+
+      click_() {
+        if (this.clickOn) playClick(this.clickVol);
+      }
+
+      stopOthers(except) {
+        this.slides.forEach(function (s) { if (s !== except) s.pause(); });
+      }
+
+      readIndex() {
+        if (!this.track) return;
+        var w = this.track.clientWidth || 1;
+        var i = Math.round(this.track.scrollLeft / w);
+        if (i !== this.index) {
+          this.index = i;
+          this.stopOthers(this.slides[i]);
+          this.update();
+        }
+      }
+
+      go(i) {
+        if (!this.track || !this.slides.length) return;
+        i = Math.max(0, Math.min(this.slides.length - 1, i));
+        this.index = i;
+        this.track.scrollTo({ left: this.track.clientWidth * i, behavior: 'smooth' });
+        this.stopOthers(this.slides[i]);
+        this.update();
+      }
+
+      initThumbDrag() {
+        var strip = this.thumbsEl;
+        if (!strip) return;
+        var self = this;
+        var dragging = false, startX = 0, startLeft = 0, moved = false;
+
+        strip.addEventListener('pointerdown', function (e) {
+          if (e.pointerType === 'touch') return;
+          dragging = true; moved = false;
+          startX = e.clientX;
+          startLeft = strip.scrollLeft;
+          // CSS scroll-behavior:smooth turns every scrollLeft write into a new
+          // animation, so a drag barely moves. Inline auto wins over the sheet
+          // and takes effect immediately, unlike waiting on a class swap.
+          strip.style.scrollBehavior = 'auto';
+          // NOTE: is-dragging is deliberately NOT set here. It disables
+          // pointer-events on the covers, and setting it on pointerdown would
+          // make the button miss its own mousedown, killing every plain click.
+        });
+
+        strip.addEventListener('pointermove', function (e) {
+          if (!dragging) return;
+          var dx = e.clientX - startX;
+          if (!moved && Math.abs(dx) > 3) {
+            moved = true;
+            strip.classList.add('is-dragging');
+          }
+          if (moved) strip.scrollLeft = startLeft - dx;
+        });
+
+        var end = function () {
+          if (!dragging) return;
+          dragging = false;
+          strip.classList.remove('is-dragging');
+          strip.style.scrollBehavior = '';
+          self.syncThumbNav();
+        };
+        strip.addEventListener('pointerup', end);
+        strip.addEventListener('pointercancel', end);
+        strip.addEventListener('pointerleave', end);
+
+        // a drag that finishes on a cover must not also select that preset
+        strip.addEventListener('click', function (e) {
+          if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
+        }, true);
+
+        strip.addEventListener('scroll', function () { self.syncThumbNav(); }, { passive: true });
+      }
+
+      scrollThumbs(dir) {
+        if (!this.thumbsEl) return;
+        var item = this.thumbsEl.querySelector('.pab__thumb-item');
+        var gap = parseFloat(getComputedStyle(this.thumbsEl).columnGap) || 0;
+        var step = item ? (item.offsetWidth + gap) * 2 : this.thumbsEl.clientWidth * 0.7;
+        this.thumbsEl.scrollBy({ left: dir * step, behavior: 'smooth' });
+      }
+
+      syncThumbNav() {
+        if (!this.thumbsEl || !this.thumbPrev || !this.thumbNext) return;
+        var max = this.thumbsEl.scrollWidth - this.thumbsEl.clientWidth - 2;
+        var overflowing = max > 2;
+        this.thumbPrev.toggleAttribute('disabled', !overflowing || this.thumbsEl.scrollLeft <= 2);
+        this.thumbNext.toggleAttribute('disabled', !overflowing || this.thumbsEl.scrollLeft >= max);
+      }
+
+      update() {
+        var self = this;
+        this.thumbs.forEach(function (t, k) {
+          var on = k === self.index;
+          t.classList.toggle('is-active', on);
+          t.setAttribute('aria-selected', on ? 'true' : 'false');
+          if (on && self.thumbsEl) {
+            // keep the active cover in view without yanking the whole page
+            var tr = t.getBoundingClientRect();
+            var sr = self.thumbsEl.getBoundingClientRect();
+            if (tr.left < sr.left || tr.right > sr.right) {
+              self.thumbsEl.scrollBy({
+                left: tr.left - sr.left - (sr.width - tr.width) / 2,
+                behavior: 'smooth'
+              });
+            }
+          }
+        });
+        var last = this.slides.length - 1;
+        if (this.prevBtn) this.prevBtn.toggleAttribute('disabled', this.index <= 0);
+        if (this.nextBtn) this.nextBtn.toggleAttribute('disabled', this.index >= last);
+        this.syncThumbNav();
+        this.slides.forEach(function (s) { s.positionThumb(); });
+      }
+    }
+
+    customElements.define('preset-ab-player', PresetABPlayer);
+  })();
+</script>
+
+{% stylesheet %}
+  .pab {
+    display: block;
+    background: var(--pab-bg, #f1f1ef);
+    color: var(--pab-muted, #6b6b68);
+    padding-block: var(--pab-pad-top, 72px) var(--pab-pad-bottom, 72px);
+    padding-inline: var(--page-margin, 24px);
+  }
+
+  .pab__inner { max-width: var(--pab-max, 1120px); margin-inline: auto; }
+
+  .pab__stage { position: relative; }
+
+  /* ---------- carousel ---------- */
+  .pab__track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+  }
+
+  .pab__track::-webkit-scrollbar { display: none; }
+
+  .pab__slide { scroll-snap-align: center; min-inline-size: 0; }
+
+  /* arrows flanking the whole player */
+  .pab__nav {
+    position: absolute;
+    top: 34%;
+    z-index: 4;
+    inline-size: 46px;
+    block-size: 46px;
+    border-radius: 50%;
+    border: 1px solid rgb(0 0 0 / 0.16);
+    background: rgb(255 255 255 / 0.9);
+    backdrop-filter: blur(6px);
+    color: var(--pab-ink, #111);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, opacity 0.25s ease;
+  }
+
+  .pab__nav svg { inline-size: 20px; block-size: 20px; }
+  .pab__nav--prev { inset-inline-start: -22px; }
+  .pab__nav--next { inset-inline-end: -22px; }
+  .pab__nav:hover:not([disabled]) { transform: scale(1.09); background: #fff; }
+  .pab__nav:active:not([disabled]) { transform: scale(0.95); }
+  .pab__nav[disabled] { opacity: 0.25; cursor: default; }
+  .pab__nav:focus-visible { outline: 2px solid var(--pab-accent, #1242fd); outline-offset: 3px; }
+
+  /* keyboard hint */
+  .pab__hint {
+    margin: 14px 0 0;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--pab-muted, #6b6b68);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .pab__hint-key { font-size: 14px; opacity: 0.75; }
+
+  /* ---------- headline + art ---------- */
+  .pab__head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: 2rem;
+    align-items: end;
+    padding-block-end: 1.25rem;
+  }
+
+  .pab__copy { padding-block-end: 0.5rem; }
+
+  .pab__eyebrow {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(18px, 2.2vw, 30px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--pab-muted, #6b6b68);
+    margin: 0 0 0.1em;
+  }
+
+  .pab__title {
+    font-family: var(--font-heading--family, inherit);
+    /* Scales down with the viewport so a long word shrinks instead of
+       breaking mid-word. Never scaled by transform, so it is never squashed. */
+    font-size: min(var(--pab-title, 76px), 7.4vw);
+    font-weight: 900;
+    line-height: 0.86;
+    letter-spacing: -0.045em;
+    color: var(--pab-ink, #111);
+    margin: 0;
+    text-transform: uppercase;
+    overflow-wrap: normal;
+    word-break: keep-all;
+    hyphens: none;
+  }
+
+  .pab__subline {
+    font-size: clamp(13px, 1.3vw, 17px);
+    font-weight: 700;
+    color: var(--pab-ink, #111);
+    margin: 0.6em 0 0;
+    text-align: right;
+  }
+
+  .pab__art {
+    position: relative;
+    /* justify-self, NOT margin-inline-start:auto — an auto margin turns a grid
+       item into shrink-to-fit, which collapses a percentage-width child to 0. */
+    justify-self: end;
+    inline-size: 100%;
+    max-inline-size: 440px;
+  }
+
+  .pab__art-img {
+    inline-size: 100%;
+    block-size: auto;
+    max-block-size: 440px;
+    object-fit: contain;
+    object-position: bottom right;
+    display: block;
+    border-radius: 10px;
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__slide:hover .pab__art-img { transform: translateY(-4px) rotate(-0.4deg); }
+
+  /* ---------- player panel ---------- */
+  .pab__panel {
+    position: relative;
+    background: var(--pab-panel, #3a3a3a);
+    color: var(--pab-panel-ink, #fff);
+    border-radius: var(--pab-radius, 22px);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 18px 50px rgb(0 0 0 / 0.16);
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Slow drifting light behind the panel. Two soft blobs on long, offset,
+     prime-ish durations so the loop never visibly repeats. */
+  .pab--animated .pab__panel::before,
+  .pab--animated .pab__panel::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    border-radius: 50%;
+    filter: blur(70px);
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .pab--animated .pab__panel::before {
+    inline-size: 46%;
+    aspect-ratio: 1;
+    inset-block-start: -30%;
+    inset-inline-start: -8%;
+    background: var(--pab-accent, #1242fd);
+    opacity: 0.34;
+    animation: pab-drift-a 19s ease-in-out infinite alternate;
+  }
+
+  .pab--animated .pab__panel::after {
+    inline-size: 38%;
+    aspect-ratio: 1;
+    inset-block-end: -34%;
+    inset-inline-end: -6%;
+    background: var(--pab-accent, #1242fd);
+    opacity: 0.22;
+    animation: pab-drift-b 26s ease-in-out infinite alternate;
+  }
+
+  @keyframes pab-drift-a {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(28%, 14%, 0) scale(1.12); }
+    100% { transform: translate3d(62%, -6%, 0) scale(0.94); }
+  }
+
+  @keyframes pab-drift-b {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    50%  { transform: translate3d(-34%, -12%, 0) scale(0.9); }
+    100% { transform: translate3d(-70%, 8%, 0) scale(1.15); }
+  }
+
+  /* keep all real content above the drifting light */
+  .pab__row { position: relative; z-index: 1; }
+
+  .pab__row { display: flex; align-items: center; gap: 18px; }
+  .pab__row--main { flex-wrap: nowrap; }
+
+  .pab__row--meta {
+    flex-wrap: wrap;
+    gap: 12px;
+    border-block-start: 1px solid rgb(255 255 255 / 0.12);
+    padding-block-start: 16px;
+  }
+
+  /* play button */
+  .pab__play {
+    flex: 0 0 auto;
+    inline-size: 52px;
+    block-size: 52px;
+    border-radius: 50%;
+    border: 0;
+    background: #fff;
+    color: #111;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__play:hover { transform: scale(1.07); }
+  .pab__play svg { inline-size: 24px; block-size: 24px; grid-area: 1 / 1; }
+  .pab__icon-pause { display: none; }
+  .pab__slide.is-playing .pab__icon-play { display: none; }
+  .pab__slide.is-playing .pab__icon-pause { display: block; }
+
+  /* waveform */
+  .pab__wave {
+    flex: 1 1 auto;
+    min-inline-size: 0;
+    block-size: 46px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    cursor: pointer;
+    touch-action: none;
+    overflow: hidden;
+  }
+
+  .pab__wave:focus-visible { outline: 2px solid var(--pab-accent, #1242fd); outline-offset: 4px; border-radius: 4px; }
+
+  .pab__bar {
+    flex: 1 1 0;
+    block-size: var(--h, 40%);
+    min-inline-size: 2px;
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.34);
+    transform-origin: center;
+    transition: background 0.12s linear;
+  }
+
+  .pab__bar.is-played { background: var(--pab-accent, #1242fd); }
+
+  /* Bars only move while this card is playing — staggered by index so the
+     motion travels along the waveform instead of pulsing as one block. */
+  .pab__slide.is-playing .pab__bar {
+    animation: pab-bar-pulse 1150ms ease-in-out infinite;
+    animation-delay: calc(var(--i, 0) * -34ms);
+  }
+
+  .pab__slide.is-playing .pab__bar.is-played {
+    animation-duration: 820ms;
+  }
+
+  @keyframes pab-bar-pulse {
+    0%, 100% { transform: scaleY(0.82); }
+    50%      { transform: scaleY(1.38); }
+  }
+
+  /* time */
+  .pab__time {
+    flex: 0 0 auto;
+    margin: 0;
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    color: rgb(255 255 255 / 0.6);
+    white-space: nowrap;
+  }
+
+  .pab__time-now { color: var(--pab-accent, #1242fd); font-weight: 700; }
+
+  /* A/B switch */
+  .pab__ab { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; }
+
+  .pab__ab-label {
+    font-size: 13px;
+    color: rgb(255 255 255 / 0.62);
+    white-space: nowrap;
+  }
+
+  .pab__switch {
+    position: relative;
+    display: flex;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.1);
+  }
+
+  .pab__switch-thumb {
+    position: absolute;
+    inset-block: 4px;
+    inset-inline-start: 0;
+    border-radius: 999px;
+    background: #fff;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__switch-btn {
+    position: relative;
+    z-index: 1;
+    border: 0;
+    background: transparent;
+    color: rgb(255 255 255 / 0.75);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 8px 18px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+
+  .pab__switch-btn.is-active { color: #111; }
+
+  /* DAWs + pills */
+  .pab__daws, .pab__pills {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    flex-wrap: wrap;
+  }
+
+  .pab__daw {
+    inline-size: 38px;
+    block-size: 38px;
+    border-radius: 9px;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    background: rgb(255 255 255 / 0.08);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__daw:hover { transform: translateY(-2px); }
+  .pab__daw-img { inline-size: 100%; block-size: 100%; object-fit: cover; display: block; }
+
+  .pab__daw--text {
+    inline-size: auto;
+    block-size: auto;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgb(255 255 255 / 0.85);
+    white-space: nowrap;
+  }
+
+  .pab__pills { margin-inline-start: auto; }
+
+  .pab__pill {
+    font-size: 12px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.08);
+    color: rgb(255 255 255 / 0.8);
+    white-space: nowrap;
+  }
+
+  /* CTA */
+  .pab__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 12px 12px 26px;
+    border-radius: 999px;
+    background: #fff;
+    color: #111;
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: none;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s ease;
+  }
+
+  .pab__cta:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgb(0 0 0 / 0.22); }
+
+  .pab__cta-arrow {
+    inline-size: 34px;
+    block-size: 34px;
+    border-radius: 50%;
+    background: var(--pab-accent, #1242fd);
+    color: #fff;
+    display: grid;
+    place-items: center;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__cta:hover .pab__cta-arrow { transform: translateX(3px); }
+  .pab__cta-arrow svg { inline-size: 17px; block-size: 17px; }
+
+  /* ---------- cover-art browser ---------- */
+  .pab__browse {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-block-start: 20px;
+  }
+
+  .pab__browse-nav {
+    flex: 0 0 auto;
+    inline-size: 34px;
+    block-size: 34px;
+    border-radius: 50%;
+    border: 1px solid rgb(0 0 0 / 0.14);
+    background: transparent;
+    color: var(--pab-ink, #111);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease, transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__browse-nav svg { inline-size: 17px; block-size: 17px; }
+  .pab__browse-nav:hover:not([disabled]) { background: rgb(0 0 0 / 0.06); transform: scale(1.07); }
+  .pab__browse-nav[disabled] { opacity: 0.22; cursor: default; }
+
+  .pab__thumbs {
+    flex: 1 1 auto;
+    display: flex;
+    gap: 12px;
+    margin: 0;
+    padding: 4px 2px 6px;
+    list-style: none;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+
+  .pab__thumbs::-webkit-scrollbar { display: none; }
+
+  /* smooth scroll and snapping both fight a live drag */
+  .pab__thumbs.is-dragging {
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+    cursor: grabbing;
+  }
+
+  .pab__thumbs.is-dragging .pab__thumb { pointer-events: none; }
+
+  .pab__thumb-item { flex: 0 0 auto; scroll-snap-align: start; }
+
+  .pab__thumb {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    inline-size: 84px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .pab__thumb:hover { transform: translateY(-3px); }
+
+  .pab__thumb-art {
+    position: relative;
+    display: block;
+    inline-size: 84px;
+    block-size: 84px;
+    border-radius: var(--pab-thumb-radius, 9px);
+    overflow: hidden;
+    background: rgb(0 0 0 / 0.08);
+    box-shadow: 0 0 0 0 rgb(0 0 0 / 0);
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    opacity: 0.55;
+    filter: saturate(0.7);
+    transition: opacity 0.28s ease, outline-color 0.28s ease, filter 0.28s ease, box-shadow 0.28s ease;
+  }
+
+  .pab__thumb-img,
+  .pab__thumb-ph {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .pab__thumb-ph { background: linear-gradient(135deg, #1b1b1b, #0d1540); }
+
+  .pab__thumb.is-active .pab__thumb-art,
+  .pab__thumb:hover .pab__thumb-art {
+    opacity: 1;
+    filter: saturate(1);
+  }
+
+  .pab__thumb.is-active .pab__thumb-art {
+    outline-color: var(--pab-accent, #1242fd);
+    box-shadow: 0 8px 20px rgb(0 0 0 / 0.18);
+  }
+
+  .pab__thumb:focus-visible .pab__thumb-art {
+    outline-color: var(--pab-ink, #111);
+    opacity: 1;
+  }
+
+  .pab__thumb-name {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+    color: var(--pab-muted, #6b6b68);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    transition: color 0.28s ease;
+  }
+
+  .pab__thumb.is-active .pab__thumb-name { color: var(--pab-ink, #111); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pab__slide.is-playing .pab__bar { animation: none; }
+    .pab__track { scroll-behavior: auto; }
+    .pab__play, .pab__cta, .pab__cta-arrow, .pab__thumb, .pab__browse-nav, .pab__nav,
+    .pab__switch-thumb, .pab__art-img, .pab__daw, .pab__dot { transition: none; }
+  }
+
+  /* ---------- responsive ---------- */
+  @media screen and (max-width: 989px) {
+    .pab__row--main { flex-wrap: wrap; }
+    .pab__wave { order: 3; flex-basis: 100%; }
+    .pab__ab { margin-inline-start: auto; }
+    .pab__pills { margin-inline-start: 0; }
+  }
+
+  @media screen and (max-width: 749px) {
+    .pab__head { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+    .pab__copy { order: 2; }
+    .pab__art { order: 1; }
+    .pab__title { font-size: var(--pab-title-mobile, 46px); }
+    .pab__subline { text-align: left; }
+    .pab__panel { padding: 16px; border-radius: calc(var(--pab-radius, 22px) * 0.8); }
+    .pab__cta { inline-size: 100%; justify-content: space-between; }
+    .pab__nav { top: 30%; inline-size: 38px; block-size: 38px; }
+    .pab__nav--prev { inset-inline-start: -10px; }
+    .pab__nav--next { inset-inline-end: -10px; }
+    .pab__nav svg { inline-size: 17px; block-size: 17px; }
+    .pab__hint { display: none; }
+    .pab__browse { gap: 6px; margin-block-start: 16px; }
+    .pab__browse-nav { inline-size: 30px; block-size: 30px; }
+    .pab__thumbs { gap: 9px; }
+    .pab__thumb, .pab__thumb-art { inline-size: 68px; }
+    .pab__thumb-art { block-size: 68px; }
+    .pab__time { font-size: 13px; }
+    .pab__ab-label { display: none; }
+
+    /* 96 bars at a 2px floor need ~382px; a phone panel has far less,
+       so tighten the gap and floor so they always fit inside the panel. */
+    .pab__wave { gap: 1px; block-size: 40px; }
+    .pab__bar { min-inline-size: 1px; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Preset A/B Player",
+  "tag": "section",
+  "class": "preset-ab-player-wrapper section-wrapper",
+  "disabled_on": {
+    "groups": [
+      "header"
+    ]
+  },
+  "settings": [
+    {
+      "type": "header",
+      "content": "Player labels"
+    },
+    {
+      "type": "text",
+      "id": "toggle_label",
+      "label": "Toggle label",
+      "default": "Hear the preset"
+    },
+    {
+      "type": "text",
+      "id": "raw_label",
+      "label": "“Before” label",
+      "default": "RAW"
+    },
+    {
+      "type": "text",
+      "id": "preset_label",
+      "label": "“After” label",
+      "default": "PRESET"
+    },
+    {
+      "type": "text",
+      "id": "button_label",
+      "label": "Button label",
+      "default": "GET THE PRESET"
+    },
+    {
+      "type": "text",
+      "id": "pills",
+      "label": "Feature pills",
+      "default": "Instant download, One-time payment, Lifetime access",
+      "info": "Separate with commas."
+    },
+    {
+      "type": "header",
+      "content": "Playback & feel"
+    },
+    {
+      "type": "checkbox",
+      "id": "loop_audio",
+      "label": "Loop the snippet",
+      "default": true,
+      "info": "Restarts automatically when it reaches the end."
+    },
+    {
+      "type": "range",
+      "id": "wave_detail",
+      "label": "Waveform detail",
+      "min": 2,
+      "max": 8,
+      "step": 1,
+      "unit": "/s",
+      "default": 4,
+      "info": "Bars drawn per second of audio. A longer snippet gets more bars, so the visual matches its length."
+    },
+    {
+      "type": "checkbox",
+      "id": "click_sound",
+      "label": "Click sound on the buttons",
+      "default": true,
+      "info": "Plays your click on the play button and the RAW/PRESET switch."
+    },
+    {
+      "type": "range",
+      "id": "click_volume",
+      "label": "Click volume",
+      "min": 0,
+      "max": 100,
+      "step": 5,
+      "unit": "%",
+      "default": 50,
+      "visible_if": "{{ section.settings.click_sound }}"
+    },
+    {
+      "type": "checkbox",
+      "id": "animate_panel",
+      "label": "Animate the panel background",
+      "default": true,
+      "info": "Slow drifting light behind the player."
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Maximum width",
+      "min": 800,
+      "max": 1500,
+      "step": 20,
+      "unit": "px",
+      "default": 1120
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "label": "Panel corner radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "default": 22
+    },
+    {
+      "type": "select",
+      "id": "thumb_shape",
+      "label": "Cover art shape",
+      "options": [
+        {
+          "value": "50%",
+          "label": "Circle"
+        },
+        {
+          "value": "12px",
+          "label": "Rounded square"
+        },
+        {
+          "value": "0px",
+          "label": "Square"
+        }
+      ],
+      "default": "50%"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_key_hint",
+      "label": "Show the arrow-keys hint",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "key_hint_text",
+      "label": "Hint text",
+      "default": "Use arrow keys",
+      "visible_if": "{{ section.settings.show_key_hint }}"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 200,
+      "step": 4,
+      "unit": "px",
+      "default": 72
+    },
+    {
+      "type": "header",
+      "content": "Appearance"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#f1f1ef"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent (waveform + arrow)",
+      "default": "#1242fd"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading text",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Muted text",
+      "default": "#6b6b68"
+    },
+    {
+      "type": "color",
+      "id": "panel_color",
+      "label": "Player panel",
+      "default": "#3a3a3a"
+    },
+    {
+      "type": "color",
+      "id": "panel_text_color",
+      "label": "Player panel text",
+      "default": "#ffffff"
+    },
+    {
+      "type": "range",
+      "id": "title_size",
+      "label": "Title size (desktop)",
+      "min": 40,
+      "max": 160,
+      "step": 2,
+      "unit": "px",
+      "default": 76
+    },
+    {
+      "type": "range",
+      "id": "title_size_mobile",
+      "label": "Title size (mobile)",
+      "min": 22,
+      "max": 90,
+      "step": 2,
+      "unit": "px",
+      "default": 46
+    }
+  ],
+  "blocks": [
+    {
+      "type": "preset",
+      "name": "Preset",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Copy"
+        },
+        {
+          "type": "text",
+          "id": "eyebrow",
+          "label": "Small line above",
+          "default": "sound like"
+        },
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "MAINSTREAM"
+        },
+        {
+          "type": "text",
+          "id": "subline",
+          "label": "Line below",
+          "default": "& it works in any DAW..."
+        },
+        {
+          "type": "header",
+          "content": "Product"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Linked product",
+          "info": "The artwork and the button link are pulled from this product."
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Custom artwork",
+          "info": "Optional. Overrides the product image."
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Custom button link",
+          "info": "Optional. Overrides the product link."
+        },
+        {
+          "type": "header",
+          "content": "Audio"
+        },
+        {
+          "type": "text",
+          "id": "raw_audio",
+          "label": "Raw audio",
+          "info": "Upload to Settings → Files, then enter just the filename (e.g. mainstream-raw.mp3). A full URL also works."
+        },
+        {
+          "type": "text",
+          "id": "preset_audio",
+          "label": "Preset audio",
+          "info": "Same snippet, same start point, with the preset applied — so the switch stays in sync."
+        }
+      ]
+    },
+    {
+      "type": "daw",
+      "name": "DAW badge",
+      "settings": [
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Name",
+          "default": "FL Studio"
+        },
+        {
+          "type": "image_picker",
+          "id": "logo",
+          "label": "Logo",
+          "info": "Optional. Without one, the name shows as a pill."
+        }
+      ]
+    }
+  ],
+  "max_blocks": 50,
+  "presets": [
+    {
+      "name": "Preset A/B Player",
+      "category": "Media",
+      "blocks": {
+        "preset_1": {
+          "type": "preset",
+          "settings": {
+            "eyebrow": "sound like",
+            "title": "MAINSTREAM",
+            "subline": "& it works in any DAW..."
+          }
+        },
+        "daw_1": {
+          "type": "daw",
+          "settings": {
+            "name": "FL Studio"
+          }
+        },
+        "daw_2": {
+          "type": "daw",
+          "settings": {
+            "name": "Ableton Live"
+          }
+        },
+        "daw_3": {
+          "type": "daw",
+          "settings": {
+            "name": "Logic Pro"
+          }
+        },
+        "daw_4": {
+          "type": "daw",
+          "settings": {
+            "name": "Pro Tools"
+          }
+        }
+      },
+      "block_order": [
+        "preset_1",
+        "daw_1",
+        "daw_2",
+        "daw_3",
+        "daw_4"
+      ]
+    }
+  ]
+}
+{% endschema %}
