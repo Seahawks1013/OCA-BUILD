@@ -154,6 +154,18 @@
             "preset_audio": "OVI_WOOD_RTYC_Beat_Mixed.wav"
           }
         },
+        "preset_EdDVJM": {
+          "type": "preset",
+          "settings": {
+            "eyebrow": "the official",
+            "title": "DRAKE PRESET",
+            "subline": "& it works in any DAW...",
+            "product": "the-drake-preset",
+            "button_link": "",
+            "raw_audio": "",
+            "preset_audio": ""
+          }
+        },
         "preset_ygHCRn": {
           "type": "preset",
           "settings": {
@@ -206,6 +218,7 @@
       "block_order": [
         "preset_cECjh8",
         "preset_YeGy4Q",
+        "preset_EdDVJM",
         "preset_ygHCRn",
         "preset_pWrpWA",
         "daw_KaAM4B",
