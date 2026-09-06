@@ -145,9 +145,10 @@
           "type": "preset",
           "settings": {
             "eyebrow": "sound like",
-            "title": "OVI WOOD",
+            "title": "‎ ‎ ‎ ‎ ‎ OVI WOOD",
             "subline": "& it works in any DAW...",
-            "product": "",
+            "product": "ovi-wood-preset",
+            "image": "shopify://shop_images/Gemini_Generated_Image_o1p5t5o1p5t5o1p5.jpg",
             "button_link": "",
             "raw_audio": "",
             "preset_audio": ""
