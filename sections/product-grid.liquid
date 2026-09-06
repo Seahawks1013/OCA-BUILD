@@ -58,6 +58,7 @@
     --pg-cols-tablet: {{ grid_cols_tablet }};
     --pg-cols-mobile: {{ grid_cols_mobile }};
     --pg-gap: {{ section.settings.grid_gap }}px;
+    --pg-card-w: {{ section.settings.card_width }}px;
     --pg-ratio: {{ section.settings.image_ratio }};
     --pg-pad-top: {{ section.settings.padding_top }}px;
     --pg-pad-bottom: {{ section.settings.padding_bottom }}px;
@@ -94,11 +95,13 @@
     {%- endif -%}
 
     {%- comment -%}
-      Two paths: hand-picked Product blocks first, else the chosen collection.
-      The card markup is kept identical between them.
+      Cards are built once here, then dropped into either the static grid or
+      the auto-scrolling reel. The reel prints the same set twice so the loop
+      has no visible seam; JS hides the second copy from screen readers.
+      Everything inside this capture is balanced markup.
     {%- endcomment -%}
-    {%- if picked_count > 0 -%}
-      <ul class="pg__grid" role="list">
+    {%- capture cards -%}
+      {%- if picked_count > 0 -%}
         {%- assign i = 0 -%}
         {%- for block in section.blocks -%}
           {%- if block.type != 'product' -%}{%- continue -%}{%- endif -%}
@@ -158,10 +161,7 @@
             </a>
           </li>
         {%- endfor -%}
-      </ul>
-
-    {%- elsif section.settings.collection != blank -%}
-      <ul class="pg__grid" role="list">
+      {%- elsif section.settings.collection != blank -%}
         {%- assign i = 0 -%}
         {%- for product in section.settings.collection.products limit: section.settings.max_products -%}
           {%- assign i = i | plus: 1 -%}
@@ -205,13 +205,41 @@
             </a>
           </li>
         {%- endfor -%}
-      </ul>
+      {%- endif -%}
+    {%- endcapture -%}
 
+    {%- if cards contains '<li' -%}
+      {%- if section.settings.layout == 'scroll' -%}
+        <div
+          class="pg__reel"
+          data-pg-reel
+          data-pg-speed="{{ section.settings.scroll_speed }}"
+          tabindex="0"
+          role="region"
+          aria-label="{{ section.settings.heading | default: 'Products' | escape }}"
+        >
+          <ul class="pg__track" data-pg-track role="list">{{ cards }}{{ cards }}</ul>
+        </div>
+      {%- else -%}
+        <ul class="pg__grid" role="list">{{ cards }}</ul>
+      {%- endif -%}
     {%- else -%}
       <p class="pg__empty">Pick a collection, or add Product blocks, to fill this grid.</p>
     {%- endif -%}
 
+    {%- if section.settings.shop_label != blank and section.settings.shop_link != blank -%}
+      <div class="pg__cta" data-reveal style="--d:120ms">
+        <a class="pg__shop" href="{{ section.settings.shop_link }}">
+          <span>{{ section.settings.shop_label }}</span>
+          <span class="pg__shop-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </a>
+      </div>
+    {%- endif -%}
+
   </div>
+
 </product-grid>
 
 <script>
@@ -237,6 +265,117 @@
         }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
 
         targets.forEach(function (el) { io.observe(el); });
+
+        this.initReel(reduced);
+      }
+
+      initReel(reduced) {
+        var reel = this.querySelector('[data-pg-reel]');
+        var track = this.querySelector('[data-pg-track]');
+        if (!reel || !track) return;
+
+        var self = this;
+        var items = [].slice.call(track.children);
+        var half = items.length / 2;
+
+        // The second copy exists only to hide the seam — keep it out of the
+        // accessibility tree and out of the tab order.
+        items.forEach(function (el, k) {
+          // cards in a horizontally scrolling strip would otherwise sit at
+          // opacity 0 until scrolled past; show them all up front
+          el.classList.add('is-in');
+          if (k < half) return;
+          el.setAttribute('aria-hidden', 'true');
+          [].slice.call(el.querySelectorAll('a')).forEach(function (a) {
+            a.setAttribute('tabindex', '-1');
+          });
+        });
+
+        var loopWidth = function () { return track.scrollWidth / 2; };
+
+        // ---- drag to scroll (mouse); touch scrolls natively ----
+        var dragging = false, startX = 0, startLeft = 0, moved = false;
+
+        reel.addEventListener('pointerdown', function (e) {
+          if (e.pointerType === 'touch') return;
+          dragging = true; moved = false;
+          startX = e.clientX;
+          startLeft = reel.scrollLeft;
+        });
+
+        reel.addEventListener('pointermove', function (e) {
+          if (!dragging) return;
+          var dx = e.clientX - startX;
+          if (!moved && Math.abs(dx) > 3) {
+            moved = true;
+            reel.classList.add('is-dragging');
+            // capture only once it is a real drag, otherwise the click gets
+            // retargeted to the strip and no product link opens
+            try { reel.setPointerCapture(e.pointerId); } catch (err) {}
+          }
+          if (moved) reel.scrollLeft = startLeft - dx;
+        });
+
+        var endDrag = function (e) {
+          if (!dragging) return;
+          dragging = false;
+          if (e && e.pointerId !== undefined) {
+            try { reel.releasePointerCapture(e.pointerId); } catch (err) {}
+          }
+          reel.classList.remove('is-dragging');
+        };
+        reel.addEventListener('pointerup', endDrag);
+        reel.addEventListener('pointercancel', endDrag);
+        window.addEventListener('pointerup', endDrag);
+
+        // a drag that ends on a card must not also follow its link
+        reel.addEventListener('click', function (e) {
+          if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
+        }, true);
+
+        if (reduced) return;
+
+        // ---- auto-scroll ----
+        var speed = parseFloat(reel.dataset.pgSpeed) || 40;
+        var paused = false, last = 0;
+        // Chrome rounds scrollLeft to whole pixels, so reading it back each
+        // frame and adding a sub-pixel step rounds up every time and runs fast.
+        // Keep the true position here and only ever write it out.
+        var pos = reel.scrollLeft;
+
+        var pause = function () { paused = true; };
+        var resume = function () { paused = false; };
+
+        reel.addEventListener('pointerenter', pause);
+        reel.addEventListener('pointerleave', resume);
+        reel.addEventListener('focusin', pause);
+        reel.addEventListener('focusout', resume);
+        reel.addEventListener('pointerdown', pause);
+        reel.addEventListener('touchstart', pause, { passive: true });
+        document.addEventListener('visibilitychange', function () {
+          if (document.hidden) pause(); else resume();
+        });
+
+        var tick = function (now) {
+          self.raf = requestAnimationFrame(tick);
+          if (!last) { last = now; return; }
+          var dt = (now - last) / 1000;
+          last = now;
+          if (paused || dragging || dt > 0.5) return;
+
+          // the visitor scrolled or dragged out from under us — adopt it
+          if (Math.abs(reel.scrollLeft - pos) > 2) pos = reel.scrollLeft;
+
+          pos += speed * dt;
+          var w = loopWidth();
+          if (w > 0 && pos >= w) pos -= w;
+          reel.scrollLeft = pos;
+        };
+        this.raf = requestAnimationFrame(tick);
+      }
+
+      disconnectedCallback() {
+        if (this.raf) cancelAnimationFrame(this.raf);
       }
     }
 
@@ -365,6 +504,87 @@
     list-style: none;
   }
 
+  /* ---------- auto-scrolling reel ---------- */
+  .pg__reel {
+    overflow-x: auto;
+    overflow-y: hidden;
+    /* deliberately no scroll-behavior:smooth — it would fight the per-frame
+       scrollLeft writes and the reel would barely move */
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+  }
+
+  .pg__reel::-webkit-scrollbar { display: none; }
+
+  .pg__reel:focus-visible {
+    outline: 2px solid var(--pg-accent, #1242fd);
+    outline-offset: 4px;
+    border-radius: var(--pg-radius, 14px);
+  }
+
+  .pg__reel.is-dragging { cursor: grabbing; }
+  .pg__reel.is-dragging .pg__card { pointer-events: none; }
+
+  .pg__track {
+    display: flex;
+    gap: var(--pg-gap, 20px);
+    inline-size: max-content;
+    margin: 0;
+    padding: 0 0 4px;
+    list-style: none;
+  }
+
+  .pg__track .pg__item { flex: 0 0 var(--pg-card-w, 260px); }
+
+  /* ---------- shop-now button ---------- */
+  .pg__cta {
+    display: flex;
+    justify-content: center;
+    margin-block-start: clamp(28px, 3.6vw, 48px);
+  }
+
+  .pg__shop {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 14px 14px 28px;
+    border-radius: 999px;
+    background: var(--pg-accent, #1242fd);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-decoration: none;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s ease;
+    box-shadow: 0 12px 30px rgb(18 66 253 / 0.28);
+  }
+
+  .pg__shop:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px rgb(18 66 253 / 0.36);
+  }
+
+  .pg__shop-arrow {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 30px;
+    block-size: 30px;
+    border-radius: 50%;
+    background: #fff;
+    color: var(--pg-accent, #1242fd);
+  }
+
+  .pg__shop-arrow svg { inline-size: 16px; block-size: 16px; }
+
+  .pg__shop:focus-visible {
+    outline: 2px solid var(--pg-ink, #111);
+    outline-offset: 3px;
+  }
+
   .pg__card {
     display: flex;
     flex-direction: column;
@@ -465,7 +685,7 @@
   /* ---------- motion off ---------- */
   @media (prefers-reduced-motion: reduce) {
     [data-reveal] { opacity: 1; transform: none; transition: none; }
-    .pg__media, .pg__img, .pg__viewall { transition: none; }
+    .pg__media, .pg__img, .pg__viewall, .pg__shop { transition: none; }
   }
 
   /* ---------- tablet ---------- */
@@ -478,7 +698,10 @@
     .pg { padding-block: calc(var(--pg-pad-top, 80px) * 0.7) calc(var(--pg-pad-bottom, 80px) * 0.7); }
     .pg__heading { font-size: var(--pg-h1-mobile, 38px); max-width: none; }
     .pg__grid { grid-template-columns: repeat(var(--pg-cols-mobile, 2), minmax(0, 1fr)); gap: 14px; }
+    .pg__track { gap: 14px; }
+    .pg__track .pg__item { flex-basis: calc(var(--pg-card-w, 260px) * 0.72); }
     .pg__viewall { inline-size: 100%; justify-content: space-between; }
+    .pg__shop { inline-size: 100%; justify-content: space-between; }
   }
 {% endstylesheet %}
 
@@ -524,6 +747,18 @@
       "info": "Both the label and the link must be filled in for the button to show."
     },
     {
+      "type": "text",
+      "id": "shop_label",
+      "label": "Button under the products",
+      "default": "Shop now"
+    },
+    {
+      "type": "url",
+      "id": "shop_link",
+      "label": "Button link",
+      "info": "Both the label and the link must be filled in for the button to show."
+    },
+    {
       "type": "header",
       "content": "Products"
     },
@@ -552,6 +787,39 @@
     {
       "type": "header",
       "content": "Layout"
+    },
+    {
+      "type": "select",
+      "id": "layout",
+      "label": "Layout",
+      "options": [
+        { "value": "scroll", "label": "Auto-scrolling row" },
+        { "value": "grid", "label": "Static grid" }
+      ],
+      "default": "scroll",
+      "info": "The row drifts on its own and pauses whenever someone hovers, taps or focuses it. Visitors can also drag or swipe it."
+    },
+    {
+      "type": "range",
+      "id": "scroll_speed",
+      "label": "Scroll speed",
+      "min": 10,
+      "max": 120,
+      "step": 5,
+      "unit": "px",
+      "default": 40,
+      "info": "Pixels per second. Only applies to the auto-scrolling row."
+    },
+    {
+      "type": "range",
+      "id": "card_width",
+      "label": "Card width",
+      "min": 180,
+      "max": 420,
+      "step": 20,
+      "unit": "px",
+      "default": 260,
+      "info": "Only applies to the auto-scrolling row."
     },
     {
       "type": "range",
@@ -718,6 +986,7 @@
       "settings": {
         "eyebrow": "THE CATALOGUE",
         "heading": "Every preset we make.",
+        "layout": "scroll",
         "columns": 4
       }
     }
