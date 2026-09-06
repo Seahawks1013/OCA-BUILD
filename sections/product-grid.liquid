@@ -94,13 +94,11 @@
     {%- endif -%}
 
     {%- comment -%}
-      One card renderer, fed either by a hand-picked block or by a collection
-      product, so the two paths can never drift apart visually.
+      Two paths: hand-picked Product blocks first, else the chosen collection.
+      The card markup is kept identical between them.
     {%- endcomment -%}
-    {%- capture card_open -%}<ul class="pg__grid" role="list">{%- endcapture -%}
-
     {%- if picked_count > 0 -%}
-      {{ card_open }}
+      <ul class="pg__grid" role="list">
         {%- assign i = 0 -%}
         {%- for block in section.blocks -%}
           {%- if block.type != 'product' -%}{%- continue -%}{%- endif -%}
@@ -163,7 +161,7 @@
       </ul>
 
     {%- elsif section.settings.collection != blank -%}
-      {{ card_open }}
+      <ul class="pg__grid" role="list">
         {%- assign i = 0 -%}
         {%- for product in section.settings.collection.products limit: section.settings.max_products -%}
           {%- assign i = i | plus: 1 -%}
