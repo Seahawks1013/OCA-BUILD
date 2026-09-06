@@ -650,6 +650,9 @@
           });
         });
 
+        // drag the cover strip with a mouse (touch already scrolls natively)
+        this.initThumbDrag();
+
         // big arrows either side of the player change preset
         this.prevBtn = this.querySelector('[data-pab-prev]');
         this.nextBtn = this.querySelector('[data-pab-next]');
@@ -716,6 +719,55 @@
         this.track.scrollTo({ left: this.track.clientWidth * i, behavior: 'smooth' });
         this.stopOthers(this.slides[i]);
         this.update();
+      }
+
+      initThumbDrag() {
+        var strip = this.thumbsEl;
+        if (!strip) return;
+        var self = this;
+        var dragging = false, startX = 0, startLeft = 0, moved = false;
+
+        strip.addEventListener('pointerdown', function (e) {
+          if (e.pointerType === 'touch') return;
+          dragging = true; moved = false;
+          startX = e.clientX;
+          startLeft = strip.scrollLeft;
+          // CSS scroll-behavior:smooth turns every scrollLeft write into a new
+          // animation, so a drag barely moves. Inline auto wins over the sheet
+          // and takes effect immediately, unlike waiting on a class swap.
+          strip.style.scrollBehavior = 'auto';
+          // NOTE: is-dragging is deliberately NOT set here. It disables
+          // pointer-events on the covers, and setting it on pointerdown would
+          // make the button miss its own mousedown, killing every plain click.
+        });
+
+        strip.addEventListener('pointermove', function (e) {
+          if (!dragging) return;
+          var dx = e.clientX - startX;
+          if (!moved && Math.abs(dx) > 3) {
+            moved = true;
+            strip.classList.add('is-dragging');
+          }
+          if (moved) strip.scrollLeft = startLeft - dx;
+        });
+
+        var end = function () {
+          if (!dragging) return;
+          dragging = false;
+          strip.classList.remove('is-dragging');
+          strip.style.scrollBehavior = '';
+          self.syncThumbNav();
+        };
+        strip.addEventListener('pointerup', end);
+        strip.addEventListener('pointercancel', end);
+        strip.addEventListener('pointerleave', end);
+
+        // a drag that finishes on a cover must not also select that preset
+        strip.addEventListener('click', function (e) {
+          if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; }
+        }, true);
+
+        strip.addEventListener('scroll', function () { self.syncThumbNav(); }, { passive: true });
       }
 
       scrollThumbs(dir) {
@@ -1212,6 +1264,15 @@
 
   .pab__thumbs::-webkit-scrollbar { display: none; }
 
+  /* smooth scroll and snapping both fight a live drag */
+  .pab__thumbs.is-dragging {
+    scroll-behavior: auto;
+    scroll-snap-type: none;
+    cursor: grabbing;
+  }
+
+  .pab__thumbs.is-dragging .pab__thumb { pointer-events: none; }
+
   .pab__thumb-item { flex: 0 0 auto; scroll-snap-align: start; }
 
   .pab__thumb {
@@ -1646,7 +1707,7 @@
       ]
     }
   ],
-  "max_blocks": 24,
+  "max_blocks": 50,
   "presets": [
     {
       "name": "Preset A/B Player",
