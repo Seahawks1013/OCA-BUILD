@@ -1,0 +1,1112 @@
+{%- comment -%}
+  Drum Kits
+  Landing section for sample/drum kits: hero, credibility points, kit grid,
+  closing statement. Every kit is a block, so adding the next one is a
+  theme-editor job rather than a code change.
+  Blocks: point / kit.
+{%- endcomment -%}
+
+{%- liquid
+  # Counted with explicit loops rather than `| where:` — that filter is
+  # unreliable against locally-defined section blocks.
+  assign point_count = 0
+  assign kit_count = 0
+  for block in section.blocks
+    case block.type
+      when 'point'
+        assign point_count = point_count | plus: 1
+      when 'kit'
+        assign kit_count = kit_count | plus: 1
+    endcase
+  endfor
+
+  # Never lay out more columns than there are kits, so a single kit fills the
+  # row instead of sitting in a third of it. Growing the list needs no setting
+  # change — the layout widens on its own until it hits the chosen maximum.
+  assign kit_cols = section.settings.columns
+  if kit_count > 0 and kit_count < kit_cols
+    assign kit_cols = kit_count
+  endif
+-%}
+
+<drum-kits
+  class="dk"
+  id="DrumKits-{{ section.id }}"
+  style="
+    --dk-bg: {{ section.settings.background_color }};
+    --dk-ink: {{ section.settings.heading_color }};
+    --dk-muted: {{ section.settings.body_color }};
+    --dk-accent: {{ section.settings.accent_color }};
+    --dk-line: {{ section.settings.line_color }};
+    --dk-card: {{ section.settings.card_color }};
+    --dk-card-ink: {{ section.settings.card_text_color }};
+    --dk-max: {{ section.settings.max_width }}px;
+    --dk-radius: {{ section.settings.corner_radius }}px;
+    --dk-h1: {{ section.settings.headline_size }}px;
+    --dk-h1-mobile: {{ section.settings.headline_size_mobile }}px;
+    --dk-cols: {{ kit_cols }};
+    --dk-pad-top: {{ section.settings.padding_top }}px;
+    --dk-pad-bottom: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="dk__inner">
+
+    {%- comment -%} ---------- 1. HERO ---------- {%- endcomment -%}
+    <header class="dk__hero">
+      {%- if section.settings.hero_eyebrow != blank -%}
+        <p class="dk__eyebrow" data-reveal>{{ section.settings.hero_eyebrow }}</p>
+      {%- endif -%}
+
+      {%- if section.settings.hero_headline != blank -%}
+        <h2 class="dk__headline" data-reveal style="--d:60ms">{{ section.settings.hero_headline }}</h2>
+      {%- endif -%}
+
+      {%- if section.settings.hero_body != blank -%}
+        <div class="dk__lede" data-reveal style="--d:120ms">{{ section.settings.hero_body }}</div>
+      {%- endif -%}
+    </header>
+
+    {%- comment -%} ---------- 2. CREDIBILITY POINTS ---------- {%- endcomment -%}
+    {%- if point_count > 0 -%}
+      <section class="dk__block">
+        {%- if section.settings.points_headline != blank -%}
+          <div class="dk__block-head" data-reveal>
+            <h3 class="dk__h3">{{ section.settings.points_headline }}</h3>
+          </div>
+        {%- endif -%}
+
+        <ul class="dk__points" role="list">
+          {%- assign pi = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'point' -%}{%- continue -%}{%- endif -%}
+            {%- assign pi = pi | plus: 1 -%}
+            <li class="dk__point" data-reveal style="--d:{{ pi | times: 80 }}ms" {{ block.shopify_attributes }}>
+              <span class="dk__point-num">{{ pi | prepend: '0' | slice: -2, 2 }}</span>
+              {%- if block.settings.title != blank -%}
+                <h4 class="dk__point-title">{{ block.settings.title }}</h4>
+              {%- endif -%}
+              {%- if block.settings.text != blank -%}
+                <p class="dk__point-text">{{ block.settings.text }}</p>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      </section>
+    {%- endif -%}
+
+    {%- comment -%} ---------- 3. THE KITS ---------- {%- endcomment -%}
+    {%- if kit_count > 0 -%}
+      <section class="dk__block">
+        {%- if section.settings.kits_headline != blank or section.settings.kits_body != blank -%}
+          <div class="dk__block-head" data-reveal>
+            {%- if section.settings.kits_headline != blank -%}
+              <h3 class="dk__h3">{{ section.settings.kits_headline }}</h3>
+            {%- endif -%}
+            {%- if section.settings.kits_body != blank -%}
+              <div class="dk__block-body">{{ section.settings.kits_body }}</div>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+
+        <ul class="dk__kits{% if kit_count == 1 %} dk__kits--solo{% endif %}" role="list">
+          {%- assign ki = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'kit' -%}{%- continue -%}{%- endif -%}
+            {%- assign ki = ki | plus: 1 -%}
+
+            {%- liquid
+              # artwork: explicit upload wins, else the linked product's image
+              assign kit_art = block.settings.image
+              if kit_art == blank and block.settings.product != blank
+                assign kit_art = block.settings.product.featured_image
+              endif
+
+              # link: explicit link wins, else the linked product
+              assign kit_link = block.settings.button_link
+              if kit_link == blank and block.settings.product != blank
+                assign kit_link = block.settings.product.url
+              endif
+
+              # price: typed price wins, else the product's own price
+              assign kit_price = block.settings.price
+              if kit_price == blank and block.settings.product != blank
+                assign kit_price = block.settings.product.price | money
+              endif
+
+              assign kit_tags = ''
+              if block.settings.tags != blank
+                assign kit_tags = block.settings.tags | split: ','
+              endif
+            -%}
+
+            <li
+              class="dk__kit{% if block.settings.featured %} dk__kit--featured{% endif %}"
+              data-reveal
+              style="--d:{{ ki | times: 90 }}ms"
+              {{ block.shopify_attributes }}
+            >
+              <div class="dk__kit-media">
+                {%- if kit_art != blank -%}
+                  {{ kit_art | image_url: width: 1000 | image_tag:
+                      widths: '300, 500, 700, 1000',
+                      sizes: '(min-width: 750px) 33vw, 90vw',
+                      alt: block.settings.name,
+                      loading: 'lazy', class: 'dk__kit-img' }}
+                {%- else -%}
+                  <span class="dk__kit-ph"></span>
+                {%- endif -%}
+
+                {%- if block.settings.badge != blank -%}
+                  <span class="dk__kit-badge">{{ block.settings.badge }}</span>
+                {%- endif -%}
+
+                {%- if block.settings.audio != blank -%}
+                  {%- liquid
+                    assign demo_src = block.settings.audio
+                    unless demo_src contains '//'
+                      assign demo_src = block.settings.audio | file_url
+                    endunless
+                  -%}
+                  <button
+                    class="dk__kit-play"
+                    type="button"
+                    data-dk-play
+                    aria-label="Play a preview of {{ block.settings.name | escape }}"
+                  >
+                    <svg class="dk__icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5-11-6.5z" fill="currentColor"/></svg>
+                    <svg class="dk__icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.2v14H7zM13.8 5H17v14h-3.2z" fill="currentColor"/></svg>
+                  </button>
+                  <audio data-dk-audio src="{{ demo_src }}" preload="none" playsinline loop></audio>
+                {%- endif -%}
+              </div>
+
+              <div class="dk__kit-body">
+                {%- if block.settings.name != blank -%}
+                  <h4 class="dk__kit-name">{{ block.settings.name }}</h4>
+                {%- endif -%}
+
+                {%- if block.settings.subtitle != blank -%}
+                  <p class="dk__kit-sub">{{ block.settings.subtitle }}</p>
+                {%- endif -%}
+
+                {%- if kit_tags != blank and kit_tags.size > 0 -%}
+                  <ul class="dk__tags" role="list">
+                    {%- for tag in kit_tags -%}
+                      {%- assign clean_tag = tag | strip -%}
+                      {%- if clean_tag != blank -%}
+                        <li class="dk__tag">{{ clean_tag }}</li>
+                      {%- endif -%}
+                    {%- endfor -%}
+                  </ul>
+                {%- endif -%}
+
+                {%- if block.settings.description != blank -%}
+                  <div class="dk__kit-text">{{ block.settings.description }}</div>
+                {%- endif -%}
+
+                <div class="dk__kit-foot">
+                  {%- if kit_price != blank -%}
+                    <p class="dk__price">
+                      <span class="dk__price-value">{{ kit_price }}</span>
+                      {%- if block.settings.price_note != blank -%}
+                        <span class="dk__price-note">{{ block.settings.price_note }}</span>
+                      {%- endif -%}
+                    </p>
+                  {%- endif -%}
+
+                  {%- if kit_link != blank -%}
+                    <a class="dk__btn" href="{{ kit_link }}">
+                      <span>{{ block.settings.button_label | default: 'Get the kit' }}</span>
+                      <span class="dk__btn-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </a>
+                  {%- endif -%}
+                </div>
+              </div>
+            </li>
+          {%- endfor -%}
+        </ul>
+      </section>
+    {%- endif -%}
+
+    {%- comment -%} ---------- 4. CLOSING ---------- {%- endcomment -%}
+    {%- if section.settings.closing_headline != blank or section.settings.closing_body != blank -%}
+      <section class="dk__closing" data-reveal>
+        {%- if section.settings.closing_headline != blank -%}
+          <h3 class="dk__closing-title">{{ section.settings.closing_headline }}</h3>
+        {%- endif -%}
+        {%- if section.settings.closing_body != blank -%}
+          <div class="dk__closing-body">{{ section.settings.closing_body }}</div>
+        {%- endif -%}
+      </section>
+    {%- endif -%}
+
+  </div>
+</drum-kits>
+
+<script>
+  (function () {
+    if (customElements.get('drum-kits')) return;
+
+    class DrumKits extends HTMLElement {
+      connectedCallback() {
+        var self = this;
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // ---- reveal on scroll ----
+        var targets = [].slice.call(this.querySelectorAll('[data-reveal]'));
+        if (reduced || !('IntersectionObserver' in window)) {
+          targets.forEach(function (el) { el.classList.add('is-in'); });
+        } else {
+          var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+              if (!entry.isIntersecting) return;
+              entry.target.classList.add('is-in');
+              io.unobserve(entry.target);
+            });
+          }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
+          targets.forEach(function (el) { io.observe(el); });
+        }
+
+        // ---- preview players ----
+        this.players = [].slice.call(this.querySelectorAll('[data-dk-play]')).map(function (btn) {
+          var media = btn.parentNode.querySelector('[data-dk-audio]');
+          return { btn: btn, media: media };
+        }).filter(function (p) { return p.media; });
+
+        this.players.forEach(function (p) {
+          p.btn.addEventListener('click', function () {
+            if (p.media.paused) {
+              self.stopAll(p.media);
+              var go = p.media.play();
+              if (go && go.catch) go.catch(function () {});
+            } else {
+              p.media.pause();
+            }
+          });
+          // the button is the source of truth for state, but the media element
+          // can also stop on its own (error, end of a non-looping file)
+          ['play', 'pause', 'ended'].forEach(function (evt) {
+            p.media.addEventListener(evt, function () {
+              p.btn.classList.toggle('is-playing', !p.media.paused);
+              p.btn.setAttribute(
+                'aria-label',
+                (p.media.paused ? 'Play' : 'Pause') + ' a preview of this kit'
+              );
+            });
+          });
+        });
+      }
+
+      stopAll(except) {
+        this.players.forEach(function (p) {
+          if (p.media !== except && !p.media.paused) p.media.pause();
+        });
+      }
+
+      disconnectedCallback() {
+        if (this.players) this.stopAll(null);
+      }
+    }
+
+    customElements.define('drum-kits', DrumKits);
+  })();
+</script>
+
+{% stylesheet %}
+  .dk {
+    display: block;
+    background: var(--dk-bg, #f1f1ef);
+    color: var(--dk-muted, #6b6b68);
+    padding-block: var(--dk-pad-top, 96px) var(--dk-pad-bottom, 96px);
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+
+  .dk__inner {
+    max-inline-size: var(--dk-max, 1160px);
+    margin-inline: auto;
+    padding-inline: clamp(18px, 4vw, 40px);
+  }
+
+  [data-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms),
+                transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms);
+  }
+
+  [data-reveal].is-in { opacity: 1; transform: none; }
+
+  /* ---------- hero ---------- */
+  .dk__eyebrow {
+    margin: 0 0 1.1rem;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dk-accent, #1242fd);
+  }
+
+  .dk__headline {
+    margin: 0;
+    font-family: var(--font-heading--family, inherit);
+    font-size: min(var(--dk-h1, 76px), 8.4vw);
+    font-weight: 900;
+    line-height: 0.94;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+    color: var(--dk-ink, #111);
+    max-width: 16ch;
+    text-wrap: balance;
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+
+  .dk__lede {
+    margin-block-start: 1.6rem;
+    font-size: clamp(15px, 1.35vw, 18px);
+    line-height: 1.6;
+    max-width: 62ch;
+  }
+
+  .dk__lede > :first-child { margin-block-start: 0; }
+  .dk__lede > :last-child { margin-block-end: 0; }
+
+  /* ---------- shared block chrome ---------- */
+  .dk__block { margin-block-start: clamp(56px, 7vw, 104px); }
+
+  .dk__block-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-block-end: 2.2rem;
+  }
+
+  .dk__h3 {
+    margin: 0;
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(26px, 3.2vw, 42px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--dk-ink, #111);
+  }
+
+  .dk__block-body {
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 46ch;
+  }
+
+  .dk__block-body > :first-child { margin-block-start: 0; }
+  .dk__block-body > :last-child { margin-block-end: 0; }
+
+  /* ---------- credibility points ---------- */
+  .dk__points {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--dk-line, #d9d9d4);
+    border-block: 1px solid var(--dk-line, #d9d9d4);
+  }
+
+  .dk__point {
+    background: var(--dk-bg, #f1f1ef);
+    padding: 28px 24px 26px;
+  }
+
+  .dk__point-num {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--dk-accent, #1242fd);
+    margin-block-end: 14px;
+  }
+
+  .dk__point-title {
+    margin: 0 0 0.55rem;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--dk-ink, #111);
+  }
+
+  .dk__point-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ---------- kit grid ---------- */
+  .dk__kits {
+    display: grid;
+    grid-template-columns: repeat(var(--dk-cols, 3), minmax(0, 1fr));
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    align-items: stretch;
+  }
+
+  .dk__kit {
+    display: flex;
+    flex-direction: column;
+    background: var(--dk-card, #0d1231);
+    color: var(--dk-card-ink, #fff);
+    border-radius: calc(var(--dk-radius, 14px) + 6px);
+    overflow: hidden;
+    box-shadow: 0 22px 54px rgb(0 0 0 / 0.16);
+    block-size: 100%;
+  }
+
+  .dk__kit--featured { outline: 2px solid var(--dk-accent, #1242fd); outline-offset: 3px; }
+
+  /* A single kit reads as an unfinished grid cell, so it becomes one wide card
+     with the artwork beside the copy. Adding a second kit drops straight back
+     to the normal grid with no settings to change. */
+  /* one kit is always one full-width row, at every breakpoint */
+  .dk__kits--solo { grid-template-columns: 1fr; }
+
+  .dk__kits--solo .dk__kit {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .dk__kits--solo .dk__kit-media {
+    flex: 0 0 42%;
+    aspect-ratio: auto;
+    min-block-size: 340px;
+  }
+
+  .dk__kits--solo .dk__kit-body {
+    justify-content: center;
+    padding: clamp(26px, 3.4vw, 44px);
+  }
+
+  .dk__kits--solo .dk__kit-name { font-size: clamp(26px, 3.4vw, 40px); }
+
+  .dk__kits--solo .dk__kit-text { max-width: 52ch; }
+
+  .dk__kit-media {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1b1b1b, #0d1540);
+  }
+
+  .dk__kit-img,
+  .dk__kit-ph {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .dk__kit:hover .dk__kit-img { transform: scale(1.04); }
+
+  .dk__kit-badge {
+    position: absolute;
+    inset-block-start: 14px;
+    inset-inline-start: 14px;
+    display: inline-flex;
+    align-items: center;
+    block-size: 26px;
+    padding-inline: 12px;
+    border-radius: 999px;
+    background: var(--dk-accent, #1242fd);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .dk__kit-play {
+    position: absolute;
+    inset-block-end: 14px;
+    inset-inline-end: 14px;
+    inline-size: 46px;
+    block-size: 46px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    color: #111;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 8px 22px rgb(0 0 0 / 0.3);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, color 0.25s ease;
+  }
+
+  .dk__kit-play:hover { transform: scale(1.08); }
+  .dk__kit-play:active { transform: scale(0.95); }
+
+  .dk__kit-play.is-playing {
+    background: var(--dk-accent, #1242fd);
+    color: #fff;
+  }
+
+  .dk__kit-play svg { inline-size: 20px; block-size: 20px; }
+  .dk__kit-play .dk__icon-pause { display: none; }
+  .dk__kit-play.is-playing .dk__icon-play { display: none; }
+  .dk__kit-play.is-playing .dk__icon-pause { display: block; }
+
+  .dk__kit-play:focus-visible {
+    outline: 2px solid var(--dk-accent, #1242fd);
+    outline-offset: 3px;
+  }
+
+  .dk__kit-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: clamp(20px, 2.4vw, 28px);
+    flex: 1 1 auto;
+  }
+
+  .dk__kit-name {
+    margin: 0;
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(20px, 2.1vw, 27px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+
+  .dk__kit-sub {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+
+  .dk__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .dk__tag {
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.1);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .dk__kit-text {
+    font-size: 14px;
+    line-height: 1.6;
+    opacity: 0.8;
+  }
+
+  .dk__kit-text > :first-child { margin-block-start: 0; }
+  .dk__kit-text > :last-child { margin-block-end: 0; }
+
+  .dk__kit-foot {
+    margin-block-start: auto;
+    padding-block-start: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-block-start: 1px solid rgb(255 255 255 / 0.14);
+  }
+
+  .dk__price {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .dk__price-value {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(24px, 2.4vw, 32px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .dk__price-note {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  .dk__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px 11px 20px;
+    border-radius: 999px;
+    background: #fff;
+    color: #111;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, color 0.25s ease;
+  }
+
+  .dk__btn:hover { transform: translateY(-2px); }
+
+  .dk__btn-arrow {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 28px;
+    block-size: 28px;
+    border-radius: 50%;
+    background: var(--dk-accent, #1242fd);
+    color: #fff;
+  }
+
+  .dk__btn-arrow svg { inline-size: 15px; block-size: 15px; }
+
+  .dk__btn:focus-visible {
+    outline: 2px solid var(--dk-accent, #1242fd);
+    outline-offset: 3px;
+  }
+
+  /* ---------- closing ---------- */
+  .dk__closing {
+    margin-block-start: clamp(56px, 7vw, 104px);
+    padding-block-start: clamp(32px, 4vw, 52px);
+    border-block-start: 1px solid var(--dk-line, #d9d9d4);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: space-between;
+  }
+
+  .dk__closing-title {
+    flex: 1 1 340px;
+    margin: 0;
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(24px, 3vw, 40px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    text-transform: uppercase;
+    color: var(--dk-ink, #111);
+    max-width: 18ch;
+  }
+
+  .dk__closing-body {
+    flex: 1 1 340px;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 56ch;
+  }
+
+  .dk__closing-body > :first-child { margin-block-start: 0; }
+  .dk__closing-body > :last-child { margin-block-end: 0; }
+
+  /* ---------- motion off ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    [data-reveal] { opacity: 1; transform: none; transition: none; }
+    .dk__kit-img, .dk__btn, .dk__kit-play { transition: none; }
+  }
+
+  /* ---------- tablet ---------- */
+  @media screen and (max-width: 989px) {
+    .dk__kits:not(.dk__kits--solo) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  /* ---------- mobile ---------- */
+  @media screen and (max-width: 749px) {
+    .dk { padding-block: calc(var(--dk-pad-top, 96px) * 0.65) calc(var(--dk-pad-bottom, 96px) * 0.65); }
+    .dk__headline { font-size: var(--dk-h1-mobile, 40px); max-width: none; }
+    .dk__points { grid-template-columns: 1fr; }
+    /* :not() in the tablet rule above raises its specificity, so match it
+       here or the two-column layout leaks onto phones */
+    .dk__kits:not(.dk__kits--solo),
+    .dk__kits--solo { grid-template-columns: 1fr; }
+    .dk__kits--solo .dk__kit { flex-direction: column; }
+    .dk__kits--solo .dk__kit-media { flex: 0 0 auto; aspect-ratio: 1 / 1; min-block-size: 0; }
+    .dk__btn { flex: 1 1 auto; justify-content: space-between; }
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Drum Kits",
+  "tag": "section",
+  "class": "drum-kits-wrapper section-wrapper",
+  "max_blocks": 40,
+  "settings": [
+    {
+      "type": "header",
+      "content": "1 · Hero"
+    },
+    {
+      "type": "text",
+      "id": "hero_eyebrow",
+      "label": "Small line above",
+      "default": "DRUM KITS"
+    },
+    {
+      "type": "text",
+      "id": "hero_headline",
+      "label": "Headline",
+      "default": "Real Brazilian funk. Not a knock-off."
+    },
+    {
+      "type": "richtext",
+      "id": "hero_body",
+      "label": "Description",
+      "default": "<p>Most funk kits on the market are second-hand imitations, put together by people who have never worked with the artists making this music. Ours was sourced at the source.</p>"
+    },
+    {
+      "type": "header",
+      "content": "2 · Why it's different"
+    },
+    {
+      "type": "text",
+      "id": "points_headline",
+      "label": "Headline",
+      "default": "Why this one is different."
+    },
+    {
+      "type": "header",
+      "content": "3 · The kits"
+    },
+    {
+      "type": "text",
+      "id": "kits_headline",
+      "label": "Headline",
+      "default": "The kits."
+    },
+    {
+      "type": "richtext",
+      "id": "kits_body",
+      "label": "Description",
+      "default": "<p>Every kit is royalty-free, instantly downloadable, and yours for good.</p>"
+    },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Kits per row",
+      "min": 1,
+      "max": 4,
+      "step": 1,
+      "default": 3,
+      "info": "Drops to 2 on tablet and 1 on mobile automatically."
+    },
+    {
+      "type": "header",
+      "content": "4 · Closing"
+    },
+    {
+      "type": "text",
+      "id": "closing_headline",
+      "label": "Headline",
+      "default": "Straight from the source."
+    },
+    {
+      "type": "richtext",
+      "id": "closing_body",
+      "label": "Description",
+      "default": "<p>Recorded and collected on the ground in Brazil, not rebuilt from other people's sample packs. Instant download, one-time payment, yours to keep.</p>"
+    },
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "max_width",
+      "label": "Content width",
+      "min": 900,
+      "max": 1600,
+      "step": 20,
+      "unit": "px",
+      "default": 1160
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "label": "Corner radius",
+      "min": 0,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "label": "Padding top",
+      "min": 0,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "label": "Padding bottom",
+      "min": 0,
+      "max": 160,
+      "step": 8,
+      "unit": "px",
+      "default": 96
+    },
+    {
+      "type": "header",
+      "content": "Type & colour"
+    },
+    {
+      "type": "range",
+      "id": "headline_size",
+      "label": "Headline size",
+      "min": 32,
+      "max": 96,
+      "step": 4,
+      "unit": "px",
+      "default": 76
+    },
+    {
+      "type": "range",
+      "id": "headline_size_mobile",
+      "label": "Headline size (mobile)",
+      "min": 24,
+      "max": 64,
+      "step": 2,
+      "unit": "px",
+      "default": 40
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background",
+      "default": "#f1f1ef"
+    },
+    {
+      "type": "color",
+      "id": "accent_color",
+      "label": "Accent",
+      "default": "#1242fd"
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Headings",
+      "default": "#111111"
+    },
+    {
+      "type": "color",
+      "id": "body_color",
+      "label": "Body text",
+      "default": "#6b6b68"
+    },
+    {
+      "type": "color",
+      "id": "line_color",
+      "label": "Rules",
+      "default": "#d9d9d4"
+    },
+    {
+      "type": "color",
+      "id": "card_color",
+      "label": "Kit card background",
+      "default": "#0d1231"
+    },
+    {
+      "type": "color",
+      "id": "card_text_color",
+      "label": "Kit card text",
+      "default": "#ffffff"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "point",
+      "name": "Point",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Title",
+          "default": "Sourced on the ground"
+        },
+        {
+          "type": "textarea",
+          "id": "text",
+          "label": "Text",
+          "default": "Collected in Brazil rather than rebuilt from other people's packs."
+        }
+      ]
+    },
+    {
+      "type": "kit",
+      "name": "Kit",
+      "settings": [
+        {
+          "type": "header",
+          "content": "Artwork"
+        },
+        {
+          "type": "image_picker",
+          "id": "image",
+          "label": "Cover art",
+          "info": "Square works best. Leave empty to use the linked product's image."
+        },
+        {
+          "type": "text",
+          "id": "badge",
+          "label": "Badge",
+          "info": "Small pill on the artwork, e.g. NEW. Leave empty to hide."
+        },
+        {
+          "type": "header",
+          "content": "Copy"
+        },
+        {
+          "type": "text",
+          "id": "name",
+          "label": "Kit name",
+          "default": "Brazilian Funk Vol. 1"
+        },
+        {
+          "type": "text",
+          "id": "subtitle",
+          "label": "Small line under the name",
+          "default": "Sourced in Brazil"
+        },
+        {
+          "type": "text",
+          "id": "tags",
+          "label": "Tags",
+          "info": "Comma separated, e.g. 808s, one-shots, loops",
+          "default": "One-shots, Loops, Percussion"
+        },
+        {
+          "type": "richtext",
+          "id": "description",
+          "label": "Description",
+          "default": "<p>Drums, percussion and vocal chops pulled from the real thing — not recycled from other sample packs.</p>"
+        },
+        {
+          "type": "header",
+          "content": "Preview"
+        },
+        {
+          "type": "text",
+          "id": "audio",
+          "label": "Demo audio",
+          "info": "A Shopify file name or full URL. Adds a play button on the artwork. Leave empty to hide it."
+        },
+        {
+          "type": "header",
+          "content": "Price & link"
+        },
+        {
+          "type": "product",
+          "id": "product",
+          "label": "Linked product",
+          "info": "Fills the price, artwork and button link automatically."
+        },
+        {
+          "type": "text",
+          "id": "price",
+          "label": "Price",
+          "info": "Overrides the product's price. Leave empty to use the product."
+        },
+        {
+          "type": "text",
+          "id": "price_note",
+          "label": "Line under the price",
+          "default": "One-time"
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "Button label",
+          "default": "Get the kit"
+        },
+        {
+          "type": "url",
+          "id": "button_link",
+          "label": "Button link",
+          "info": "Overrides the linked product. Leave empty to use the product."
+        },
+        {
+          "type": "checkbox",
+          "id": "featured",
+          "label": "Outline this kit",
+          "default": false
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Drum Kits",
+      "category": "Products",
+      "blocks": {
+        "pt1": {
+          "type": "point",
+          "settings": {
+            "title": "Sourced on the ground",
+            "text": "Collected in Brazil with the people making this music, not rebuilt from other sample packs."
+          }
+        },
+        "pt2": {
+          "type": "point",
+          "settings": {
+            "title": "Not a re-flip",
+            "text": "Most funk kits sold abroad are copies of copies. Nothing here is lifted from another pack."
+          }
+        },
+        "pt3": {
+          "type": "point",
+          "settings": {
+            "title": "Royalty-free",
+            "text": "Use it on anything you release. One payment, no clearance, no splits."
+          }
+        },
+        "kit1": {
+          "type": "kit",
+          "settings": {
+            "name": "Brazilian Funk Vol. 1",
+            "subtitle": "Sourced in Brazil",
+            "badge": "New",
+            "tags": "One-shots, Loops, Percussion",
+            "description": "<p>Drums, percussion and vocal chops pulled from the real thing — not recycled from other sample packs.</p>",
+            "price_note": "One-time",
+            "button_label": "Get the kit",
+            "featured": true
+          }
+        }
+      },
+      "block_order": [
+        "pt1",
+        "pt2",
+        "pt3",
+        "kit1"
+      ]
+    }
+  ]
+}
+{% endschema %}
