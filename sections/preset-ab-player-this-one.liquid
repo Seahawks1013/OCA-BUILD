@@ -20,6 +20,22 @@
       assign daw_count = daw_count | plus: 1
     endif
   endfor
+
+  # The cover strip used to appear only at 2+ presets, so a section with one
+  # preset looked like the feature was missing. It now stays put by default.
+  assign browse_mode = section.settings.browse_display | default: 'always'
+  assign show_browse = false
+  if browse_mode == 'always' and preset_count > 0
+    assign show_browse = true
+  elsif browse_mode == 'multi' and preset_count > 1
+    assign show_browse = true
+  endif
+
+  # Big side arrows are pointless with a single preset — nowhere to go.
+  assign show_stage_nav = false
+  if preset_count > 1
+    assign show_stage_nav = true
+  endif
 -%}
 
 <preset-ab-player
@@ -38,6 +54,7 @@
     --pab-radius: {{ section.settings.corner_radius }}px;
     --pab-max: {{ section.settings.max_width }}px;
     --pab-thumb-radius: {{ section.settings.thumb_shape }};
+    --pab-thumb-size: {{ section.settings.thumb_size | default: 84 }}px;
     --pab-title: {{ section.settings.title_size }}px;
     --pab-title-mobile: {{ section.settings.title_size_mobile }}px;
     --pab-pad-top: {{ section.settings.padding_top }}px;
@@ -46,7 +63,7 @@
 >
   <div class="pab__inner">
     <div class="pab__stage">
-      {%- if preset_count > 1 -%}
+      {%- if show_stage_nav -%}
         <button class="pab__nav pab__nav--prev" type="button" data-pab-prev aria-label="Previous preset">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -216,7 +233,7 @@
       </div>
     </div>
 
-    {%- if preset_count > 1 -%}
+    {%- if show_browse -%}
       <div class="pab__browse">
         <button class="pab__browse-nav" type="button" data-pab-thumbs-prev aria-label="Scroll presets left">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -251,7 +268,7 @@
                     <span class="pab__thumb-ph"></span>
                   {%- endif -%}
                 </span>
-                {%- if block.settings.title != blank -%}
+                {%- if block.settings.title != blank and section.settings.thumb_labels -%}
                   <span class="pab__thumb-name">{{ block.settings.title }}</span>
                 {%- endif -%}
               </button>
@@ -732,6 +749,9 @@
           dragging = true; moved = false;
           startX = e.clientX;
           startLeft = strip.scrollLeft;
+          // Pointer capture is taken in pointermove, once the cursor has
+          // actually travelled. Taking it here would retarget the click to the
+          // strip and stop every cover from selecting its preset.
           // CSS scroll-behavior:smooth turns every scrollLeft write into a new
           // animation, so a drag barely moves. Inline auto wins over the sheet
           // and takes effect immediately, unlike waiting on a class swap.
@@ -747,20 +767,31 @@
           if (!moved && Math.abs(dx) > 3) {
             moved = true;
             strip.classList.add('is-dragging');
+            // Now that it's a real drag, route the rest of the gesture to the
+            // strip. Without this, crossing a cover fires a boundary event that
+            // ends the drag. Capture can throw if the pointer is already gone;
+            // that must not abort the drag.
+            try { strip.setPointerCapture(e.pointerId); } catch (err) {}
           }
           if (moved) strip.scrollLeft = startLeft - dx;
         });
 
-        var end = function () {
+        var end = function (e) {
           if (!dragging) return;
           dragging = false;
+          if (e && e.pointerId !== undefined) {
+            try { strip.releasePointerCapture(e.pointerId); } catch (err) {}
+          }
           strip.classList.remove('is-dragging');
           strip.style.scrollBehavior = '';
           self.syncThumbNav();
         };
         strip.addEventListener('pointerup', end);
         strip.addEventListener('pointercancel', end);
-        strip.addEventListener('pointerleave', end);
+        // deliberately NOT pointerleave — it fired on every cover the cursor
+        // crossed and ended the drag one thumbnail in. Capture covers the
+        // dragging case; this catches a press released off the strip entirely.
+        window.addEventListener('pointerup', end);
 
         // a drag that finishes on a cover must not also select that preset
         strip.addEventListener('click', function (e) {
@@ -782,6 +813,10 @@
         if (!this.thumbsEl || !this.thumbPrev || !this.thumbNext) return;
         var max = this.thumbsEl.scrollWidth - this.thumbsEl.clientWidth - 2;
         var overflowing = max > 2;
+        // nothing to scroll (a single preset, or they all fit on screen) —
+        // hide the arrows instead of showing two permanently dead buttons
+        this.thumbPrev.hidden = !overflowing;
+        this.thumbNext.hidden = !overflowing;
         this.thumbPrev.toggleAttribute('disabled', !overflowing || this.thumbsEl.scrollLeft <= 2);
         this.thumbNext.toggleAttribute('disabled', !overflowing || this.thumbsEl.scrollLeft >= max);
       }
@@ -1231,6 +1266,9 @@
     margin-block-start: 20px;
   }
 
+  /* an explicit display beats the UA [hidden] rule, so restate it here */
+  .pab__browse-nav[hidden] { display: none; }
+
   .pab__browse-nav {
     flex: 0 0 auto;
     inline-size: 34px;
@@ -1279,7 +1317,7 @@
     display: flex;
     flex-direction: column;
     gap: 7px;
-    inline-size: 84px;
+    inline-size: var(--pab-thumb-size, 84px);
     padding: 0;
     border: 0;
     background: transparent;
@@ -1293,8 +1331,8 @@
   .pab__thumb-art {
     position: relative;
     display: block;
-    inline-size: 84px;
-    block-size: 84px;
+    inline-size: var(--pab-thumb-size, 84px);
+    block-size: var(--pab-thumb-size, 84px);
     border-radius: var(--pab-thumb-radius, 9px);
     overflow: hidden;
     background: rgb(0 0 0 / 0.08);
@@ -1378,8 +1416,8 @@
     .pab__browse { gap: 6px; margin-block-start: 16px; }
     .pab__browse-nav { inline-size: 30px; block-size: 30px; }
     .pab__thumbs { gap: 9px; }
-    .pab__thumb, .pab__thumb-art { inline-size: 68px; }
-    .pab__thumb-art { block-size: 68px; }
+    .pab__thumb, .pab__thumb-art { inline-size: calc(var(--pab-thumb-size, 84px) * 0.8); }
+    .pab__thumb-art { block-size: calc(var(--pab-thumb-size, 84px) * 0.8); }
     .pab__time { font-size: 13px; }
     .pab__ab-label { display: none; }
 
@@ -1506,6 +1544,38 @@
       "step": 2,
       "unit": "px",
       "default": 22
+    },
+    {
+      "type": "header",
+      "content": "Preset strip"
+    },
+    {
+      "type": "select",
+      "id": "browse_display",
+      "label": "Show the preset strip",
+      "options": [
+        { "value": "always", "label": "Always" },
+        { "value": "multi", "label": "Only with 2 or more presets" },
+        { "value": "never", "label": "Never" }
+      ],
+      "default": "always",
+      "info": "The strip is the row of cover art under the player. Drag Preset blocks in the list above to change their order."
+    },
+    {
+      "type": "range",
+      "id": "thumb_size",
+      "label": "Cover size",
+      "min": 56,
+      "max": 132,
+      "step": 4,
+      "unit": "px",
+      "default": 84
+    },
+    {
+      "type": "checkbox",
+      "id": "thumb_labels",
+      "label": "Show titles under the covers",
+      "default": true
     },
     {
       "type": "select",
