@@ -108,7 +108,12 @@
         href="{{ section.settings.button_link | default: '#' }}"
         class="hdv__button"
         {% if section.settings.open_in_new_tab %}target="_blank" rel="noopener"{% endif %}
-      >{{ section.settings.button_label }}</a>
+      >
+        <span class="hdv__button-label">{{ section.settings.button_label }}</span>
+        <span class="hdv__button-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+      </a>
     {%- endif -%}
   </div>
 </div>
@@ -218,21 +223,58 @@
   }
 
   .hdv__button {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 14px 40px;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 1.25rem;
+    padding: 8px 8px 8px 28px;
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 800;
+    letter-spacing: -0.01em;
     text-decoration: none;
-    color: var(--hdv-text, #fff);
-    border: 2px solid var(--hdv-text, #fff);
-    border-radius: 50px;
-    background: transparent;
-    letter-spacing: 0.05em;
-    transition: background 0.25s ease, color 0.25s ease;
+    color: #0a0e26;
+    background: #fff;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: 0 0 0 0 rgb(18 66 253 / 0.55), 0 14px 40px rgb(18 66 253 / 0.35);
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.3s ease;
+    animation: hdv-pulse 2.6s ease-out infinite;
   }
 
-  .hdv__button:hover { background: var(--hdv-text, #fff); color: #000; }
+  .hdv__button-arrow {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 40px;
+    block-size: 40px;
+    border-radius: 50%;
+    background: #1242fd;
+    color: #fff;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .hdv__button-arrow svg {
+    inline-size: 18px;
+    block-size: 18px;
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .hdv__button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 0 rgb(18 66 253 / 0), 0 20px 50px rgb(18 66 253 / 0.55);
+  }
+
+  .hdv__button:hover .hdv__button-arrow { transform: scale(1.08); }
+  .hdv__button:hover .hdv__button-arrow svg { transform: translateX(3px); }
+  .hdv__button:active { transform: translateY(-1px) scale(0.98); }
+  .hdv__button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+  @keyframes hdv-pulse {
+    0%   { box-shadow: 0 0 0 0 rgb(18 66 253 / 0.55), 0 14px 40px rgb(18 66 253 / 0.35); }
+    70%  { box-shadow: 0 0 0 16px rgb(18 66 253 / 0), 0 14px 40px rgb(18 66 253 / 0.35); }
+    100% { box-shadow: 0 0 0 0 rgb(18 66 253 / 0), 0 14px 40px rgb(18 66 253 / 0.35); }
+  }
 
   @media screen and (max-width: 749px) {
     .hdv { aspect-ratio: var(--hdv-ratio-mobile, var(--hdv-ratio, 16 / 9)); }
@@ -244,12 +286,14 @@
 
     .hdv__heading { font-size: var(--hdv-h-size-mobile, 40px); }
     .hdv__sub { font-size: 13px; }
-    .hdv__button { padding: 12px 32px; font-size: 14px; }
+    .hdv__button { padding: 6px 6px 6px 22px; font-size: 15px; gap: 12px; }
+    .hdv__button-arrow { inline-size: 36px; block-size: 36px; }
     .hdv__content { padding: 1.25rem; }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .hdv__button { transition: none; }
+    .hdv__button { transition: none; animation: none; }
+    .hdv__button-arrow, .hdv__button-arrow svg { transition: none; }
   }
 {% endstylesheet %}
 
