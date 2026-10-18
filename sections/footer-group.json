@@ -153,7 +153,8 @@
         "background_color": "{{ settings.color_palette.background }}",
         "padding-block-start": 30,
         "padding-block-end": 30
-      }
+      },
+      "disabled": true
     },
     "footer_utilities_jLGE8U": {
       "type": "footer-utilities",
@@ -212,10 +213,21 @@
         "divider_color": "{{ settings.color_palette.color2 }}",
         "padding-block-start": 20,
         "padding-block-end": 48
+      },
+      "disabled": true
+    },
+    "oca_footer": {
+      "type": "oca-footer",
+      "settings": {
+        "instagram_url": "https://www.instagram.com/oneclickaudio",
+        "contact_link": "shopify://pages/contact",
+        "shop_menu": "main-menu",
+        "help_menu": "footer"
       }
     }
   },
   "order": [
+    "oca_footer",
     "footer_m9NzUG",
     "footer_utilities_jLGE8U"
   ]
