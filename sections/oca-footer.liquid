@@ -281,7 +281,30 @@
     outline: none;
   }
 
-  .ocf__input::placeholder { color: rgb(255 255 255 / 0.45); }
+  /* beat the theme's global input styles (white background, border, radius) */
+  .ocf .ocf__input {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    background-color: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    color: #fff;
+  }
+
+  .ocf .ocf__input::placeholder { color: rgb(255 255 255 / 0.45); opacity: 1; }
+  .ocf .ocf__input:focus::placeholder { opacity: 0.6; }
+
+  /* keep browser autofill from painting the field white/yellow */
+  .ocf .ocf__input:-webkit-autofill,
+  .ocf .ocf__input:-webkit-autofill:hover,
+  .ocf .ocf__input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #fff;
+    caret-color: #fff;
+    transition: background-color 9999s ease-out 0s;
+    box-shadow: 0 0 0 1000px transparent inset;
+  }
 
   .ocf__submit {
     flex: 0 0 auto;
