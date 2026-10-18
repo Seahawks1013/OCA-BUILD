@@ -70,28 +70,14 @@
       class="header-logo__image-container header-logo__image-container--inverse"
       data-testid="header-logo-inverse"
     >
-      {% if settings.logo_inverse == blank %}
-        {% comment %} OCA: white-text logo committed to theme assets, used until an inverse logo is set in the editor {% endcomment %}
-        {%- assign oca_inv_w = settings.logo_height | times: 173 | divided_by: 23 -%}
-        {%- assign oca_inv_w_m = settings.logo_height_mobile | times: 173 | divided_by: 23 -%}
-        <img
-          src="{{ 'logo-inverse-oca.png' | asset_url }}"
-          alt="{{ alt_text_fallback | escape }}"
-          class="header-logo__image"
-          width="173"
-          height="23"
-          style="--header-logo-image-width: {{ oca_inv_w }}px; --header-logo-image-width-mobile: {{ oca_inv_w_m }}px; --header-logo-image-height: {{ settings.logo_height }}px; --header-logo-image-height-mobile: {{ settings.logo_height_mobile }}px;"
-        >
-      {% else %}
-        {% render 'image',
-          image: inverse_logo,
-          class: 'header-logo__image',
-          height: settings.logo_height,
-          alt_text_fallback: alt_text_fallback,
-          text_fallback: shop.name,
-          style: inverse_logo_style
-        %}
-      {% endif %}
+      {% render 'image',
+        image: inverse_logo,
+        class: 'header-logo__image',
+        height: settings.logo_height,
+        alt_text_fallback: alt_text_fallback,
+        text_fallback: shop.name,
+        style: inverse_logo_style
+      %}
     </span>
   {% endif %}
 </a>
@@ -151,6 +137,12 @@
 
   .header-logo__image-container--inverse {
     display: var(--header-logo-inverse-display, none);
+  }
+
+  /* OCA: logo tint driven by the header's transparent state (see sections/header.liquid) */
+  .header-logo .header-logo__image {
+    filter: var(--oca-logo-filter, none);
+    transition: filter var(--header-content-transition-timing, 0.3s ease);
   }
 {% endstylesheet %}
 

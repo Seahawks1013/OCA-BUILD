@@ -526,6 +526,8 @@
     /* used to display the appropriate logo based on transparency state */
     --header-logo-display: none;
     --header-logo-inverse-display: block;
+    /* OCA: show the logo all-white while the header is transparent; fades with the menu text */
+    --oca-logo-filter: brightness(0) invert(1);
 
     position: absolute;
     top: 0;
@@ -538,6 +540,7 @@
     &:has(.menu-list__list-item > .menu-list__link:not([aria-haspopup]):hover) {
       --header-logo-display: unset;
       --header-logo-inverse-display: unset;
+      --oca-logo-filter: brightness(1) invert(0);
       --color-foreground: inherit;
       --color-foreground-rgb: inherit;
       --color-background: inherit;
@@ -574,6 +577,7 @@
     &:has(header-menu[aria-expanded='true']) {
       --header-logo-display: unset;
       --header-logo-inverse-display: unset;
+      --oca-logo-filter: brightness(1) invert(0);
       --color-foreground: inherit;
       --color-foreground-rgb: inherit;
       --color-background: inherit;
