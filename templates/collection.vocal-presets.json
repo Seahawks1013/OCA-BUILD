@@ -1,0 +1,42 @@
+{
+  "sections": {
+    "vocal_presets": {
+      "type": "vocal-presets",
+      "blocks": {
+        "pt1": {
+          "type": "point",
+          "settings": {
+            "title": "Drag. Drop. Done.",
+            "text": "Load the chain on your vocal track and you have a pro mix in under 60 seconds."
+          }
+        },
+        "pt2": {
+          "type": "point",
+          "settings": {
+            "title": "Every major DAW",
+            "text": "Each preset ships in FL Studio, Logic, Ableton and BandLab versions. Pick yours at checkout."
+          }
+        },
+        "pt3": {
+          "type": "point",
+          "settings": {
+            "title": "On real releases",
+            "text": "These chains are already on released tracks from artists with millions of monthly listeners."
+          }
+        }
+      },
+      "block_order": [
+        "pt1",
+        "pt2",
+        "pt3"
+      ],
+      "settings": {
+        "featured_product": "gabe-chain",
+        "featured_badge": "Flagship"
+      }
+    }
+  },
+  "order": [
+    "vocal_presets"
+  ]
+}

@@ -1,0 +1,823 @@
+{%- comment -%}
+  Vocal Presets
+  Same look as the Sound Kits page (sections/drum-kits.liquid), but the grid is
+  filled automatically from a collection: every product added to the
+  collection shows up here with its artwork, DAW versions and price.
+  Blocks: point (the "why" row).
+{%- endcomment -%}
+
+{%- liquid
+  assign vp_collection = section.settings.collection
+  if vp_collection == blank and collection != blank
+    assign vp_collection = collection
+  endif
+
+  assign point_count = 0
+  for block in section.blocks
+    if block.type == 'point'
+      assign point_count = point_count | plus: 1
+    endif
+  endfor
+
+  assign preset_count = 0
+  if vp_collection != blank
+    assign preset_count = vp_collection.products_count
+    if preset_count > section.settings.limit
+      assign preset_count = section.settings.limit
+    endif
+  endif
+
+  assign vp_cols = section.settings.columns
+  if preset_count > 0 and preset_count < vp_cols
+    assign vp_cols = preset_count
+  endif
+
+  assign featured_handle = ''
+  if section.settings.featured_product != blank
+    assign featured_handle = section.settings.featured_product.handle
+  endif
+-%}
+
+<vocal-presets
+  class="vp"
+  id="VocalPresets-{{ section.id }}"
+  style="
+    --vp-bg: {{ section.settings.background_color }};
+    --vp-ink: {{ section.settings.heading_color }};
+    --vp-muted: {{ section.settings.body_color }};
+    --vp-accent: {{ section.settings.accent_color }};
+    --vp-line: {{ section.settings.line_color }};
+    --vp-card: {{ section.settings.card_color }};
+    --vp-card-ink: {{ section.settings.card_text_color }};
+    --vp-max: {{ section.settings.max_width }}px;
+    --vp-radius: {{ section.settings.corner_radius }}px;
+    --vp-h1: {{ section.settings.headline_size }}px;
+    --vp-h1-mobile: {{ section.settings.headline_size_mobile }}px;
+    --vp-cols: {{ vp_cols }};
+    --vp-pad-top: {{ section.settings.padding_top }}px;
+    --vp-pad-bottom: {{ section.settings.padding_bottom }}px;
+  "
+>
+  <div class="vp__inner">
+
+    {%- comment -%} ---------- 1. HERO ---------- {%- endcomment -%}
+    <header class="vp__hero">
+      {%- if section.settings.hero_eyebrow != blank -%}
+        <p class="vp__eyebrow" data-reveal>{{ section.settings.hero_eyebrow }}</p>
+      {%- endif -%}
+      {%- if section.settings.hero_headline != blank -%}
+        <h1 class="vp__headline" data-reveal style="--d:60ms">{{ section.settings.hero_headline }}</h1>
+      {%- endif -%}
+      {%- if section.settings.hero_body != blank -%}
+        <div class="vp__lede" data-reveal style="--d:120ms">{{ section.settings.hero_body }}</div>
+      {%- endif -%}
+    </header>
+
+    {%- comment -%} ---------- 2. WHY ---------- {%- endcomment -%}
+    {%- if point_count > 0 -%}
+      <section class="vp__block">
+        {%- if section.settings.points_headline != blank -%}
+          <div class="vp__block-head" data-reveal>
+            <h2 class="vp__h3">{{ section.settings.points_headline }}</h2>
+          </div>
+        {%- endif -%}
+        <ul class="vp__points" role="list">
+          {%- assign pi = 0 -%}
+          {%- for block in section.blocks -%}
+            {%- if block.type != 'point' -%}{%- continue -%}{%- endif -%}
+            {%- assign pi = pi | plus: 1 -%}
+            <li class="vp__point" data-reveal style="--d:{{ pi | times: 80 }}ms" {{ block.shopify_attributes }}>
+              <span class="vp__point-num">{{ pi | prepend: '0' | slice: -2, 2 }}</span>
+              {%- if block.settings.title != blank -%}
+                <h3 class="vp__point-title">{{ block.settings.title }}</h3>
+              {%- endif -%}
+              {%- if block.settings.text != blank -%}
+                <p class="vp__point-text">{{ block.settings.text }}</p>
+              {%- endif -%}
+            </li>
+          {%- endfor -%}
+        </ul>
+      </section>
+    {%- endif -%}
+
+    {%- comment -%} ---------- 3. THE PRESETS (from the collection) ---------- {%- endcomment -%}
+    <section class="vp__block">
+      {%- if section.settings.grid_headline != blank or section.settings.grid_body != blank -%}
+        <div class="vp__block-head" data-reveal>
+          {%- if section.settings.grid_headline != blank -%}
+            <h2 class="vp__h3">{{ section.settings.grid_headline }}</h2>
+          {%- endif -%}
+          {%- if section.settings.grid_body != blank -%}
+            <div class="vp__block-body">{{ section.settings.grid_body }}</div>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      {%- if preset_count > 0 -%}
+        <ul class="vp__kits{% if preset_count == 1 %} vp__kits--solo{% endif %}" role="list">
+          {%- comment -%} the featured preset always leads the grid {%- endcomment -%}
+          {%- liquid
+            assign ordered = ''
+            if featured_handle != blank
+              for product in vp_collection.products limit: section.settings.limit
+                if product.handle == featured_handle
+                  assign ordered = product.handle
+                endif
+              endfor
+            endif
+          -%}
+
+          {%- assign ki = 0 -%}
+          {%- for pass in (1..2) -%}
+            {%- for product in vp_collection.products limit: section.settings.limit -%}
+              {%- liquid
+                if pass == 1
+                  unless product.handle == ordered
+                    continue
+                  endunless
+                else
+                  if product.handle == ordered
+                    continue
+                  endif
+                endif
+                assign ki = ki | plus: 1
+                assign is_featured = false
+                if product.handle == featured_handle
+                  assign is_featured = true
+                endif
+
+                assign badge = ''
+                if is_featured and section.settings.featured_badge != blank
+                  assign badge = section.settings.featured_badge
+                elsif product.tags contains 'new' or product.tags contains 'New'
+                  assign badge = 'New'
+                endif
+
+                assign daw_values = ''
+                for option in product.options_with_values
+                  assign opt = option.name | downcase
+                  if opt == 'daw' or opt contains 'daw' or opt contains 'software'
+                    assign daw_values = option.values
+                  endif
+                endfor
+
+                assign blurb = product.metafields.custom.card_blurb.value
+              -%}
+
+              <li
+                class="vp__kit{% if is_featured %} vp__kit--featured{% endif %}"
+                data-reveal
+                style="--d:{{ ki | times: 90 }}ms"
+              >
+                <a class="vp__kit-media" href="{{ product.url }}" tabindex="-1" aria-hidden="true">
+                  {%- if product.featured_image != blank -%}
+                    {{ product.featured_image | image_url: width: 1000 | image_tag:
+                        widths: '300, 500, 700, 1000',
+                        sizes: '(min-width: 990px) 33vw, (min-width: 750px) 50vw, 90vw',
+                        alt: product.title,
+                        loading: 'lazy', class: 'vp__kit-img' }}
+                  {%- else -%}
+                    <span class="vp__kit-ph"></span>
+                  {%- endif -%}
+                  {%- if badge != blank -%}
+                    <span class="vp__kit-badge">{{ badge }}</span>
+                  {%- endif -%}
+                </a>
+
+                <div class="vp__kit-body">
+                  <h3 class="vp__kit-name">
+                    <a class="vp__kit-link" href="{{ product.url }}">{{ product.title }}</a>
+                  </h3>
+
+                  {%- if section.settings.card_subtitle != blank -%}
+                    <p class="vp__kit-sub">{{ section.settings.card_subtitle }}</p>
+                  {%- endif -%}
+
+                  {%- if daw_values != blank and daw_values.size > 0 -%}
+                    <ul class="vp__tags" role="list" aria-label="Available for">
+                      {%- for v in daw_values -%}
+                        <li class="vp__tag">{{ v }}</li>
+                      {%- endfor -%}
+                    </ul>
+                  {%- endif -%}
+
+                  {%- if blurb != blank -%}
+                    <p class="vp__kit-text">{{ blurb }}</p>
+                  {%- endif -%}
+
+                  <div class="vp__kit-foot">
+                    <p class="vp__price">
+                      <span class="vp__price-value">
+                        {%- if product.price_varies -%}From {% endif -%}
+                        {{- product.price_min | money -}}
+                      </span>
+                      {%- if section.settings.price_note != blank -%}
+                        <span class="vp__price-note">{{ section.settings.price_note }}</span>
+                      {%- endif -%}
+                    </p>
+                    <a class="vp__btn" href="{{ product.url }}" aria-label="{{ section.settings.button_label | escape }}: {{ product.title | escape }}">
+                      <span>{{ section.settings.button_label | default: 'Get the preset' }}</span>
+                      <span class="vp__btn-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </span>
+                    </a>
+                  </div>
+                </div>
+              </li>
+            {%- endfor -%}
+          {%- endfor -%}
+        </ul>
+      {%- else -%}
+        <p class="vp__empty">
+          {%- if vp_collection == blank -%}Choose a collection for this section in the theme editor.{%- else -%}New presets are on the way.{%- endif -%}
+        </p>
+      {%- endif -%}
+    </section>
+
+    {%- comment -%} ---------- 4. CLOSING ---------- {%- endcomment -%}
+    {%- if section.settings.closing_headline != blank or section.settings.closing_body != blank -%}
+      <section class="vp__closing" data-reveal>
+        {%- if section.settings.closing_headline != blank -%}
+          <h2 class="vp__closing-title">{{ section.settings.closing_headline }}</h2>
+        {%- endif -%}
+        {%- if section.settings.closing_body != blank -%}
+          <div class="vp__closing-body">{{ section.settings.closing_body }}</div>
+        {%- endif -%}
+      </section>
+    {%- endif -%}
+
+  </div>
+</vocal-presets>
+
+<script>
+  (function () {
+    if (customElements.get('vocal-presets')) return;
+    class VocalPresets extends HTMLElement {
+      connectedCallback() {
+        var targets = [].slice.call(this.querySelectorAll('[data-reveal]'));
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (reduced || !('IntersectionObserver' in window)) {
+          targets.forEach(function (el) { el.classList.add('is-in'); });
+          return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add('is-in');
+            io.unobserve(entry.target);
+          });
+        }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
+        targets.forEach(function (el) { io.observe(el); });
+      }
+    }
+    customElements.define('vocal-presets', VocalPresets);
+  })();
+</script>
+
+{% stylesheet %}
+
+  .vp {
+    display: block;
+    background: var(--vp-bg, #f1f1ef);
+    color: var(--vp-muted, #6b6b68);
+    padding-block: var(--vp-pad-top, 96px) var(--vp-pad-bottom, 96px);
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+
+  .vp__inner {
+    max-inline-size: var(--vp-max, 1160px);
+    margin-inline: auto;
+    padding-inline: clamp(18px, 4vw, 40px);
+  }
+
+  .vp [data-reveal] {
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms),
+                transform 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) var(--d, 0ms);
+  }
+
+  .vp [data-reveal].is-in { opacity: 1; transform: none; }
+
+  /* ---------- hero ---------- */
+  .vp__eyebrow {
+    margin: 0 0 1.1rem;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--vp-accent, #1242fd);
+  }
+
+  .vp__headline {
+    margin: 0;
+    font-family: var(--font-heading--family, inherit);
+    font-size: min(var(--vp-h1, 76px), 8.4vw);
+    font-weight: 900;
+    line-height: 0.94;
+    letter-spacing: -0.035em;
+    text-transform: uppercase;
+    color: var(--vp-ink, #111);
+    max-width: 16ch;
+    text-wrap: balance;
+    word-break: keep-all;
+    overflow-wrap: normal;
+  }
+
+  .vp__lede {
+    margin-block-start: 1.6rem;
+    font-size: clamp(15px, 1.35vw, 18px);
+    line-height: 1.6;
+    max-width: 62ch;
+  }
+
+  .vp__lede > :first-child { margin-block-start: 0; }
+  .vp__lede > :last-child { margin-block-end: 0; }
+
+  /* ---------- shared block chrome ---------- */
+  .vp__block { margin-block-start: clamp(56px, 7vw, 104px); }
+
+  .vp__block-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 20px;
+    margin-block-end: 2.2rem;
+  }
+
+  .vp__h3 {
+    margin: 0;
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(26px, 3.2vw, 42px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    text-transform: uppercase;
+    color: var(--vp-ink, #111);
+  }
+
+  .vp__block-body {
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 46ch;
+  }
+
+  .vp__block-body > :first-child { margin-block-start: 0; }
+  .vp__block-body > :last-child { margin-block-end: 0; }
+
+  /* ---------- credibility points ---------- */
+  .vp__points {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: var(--vp-line, #d9d9d4);
+    border-block: 1px solid var(--vp-line, #d9d9d4);
+  }
+
+  .vp__point {
+    background: var(--vp-bg, #f1f1ef);
+    padding: 28px 24px 26px;
+  }
+
+  .vp__point-num {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    color: var(--vp-accent, #1242fd);
+    margin-block-end: 14px;
+  }
+
+  .vp__point-title {
+    margin: 0 0 0.55rem;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--vp-ink, #111);
+  }
+
+  .vp__point-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ---------- kit grid ---------- */
+  .vp__kits {
+    display: grid;
+    grid-template-columns: repeat(var(--vp-cols, 3), minmax(0, 1fr));
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    align-items: stretch;
+  }
+
+  .vp__kit {
+    display: flex;
+    flex-direction: column;
+    background: var(--vp-card, #0d1231);
+    color: var(--vp-card-ink, #fff);
+    border-radius: calc(var(--vp-radius, 14px) + 6px);
+    overflow: hidden;
+    box-shadow: 0 22px 54px rgb(0 0 0 / 0.16);
+    block-size: 100%;
+  }
+
+  .vp__kit--featured { outline: 2px solid var(--vp-accent, #1242fd); outline-offset: 3px; }
+
+  /* A single kit reads as an unfinished grid cell, so it becomes one wide card
+     with the artwork beside the copy. Adding a second kit drops straight back
+     to the normal grid with no settings to change. */
+  /* one kit is always one full-width row, at every breakpoint */
+  .vp__kits--solo { grid-template-columns: 1fr; }
+
+  .vp__kits--solo .vp__kit {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .vp__kits--solo .vp__kit-media {
+    flex: 0 0 42%;
+    aspect-ratio: auto;
+    min-block-size: 340px;
+  }
+
+  .vp__kits--solo .vp__kit-body {
+    justify-content: center;
+    padding: clamp(26px, 3.4vw, 44px);
+  }
+
+  .vp__kits--solo .vp__kit-name { font-size: clamp(26px, 3.4vw, 40px); }
+
+  .vp__kits--solo .vp__kit-text { max-width: 52ch; }
+
+  .vp__kit-media {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1b1b1b, #0d1540);
+  }
+
+  .vp__kit-img,
+  .vp__kit-ph {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .vp__kit:hover .vp__kit-img { transform: scale(1.04); }
+
+  .vp__kit-badge {
+    position: absolute;
+    inset-block-start: 14px;
+    inset-inline-start: 14px;
+    display: inline-flex;
+    align-items: center;
+    block-size: 26px;
+    padding-inline: 12px;
+    border-radius: 999px;
+    background: var(--vp-accent, #1242fd);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  .vp__kit-play {
+    position: absolute;
+    inset-block-end: 14px;
+    inset-inline-end: 14px;
+    inline-size: 46px;
+    block-size: 46px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    color: #111;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    box-shadow: 0 8px 22px rgb(0 0 0 / 0.3);
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, color 0.25s ease;
+  }
+
+  .vp__kit-play:hover { transform: scale(1.08); }
+  .vp__kit-play:active { transform: scale(0.95); }
+
+  .vp__kit-play.is-playing {
+    background: var(--vp-accent, #1242fd);
+    color: #fff;
+  }
+
+  .vp__kit-play svg { inline-size: 20px; block-size: 20px; }
+  .vp__kit-play .vp__icon-pause { display: none; }
+  .vp__kit-play.is-playing .vp__icon-play { display: none; }
+  .vp__kit-play.is-playing .vp__icon-pause { display: block; }
+
+  .vp__kit-play:focus-visible {
+    outline: 2px solid var(--vp-accent, #1242fd);
+    outline-offset: 3px;
+  }
+
+  .vp__kit-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: clamp(20px, 2.4vw, 28px);
+    flex: 1 1 auto;
+  }
+
+  .vp__kit-name {
+    margin: 0;
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(20px, 2.1vw, 27px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    text-transform: uppercase;
+  }
+
+  .vp__kit-sub {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+
+  .vp__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .vp__tag {
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgb(255 255 255 / 0.1);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .vp__kit-text {
+    font-size: 14px;
+    line-height: 1.6;
+    opacity: 0.8;
+  }
+
+  .vp__kit-text > :first-child { margin-block-start: 0; }
+  .vp__kit-text > :last-child { margin-block-end: 0; }
+
+  .vp__kit-foot {
+    margin-block-start: auto;
+    padding-block-start: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    border-block-start: 1px solid rgb(255 255 255 / 0.14);
+  }
+
+  .vp__price {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .vp__price-value {
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(24px, 2.4vw, 32px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  .vp__price-note {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.55;
+  }
+
+  .vp__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px 11px 20px;
+    border-radius: 999px;
+    background: #fff;
+    color: #111;
+    font-size: 14px;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.25s ease, color 0.25s ease;
+  }
+
+  .vp__btn:hover { transform: translateY(-2px); }
+
+  .vp__btn-arrow {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 28px;
+    block-size: 28px;
+    border-radius: 50%;
+    background: var(--vp-accent, #1242fd);
+    color: #fff;
+  }
+
+  .vp__btn-arrow svg { inline-size: 15px; block-size: 15px; }
+
+  .vp__btn:focus-visible {
+    outline: 2px solid var(--vp-accent, #1242fd);
+    outline-offset: 3px;
+  }
+
+  /* ---------- closing ---------- */
+  .vp__closing {
+    margin-block-start: clamp(56px, 7vw, 104px);
+    padding-block-start: clamp(32px, 4vw, 52px);
+    border-block-start: 1px solid var(--vp-line, #d9d9d4);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: space-between;
+  }
+
+  .vp__closing-title {
+    flex: 1 1 340px;
+    margin: 0;
+    font-family: var(--font-heading--family, inherit);
+    font-size: clamp(24px, 3vw, 40px);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1.02;
+    text-transform: uppercase;
+    color: var(--vp-ink, #111);
+    max-width: 18ch;
+  }
+
+  .vp__closing-body {
+    flex: 1 1 340px;
+    font-size: 15px;
+    line-height: 1.65;
+    max-width: 56ch;
+  }
+
+  .vp__closing-body > :first-child { margin-block-start: 0; }
+  .vp__closing-body > :last-child { margin-block-end: 0; }
+
+  /* ---------- motion off ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    .vp [data-reveal] { opacity: 1; transform: none; transition: none; }
+    .vp__kit-img, .vp__btn, .vp__kit-play { transition: none; }
+  }
+
+  /* ---------- tablet ---------- */
+  @media screen and (max-width: 989px) {
+    .vp__kits:not(.vp__kits--solo) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
+  /* ---------- mobile ---------- */
+  @media screen and (max-width: 749px) {
+    .vp { padding-block: calc(var(--vp-pad-top, 96px) * 0.65) calc(var(--vp-pad-bottom, 96px) * 0.65); }
+    .vp__headline { font-size: var(--vp-h1-mobile, 40px); max-width: none; }
+    .vp__points { grid-template-columns: 1fr; }
+    /* :not() in the tablet rule above raises its specificity, so match it
+       here or the two-column layout leaks onto phones */
+    .vp__kits:not(.vp__kits--solo),
+    .vp__kits--solo { grid-template-columns: 1fr; }
+    .vp__kits--solo .vp__kit { flex-direction: column; }
+    .vp__kits--solo .vp__kit-media { flex: 0 0 auto; aspect-ratio: 1 / 1; min-block-size: 0; }
+    .vp__btn { flex: 1 1 auto; justify-content: space-between; }
+  }
+
+  /* ---------- vocal-preset additions ---------- */
+  .vp__kit-media { display: block; }
+  .vp__kit-link { color: inherit; text-decoration: none; }
+  .vp__kit-link:hover { text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+  .vp__kit-link:focus-visible { outline: 2px solid var(--vp-accent, #1242fd); outline-offset: 3px; border-radius: 4px; }
+  .vp__price-value { white-space: nowrap; }
+  .vp__empty {
+    margin: 0;
+    padding: 48px 24px;
+    text-align: center;
+    border: 1px dashed var(--vp-line, #d9d9d4);
+    border-radius: calc(var(--vp-radius, 14px) + 6px);
+    font-size: 15px;
+  }
+{% endstylesheet %}
+
+{% schema %}
+{
+  "name": "Vocal Presets",
+  "tag": "section",
+  "class": "vocal-presets-wrapper section-wrapper",
+  "max_blocks": 12,
+  "settings": [
+    { "type": "header", "content": "1 · Hero" },
+    { "type": "text", "id": "hero_eyebrow", "label": "Small line above", "default": "VOCAL PRESETS" },
+    { "type": "text", "id": "hero_headline", "label": "Headline", "default": "Radio-ready vocals. One drag." },
+    {
+      "type": "richtext",
+      "id": "hero_body",
+      "label": "Description",
+      "default": "<p>Drop a preset on your vocal track and get a pro mix in under 60 seconds. No engineer, no $200-a-track invoices, no guesswork.</p>"
+    },
+    { "type": "header", "content": "2 · Why it's different" },
+    { "type": "text", "id": "points_headline", "label": "Headline", "default": "Why these work." },
+    { "type": "header", "content": "3 · The presets" },
+    {
+      "type": "collection",
+      "id": "collection",
+      "label": "Collection",
+      "info": "Every product in this collection appears in the grid. Leave empty on a collection page to use that collection."
+    },
+    {
+      "type": "product",
+      "id": "featured_product",
+      "label": "Featured preset",
+      "info": "Shown first, outlined, with the badge below."
+    },
+    { "type": "text", "id": "featured_badge", "label": "Featured badge", "default": "Flagship" },
+    { "type": "text", "id": "grid_headline", "label": "Headline", "default": "The presets." },
+    {
+      "type": "richtext",
+      "id": "grid_body",
+      "label": "Description",
+      "default": "<p>Every preset works in FL Studio, Logic, Ableton and BandLab. Instant download, yours for good.</p>"
+    },
+    { "type": "text", "id": "card_subtitle", "label": "Small line under each name", "default": "Vocal preset chain" },
+    { "type": "text", "id": "price_note", "label": "Line under the price", "default": "One-time" },
+    { "type": "text", "id": "button_label", "label": "Button label", "default": "Get the preset" },
+    {
+      "type": "range",
+      "id": "columns",
+      "label": "Presets per row",
+      "min": 1, "max": 4, "step": 1, "default": 3,
+      "info": "Drops to 2 on tablet and 1 on mobile automatically."
+    },
+    { "type": "range", "id": "limit", "label": "Max presets shown", "min": 3, "max": 48, "step": 3, "default": 24 },
+    { "type": "header", "content": "4 · Closing" },
+    { "type": "text", "id": "closing_headline", "label": "Headline", "default": "Sound like you. Just pro." },
+    {
+      "type": "richtext",
+      "id": "closing_body",
+      "label": "Description",
+      "default": "<p>Built by engineers whose chains are already on released records. One-time payment, instant download, works in every major DAW.</p>"
+    },
+    { "type": "header", "content": "Layout" },
+    { "type": "range", "id": "max_width", "label": "Content width", "min": 900, "max": 1600, "step": 20, "unit": "px", "default": 1160 },
+    { "type": "range", "id": "corner_radius", "label": "Corner radius", "min": 0, "max": 32, "step": 2, "unit": "px", "default": 14 },
+    { "type": "range", "id": "padding_top", "label": "Padding top", "min": 0, "max": 160, "step": 8, "unit": "px", "default": 96 },
+    { "type": "range", "id": "padding_bottom", "label": "Padding bottom", "min": 0, "max": 160, "step": 8, "unit": "px", "default": 96 },
+    { "type": "header", "content": "Type & colour" },
+    { "type": "range", "id": "headline_size", "label": "Headline size", "min": 32, "max": 96, "step": 4, "unit": "px", "default": 76 },
+    { "type": "range", "id": "headline_size_mobile", "label": "Headline size (mobile)", "min": 24, "max": 64, "step": 2, "unit": "px", "default": 40 },
+    { "type": "color", "id": "background_color", "label": "Background", "default": "#f1f1ef" },
+    { "type": "color", "id": "accent_color", "label": "Accent", "default": "#1242fd" },
+    { "type": "color", "id": "heading_color", "label": "Headings", "default": "#111111" },
+    { "type": "color", "id": "body_color", "label": "Body text", "default": "#6b6b68" },
+    { "type": "color", "id": "line_color", "label": "Rules", "default": "#d9d9d4" },
+    { "type": "color", "id": "card_color", "label": "Card background", "default": "#0d1231" },
+    { "type": "color", "id": "card_text_color", "label": "Card text", "default": "#ffffff" }
+  ],
+  "blocks": [
+    {
+      "type": "point",
+      "name": "Point",
+      "settings": [
+        { "type": "text", "id": "title", "label": "Title", "default": "Drag. Drop. Done." },
+        { "type": "textarea", "id": "text", "label": "Text", "default": "Load the chain on your vocal and you're mixed." }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Vocal Presets",
+      "category": "Products",
+      "blocks": {
+        "pt1": { "type": "point", "settings": { "title": "Drag. Drop. Done.", "text": "Load the chain on your vocal track and you have a pro mix in under 60 seconds." } },
+        "pt2": { "type": "point", "settings": { "title": "Every major DAW", "text": "Each preset ships in FL Studio, Logic, Ableton and BandLab versions. Pick yours at checkout." } },
+        "pt3": { "type": "point", "settings": { "title": "On real releases", "text": "These chains are already on released tracks from artists with millions of monthly listeners." } }
+      },
+      "block_order": ["pt1", "pt2", "pt3"]
+    }
+  ]
+}
+{% endschema %}
